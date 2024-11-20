@@ -4,9 +4,17 @@ import React from 'react';
 
 const Manager: React.FC = () => {
   return (
-    <div>
-      <h1>Welcome to the New Page!</h1>
-      <p>This is the content of your new page.</p>
+    <div className="manager_button_container">
+      <h1>Manager View</h1>
+      <p>Content below</p>
+      <button className="manager_button">Create Restaurant</button>
+      <button className="manager_button">Edit Restaurant</button>
+      <button className="manager_button">Activate Restaurant</button>
+      <button className="manager_button">Delete Restaurant</button>
+      <button className="manager_button">Review Day's Availability</button>
+      <button className="manager_button">Close Future Day</button>
+      <button className="manager_button">Open Future Day</button>
+      <button className="manager_button">Login Restaurant</button>
     </div>
   );
 };
