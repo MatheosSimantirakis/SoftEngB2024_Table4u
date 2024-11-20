@@ -29,6 +29,7 @@ body {
   cursor: pointer;
   top: 150px;
   left: 50px;
+  width: '100px'
 }
 
 .dates {
