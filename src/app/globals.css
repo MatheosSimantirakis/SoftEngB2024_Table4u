@@ -4,12 +4,12 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #314329;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #314329;
     --foreground: #ededed;
   }
 }
@@ -18,4 +18,41 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Customer Window Setting: Start*/
+.reservations {
+  position: absolute;
+  top: 170px;
+  left: 630px;
+}
+
+.dates {
+  position: absolute;
+  left: 550px;
+  top: 10px;
+}
+
+.times {
+  position: absolute;
+  left: 550px;
+  top: 50px;
+}
+
+.seats {
+  position: absolute;
+  top: 170px;
+  left: 550px;
+}
+/* Customer Window Setting: End*/
+
+.configbutton {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 150px; 
 }
