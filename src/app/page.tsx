@@ -6,12 +6,21 @@ export default function Home() {
   return (
     <div className="Customer View">
 
-      <input type="text" style={{position: 'absolute', top: '100px', left: '50px', width: '600px', height: '40px'}} placeholder="Search..." value={""}
+      <input type="text" style={{position: 'absolute', top: '100px', left: '50px', width: '900px', height: '40px'}} placeholder="Search..." value={""}
       // onChange={"Hi"}
       />
       <button className="reservations" >reservations</button>
+      <button className="square" >search results</button>
+      <button className="logout" >logout</button>
+      
+      <div className="dateDropDown" style={{ marginTop: "20px" }}>
+      <select id="dateSelect" style={{padding: "5px", fontSize: "14px", position: 'absolute', top: '150px', left: '480px', width: '150px', borderRadius: 4}}>
+        <option value="All dates">dates</option>
+      </select>
+      </div>
+
       <div className="timeDropDown" style={{ marginTop: "20px" }}>
-        <select id="timeSelect" style={{padding: "5px", fontSize: "14px", position: 'absolute', top: '150px', left: '260px', width: '100px', borderRadius: 4}}>
+        <select id="timeSelect" style={{padding: "5px", fontSize: "14px", position: 'absolute', top: '150px', left: '640px', width: '150px', borderRadius: 4}}>
           <option value="All times">All times</option>
           <option value="08:00">08:00</option>
           <option value="09:00">09:00</option>
@@ -31,13 +40,9 @@ export default function Home() {
           <option value="23:00">23:00</option>
         </select>
       </div>     
-      <div className="dateDropDown" style={{ marginTop: "20px" }}>
-      <select id="dateSelect" style={{padding: "5px", fontSize: "14px", position: 'absolute', top: '150px', left: '150px', width: '100px', borderRadius: 4}}>
-        <option value="All dates">dates</option>
-      </select>
-      </div>
+
       <div className="seatsDropDown" style={{ marginTop: "20px" }}>
-        <select id="numberOfSeats" style={{padding: "5px", fontSize: "14px", position: 'absolute', top: '150px', left: '380px', width: '100px', borderRadius: 4}}>
+        <select id="numberOfSeats" style={{padding: "5px", fontSize: "14px", position: 'absolute', top: '150px', left: '800px', width: '150px', borderRadius: 4}}>
           <option value="Seats">Seats</option>
           <option value="2 seats">2</option>
           <option value="3 seats">3</option>
