@@ -32,29 +32,47 @@ body {
   width: '100px'
 }
 
-.search_consumer {
-  width: 900px;
-  height: 600px;
+.dates {
   position: absolute;
-  background-color: #000000;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  top: 180px;
-  left: 50px;
+  left: 550px;
+  top: 10px;
 }
 
+.times {
+  position: absolute;
+  left: 550px;
+  top: 50px;
+}
+
+.seats {
+  position: absolute;
+  top: 170px;
+  left: 550px;
+}
 /* Customer Window Setting: End*/
 
-.configbutton {
-  padding: 8px 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
+
+.manager_button_container {
+  text-align:center;
+}
+
+.manager_button {
+  background-color: green; /* Green background */
+  color: white;              /* White text */
+  border: none;              /* No border */
+  padding: 10px 20px;        /* Padding inside the button */
+  text-align: center;        /* Center the text */
+  text-decoration: none;     /* Remove underline */
+  display: inline-block;     /* Display as inline block */
+  font-size: 16px;           /* Font size */
+  border-radius: 5px;        /* Rounded corners */
   cursor: pointer;
-  transition: background-color 0.3s;
-  width: 150px; 
+  transition: background-color 0.3s ease;
+  margin: 5px;
+}
+
+.manager_button:hover {
+  background-color: turquoise;
 }
 
 .manager_button_container {
