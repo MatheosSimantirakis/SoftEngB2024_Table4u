@@ -21,7 +21,7 @@ body {
 }
 
 /* Customer Window Setting: Start*/
-.reservations {
+.reservations_consumer {
   position: absolute;
   background-color: #000000;
   color: white;
@@ -32,48 +32,28 @@ body {
   width: '100px'
 }
 
-.dates {
-  position: absolute;
-  left: 550px;
-  top: 10px;
-}
-
-.times {
-  position: absolute;
-  left: 550px;
-  top: 50px;
-}
-
-.seats {
-  position: absolute;
-  top: 170px;
-  left: 550px;
-}
-
-.square {
-  width: 900px;
-  height: 600px;
-  position: absolute;
-  background-color: #000000;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  top: 180px;
-  left: 50px;
-  width: '100px'
-}
-
-.logout {
-  width: 80px;
-  height: 30px;
-  position: absolute;
-  background-color: #000000;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  top: 10px;
-  left: 10px;
-  width: '100px'
-}
 /* Customer Window Setting: End*/
 
+
+.manager_button_container {
+  text-align:center;
+}
+
+.manager_button {
+  background-color: green; /* Green background */
+  color: white;              /* White text */
+  border: none;              /* No border */
+  padding: 10px 20px;        /* Padding inside the button */
+  text-align: center;        /* Center the text */
+  text-decoration: none;     /* Remove underline */
+  display: inline-block;     /* Display as inline block */
+  font-size: 16px;           /* Font size */
+  border-radius: 5px;        /* Rounded corners */
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin: 5px;
+}
+
+.manager_button:hover {
+  background-color: turquoise;
+}
