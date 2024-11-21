@@ -21,7 +21,7 @@ body {
 }
 
 /* Customer Window Setting: Start*/
-.reservations {
+.reservations_consumer {
   position: absolute;
   background-color: #000000;
   color: white;
@@ -32,23 +32,18 @@ body {
   width: '100px'
 }
 
-.dates {
+.search_consumer {
+  width: 900px;
+  height: 600px;
   position: absolute;
-  left: 550px;
-  top: 10px;
+  background-color: #000000;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  top: 180px;
+  left: 50px;
 }
 
-.times {
-  position: absolute;
-  left: 550px;
-  top: 50px;
-}
-
-.seats {
-  position: absolute;
-  top: 170px;
-  left: 550px;
-}
 /* Customer Window Setting: End*/
 
 .configbutton {
