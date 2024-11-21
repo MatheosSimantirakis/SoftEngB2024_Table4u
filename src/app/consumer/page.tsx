@@ -1,15 +1,16 @@
-import Image from "next/image";
+"use client";
 
+import React from 'react';
 
-export default function Home() {
+const Consumer: React.FC = () => {
   
-  return (
-    <div className="Customer View">
+    return (
+      <div className="Customer View">
 
       <input type="text" style={{position: 'absolute', top: '100px', left: '50px', width: '900px', height: '40px'}} placeholder="Search..." value={""}
       // onChange={"Hi"}
       />
-      <button className="reservations" >reservations</button>
+      <button className="reservations_consumer" >reservations</button>
       <button className="square" >search results</button>
       <button className="logout" >logout</button>
       
@@ -52,6 +53,8 @@ export default function Home() {
         </select>
       </div>      
     </div>
-  );
-}
+    );
+  };
 
+  export default Consumer;
+  
