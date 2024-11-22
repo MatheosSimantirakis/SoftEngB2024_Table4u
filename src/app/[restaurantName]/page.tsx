@@ -17,10 +17,10 @@ export default function RestaurantPage() {
 
   return (
     <div className="admin-view">
-      {/* Left Side: Buttons */}
+      {/* Left Side: Buttons, Logo and Subheading*/}
       <div className="left-panel">
         <div className="left-panel-header">
-          <h1 className="title">Tables4U</h1>
+          <img src="/logo.svg" alt="Tables4U Logo" className="logo" />
           <h2 className="subtitle">Administrator View</h2>
         </div>
         <div className="left-panel-buttons">
@@ -33,7 +33,7 @@ export default function RestaurantPage() {
           <button className="action-button delete-button">Delete Restaurant</button>
         </div>
       </div>
-
+      
       {/* Main Content */}
       <div className="main-content">
         {/* Restaurant Name */}

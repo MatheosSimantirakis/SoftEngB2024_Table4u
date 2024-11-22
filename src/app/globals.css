@@ -4,15 +4,24 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #000000;
+  --foreground: #F3F4F8;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #000000;
+    --background: #F3F4F8;
     --foreground: #ededed;
   }
 }
+
+.logo {
+  width: 225px; 
+  height: auto; 
+  margin-bottom: 10px;
+  margin-top: 10px;
+  margin-left: 80px;
+}
+
 
 body {
   color: var(--foreground);
@@ -277,5 +286,5 @@ body {
   font-weight: bold;
   text-align: center; 
   margin-bottom: 20px;
-  color: #ffffff; 
+  color: #000000; 
 }

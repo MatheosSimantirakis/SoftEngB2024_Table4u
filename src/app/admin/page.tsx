@@ -5,10 +5,10 @@ import React from "react";
 export default function Home() {
   return (
     <div className="admin-view">
-      {/* Left Side: Title and Subheading */}
+      {/* Left Side: Logo and Subheading */}
       <div className="left-panel">
         <div className="left-panel-header">
-          <h1 className="title">Tables4U</h1>
+          <img src="/logo.svg" alt="Tables4U Logo" className="logo" />
           <h2 className="subtitle">Administrator View</h2>
         </div>
       </div>
