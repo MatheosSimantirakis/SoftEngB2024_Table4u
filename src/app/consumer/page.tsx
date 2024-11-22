@@ -5,24 +5,31 @@ import React from 'react';
 const Consumer: React.FC = () => {
   
     return (
+    /*All HTML class are under Customer View className*/
       <div className="Customer View">
 
-      <input type="text" style={{position: 'absolute', top: '100px', left: '50px', width: '900px', height: '40px'}} placeholder="Search..." value={""}
-      // onChange={"Hi"}
-      />
-      <button className="reservations_consumer" >reservations</button>
-      <button className="search_consumer" >search results</button>
-      <button className="logout" >logout</button>
+      {/* Gabe's Code for search bar*/}
+      <div className="search-bar">
+          <input type="text" placeholder="Search for a restaurant..." className="search-input"/>
+          <button className="search-button">Search</button>
+        </div>
+
+        {/* Matheos reservation button */}
+        <button className="reservations-consumer" 
+            style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '250px', left: '100px', width: '180px', borderRadius: 4}}
+        >Reservations</button>
       
-      <div className="dateDropDown" style={{ marginTop: "20px" }}>
-      <select id="dateSelect" style={{padding: "5px", fontSize: "14px", position: 'absolute', top: '150px', left: '480px', width: '150px', borderRadius: 4}}>
-        <option value="All dates">dates</option>
+      {/* Matheos Date Dropdown */}
+      <div className="dateDropDown-consumer" style={{ marginTop: "20px" }}>
+      <select id="dateSelect-consumer" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '600px', width: '180px', borderRadius: 4}}>
+        <option value="All dates">Dates</option>
       </select>
       </div>
 
+        {/* Matheos Time Dropdown */}
       <div className="timeDropDown" style={{ marginTop: "20px" }}>
-        <select id="timeSelect" style={{padding: "5px", fontSize: "14px", position: 'absolute', top: '150px', left: '640px', width: '150px', borderRadius: 4}}>
-          <option value="All times">All times</option>
+        <select id="timeSelect" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '900px', width: '180px', borderRadius: 4}}>
+          <option value="All times">Times</option>
           <option value="08:00">08:00</option>
           <option value="09:00">09:00</option>
           <option value="10:00">10:00</option>
@@ -42,8 +49,9 @@ const Consumer: React.FC = () => {
         </select>
       </div>     
 
-      <div className="seatsDropDown" style={{ marginTop: "20px" }}>
-        <select id="numberOfSeats" style={{padding: "5px", fontSize: "14px", position: 'absolute', top: '150px', left: '800px', width: '150px', borderRadius: 4}}>
+
+      <div className="seatsDropDown-consumer" style={{ marginTop: "20px" }}>
+        <select id="numberOfSeats-consumer" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '1200px', width: '180px', borderRadius: 4}}>
           <option value="Seats">Seats</option>
           <option value="2 seats">2</option>
           <option value="3 seats">3</option>
@@ -51,7 +59,15 @@ const Consumer: React.FC = () => {
           <option value="5 seats">5</option>
           <option value="6 seats">6</option>
         </select>
-      </div>      
+      </div>
+      
+      {/* Gabe's Code logo and location*/}
+      <div className="left-panel">
+        <div className="left-panel-header">
+          <img src="/logo.svg" alt="Tables4U Logo" className="logo" />
+          <h2 className="subtitle">Consumer View</h2>
+        </div>
+      </div>
     </div>
     );
   };
