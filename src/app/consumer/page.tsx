@@ -8,25 +8,25 @@ const Consumer: React.FC = () => {
     /*All HTML class are under Customer View className*/
       <div className="Customer View">
 
-      {/* Gabe's Code for search bar*/}
+    {/* Gabe's Code for search bar*/}
       <div className="search-bar">
           <input type="text" placeholder="Search for a restaurant..." className="search-input"/>
           <button className="search-button">Search</button>
         </div>
 
-        {/* Matheos reservation button */}
+    {/* Matheos reservation button */}
         <button className="reservations-consumer" 
             style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '250px', left: '100px', width: '180px', borderRadius: 4}}
-        >Reservations</button>
+            >Reservations</button>
       
-      {/* Matheos Date Dropdown */}
+    {/* Matheos Date Dropdown */}
       <div className="dateDropDown-consumer" style={{ marginTop: "20px" }}>
       <select id="dateSelect-consumer" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '600px', width: '180px', borderRadius: 4}}>
         <option value="All dates">Dates</option>
       </select>
       </div>
 
-        {/* Matheos Time Dropdown */}
+    {/* Matheos Time Dropdown */}
       <div className="timeDropDown" style={{ marginTop: "20px" }}>
         <select id="timeSelect" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '900px', width: '180px', borderRadius: 4}}>
           <option value="All times">Times</option>
@@ -49,7 +49,7 @@ const Consumer: React.FC = () => {
         </select>
       </div>     
 
-
+    {/* Matheos seats Dropdown */}
       <div className="seatsDropDown-consumer" style={{ marginTop: "20px" }}>
         <select id="numberOfSeats-consumer" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '1200px', width: '180px', borderRadius: 4}}>
           <option value="Seats">Seats</option>
@@ -61,7 +61,7 @@ const Consumer: React.FC = () => {
         </select>
       </div>
       
-      {/* Gabe's Code logo and location*/}
+    {/* Gabe's Code logo and location*/}
       <div className="left-panel">
         <div className="left-panel-header">
           <img src="/logo.svg" alt="Tables4U Logo" className="logo" />
