@@ -11,6 +11,7 @@ const ManagerView: React.FC = () => {
   const [showCloseForm, setShowCloseForm] = useState(false); // Toggles Close Future Day form
   const [showReviewForm, setShowReviewForm] = useState(false); // Toggles Review Days Availability form
   const [isActivated, setIsActivated] = useState(false); // Tracks Activate/Deactivate state
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false); // Controls Delete Confirmation popup
 
   const router = useRouter();
 
@@ -48,11 +49,27 @@ const ManagerView: React.FC = () => {
     if (current !== 'review') setShowReviewForm(false);
   };
 
+  // Toggle for activate/deactivate
   const handleToggleSwitch = () => {
-    setIsActivated((prevState) => !prevState); 
+    setIsActivated((prevState) => !prevState);
   };
 
+  // Navigation handler
   const handleGoBack = () => router.push('/consumer');
+
+  // Delete Confirmation Handlers
+  const handleDeleteClick = () => {
+    setShowDeleteConfirmation(true); // Show delete confirmation modal
+  };
+
+  const confirmDelete = () => {
+    setShowDeleteConfirmation(false);
+    console.log('Restaurant deleted'); // Replace with actual delete logic
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirmation(false); // Close modal
+  };
 
   return (
     <div className="manager-view">
@@ -77,6 +94,9 @@ const ManagerView: React.FC = () => {
           </button>
           <button className="action-button-manager" onClick={handleReviewToggle}>
             {showReviewForm ? 'Exit' : 'Review Days Availability'}
+          </button>
+          <button className="delete-button-manager" onClick={handleDeleteClick}>
+            Delete My Restaurant
           </button>
           <div className="toggle-container">
             <label className="toggle-switch">
@@ -235,12 +255,28 @@ const ManagerView: React.FC = () => {
           </div>
         )}
 
+        {/* Delete Confirmation Popup */}
+        {showDeleteConfirmation && (
+          <div className="modal-overlay" onClick={cancelDelete}>
+            <div className="delete-confirmation-popup" onClick={(e) => e.stopPropagation()}>
+              <p>Are you sure you want to delete your restaurant?</p>
+              <button className="confirm-button" onClick={confirmDelete}>
+                Yes, Delete
+              </button>
+              <button className="cancel-button" onClick={cancelDelete}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Placeholder */}
         {!showCreateForm &&
           !showEditForm &&
           !showOpenForm &&
           !showCloseForm &&
-          !showReviewForm && (
+          !showReviewForm &&
+          !showDeleteConfirmation && (
             <div className="placeholder-manager">
               <p>Select an option from the left panel to get started.</p>
             </div>

@@ -455,6 +455,8 @@ body {
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.6); 
+  z-index: 999;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -540,6 +542,13 @@ body {
 }
 
 /* ---------------- Manager View Styles ---------------- */
+
+.main-content-manager {
+  position: relative;
+  width: 75%;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
 
 .manager-view {
   display: flex;
@@ -656,11 +665,55 @@ body {
   background-color: #177538;
 }
 
-.main-content-manager {
-  width: 75%;
-  padding: 20px;
-  background-color: #f8f9fa;
+.delete-confirmation-popup {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 50%; 
+  left: 50%;
+  transform: translate(-50%, -50%); 
+  background: #ffffff; 
+  color: #000000;
+  padding: 30px; 
+  border: 1px solid #ced4da; 
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+  width: 300px; 
+  z-index: 1000; 
 }
+
+.confirm-button,
+.cancel-button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.confirm-button {
+  background-color: #dc3545; /* Red for confirmation */
+  color: #ffffff;
+}
+
+.confirm-button:hover {
+  background-color: #b02a37;
+}
+
+.cancel-button {
+  background-color: #6c757d; /* Gray for cancel */
+  color: #ffffff;
+}
+
+.cancel-button:hover {
+  background-color: #5a6268;
+}
+
 
 /* ---------------- Create Restaurant Form Styles ---------------- */
 
