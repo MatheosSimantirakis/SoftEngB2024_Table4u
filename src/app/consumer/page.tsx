@@ -1,19 +1,74 @@
-"use client";
+'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const Consumer: React.FC = () => {
-  
-    return (
-    /*All HTML class are under Customer View className*/
-      <div className="Customer View">
+  // State for toggling the login modal visibility
+  const [isLoginVisible, setLoginVisible] = useState(false);
 
+<<<<<<< HEAD
     {/* Gabe's Code for search bar*/}
       <div className="search-bar">
           <input type="text" placeholder="Search for a restaurant..." className="search-input"/>
           <button className="search-button">Search</button>
-        </div>
+=======
+  // State for storing login credentials
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
+  // State for storing the selected date from the calendar
+  const [selectedDate, setSelectedDate] = useState('');
+
+  const router = useRouter();
+
+  // Handlers for showing and hiding the login modal
+  const handleOpenLogin = () => {
+    setLoginVisible(true);
+  };
+
+  const handleCloseLogin = () => {
+    setLoginVisible(false);
+  };
+
+  // Handler for login action based on role (manager or admin)
+  const handleLogin = (role: string) => {
+    if (role === 'manager') {
+      console.log(`Logging in as Manager with username: ${username}`);
+      router.push('/manager'); // Redirect to manager page
+    } else if (role === 'admin') {
+      console.log(`Logging in as Admin with username: ${username}`);
+      router.push('/admin'); // Redirect to admin page
+    }
+    setLoginVisible(false); // Close the modal after login
+  };
+
+  // Handler for date selection from the calendar input
+  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(event.target.value);
+    console.log(`Selected date: ${event.target.value}`);
+  };
+
+  return (
+    <div className="consumer-view">
+      {/* Header Section: Contains the logo, login button, and search bar */}
+      <header className="consumer-header">
+        <img src="/logo.svg" alt="Tables4U Logo" className="logo-consumer" />
+        <button className="login-button-consumer" onClick={handleOpenLogin}>
+          Log in
+        </button>
+        <div className="search-container-consumer">
+          <input
+            type="text"
+            placeholder="Search for a restaurant..."
+            className="search-input-consumer"
+          />
+          <button className="search-button-consumer">Search</button>
+>>>>>>> gabriel
+        </div>
+      </header>
+
+<<<<<<< HEAD
     {/* Matheos reservation button */}
         <button className="reservations-consumer" 
             style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '250px', left: '100px', width: '180px', borderRadius: 4}}
@@ -29,6 +84,18 @@ const Consumer: React.FC = () => {
     {/* Matheos Time Dropdown */}
       <div className="timeDropDown" style={{ marginTop: "20px" }}>
         <select id="timeSelect" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '900px', width: '180px', borderRadius: 4}}>
+=======
+      {/* Filters Section: Buttons and dropdowns for filtering reservations */}
+      <section className="filters-section-consumer">
+        <button className="my-reservations-button-consumer">My Reservations</button>
+        <input
+          type="date" // Calendar input for selecting a date
+          className="date-input-consumer"
+          value={selectedDate}
+          onChange={handleDateChange}
+        />
+        <select className="dropdown-consumer">
+>>>>>>> gabriel
           <option value="All times">Times</option>
           <option value="08:00">08:00</option>
           <option value="09:00">09:00</option>
@@ -47,8 +114,9 @@ const Consumer: React.FC = () => {
           <option value="22:00">22:00</option>
           <option value="23:00">23:00</option>
         </select>
-      </div>     
+      </section>
 
+<<<<<<< HEAD
     {/* Matheos seats Dropdown */}
       <div className="seatsDropDown-consumer" style={{ marginTop: "20px" }}>
         <select id="numberOfSeats-consumer" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '1200px', width: '180px', borderRadius: 4}}>
@@ -66,11 +134,86 @@ const Consumer: React.FC = () => {
         <div className="left-panel-header">
           <img src="/logo.svg" alt="Tables4U Logo" className="logo" />
           <h2 className="subtitle">Consumer View</h2>
-        </div>
-      </div>
-    </div>
-    );
-  };
+=======
+      {/* Results Section: List of available restaurants */}
+      <section className="results-section-consumer">
+        <h3 className="results-title-consumer">Available Restaurants</h3>
+        <ul className="results-list-consumer">
+          {/* Example of a restaurant card */}
+          <li className="result-item-consumer">
+            <h4 className="restaurant-name-consumer">Tech Pizza</h4>
+            <p className="restaurant-info-consumer">
+              <strong>Address:</strong> 123 Main St
+            </p>
+            <p className="restaurant-info-consumer">
+              <strong>Open:</strong> 9:00 AM
+            </p>
+            <p className="restaurant-info-consumer">
+              <strong>Close:</strong> 10:00 PM
+            </p>
+            <button className="action-button-consumer">Reserve</button>
+          </li>
+          <li className="result-item-consumer">
+            <h4 className="restaurant-name-consumer">Boomers</h4>
+            <p className="restaurant-info-consumer">
+              <strong>Address:</strong> 123 Main St
+            </p>
+            <p className="restaurant-info-consumer">
+              <strong>Open:</strong> 11:00 AM
+            </p>
+            <p className="restaurant-info-consumer">
+              <strong>Close:</strong> 11:00 PM
+            </p>
+            <button className="action-button-consumer">Reserve</button>
+          </li>
+        </ul>
+      </section>
 
-  export default Consumer;
-  
+      {/* Login Modal: Displayed when the login button is clicked */}
+      {isLoginVisible && (
+        <div className="modal-overlay">
+          <div className="login-modal">
+            <button className="close-button" onClick={handleCloseLogin}>
+              ✕
+            </button>
+            <h2 className="login-title">Log in</h2>
+            <p className="login-subtitle">Enter your credentials</p>
+            <div className="login-inputs">
+              <input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="login-input"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="login-input"
+              />
+            </div>
+            <div className="login-buttons">
+              <button
+                className="login-button"
+                onClick={() => handleLogin('manager')}
+              >
+                Login as Manager
+              </button>
+              <button
+                className="login-button"
+                onClick={() => handleLogin('admin')}
+              >
+                Login as Administrator
+              </button>
+            </div>
+          </div>
+>>>>>>> gabriel
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Consumer;
