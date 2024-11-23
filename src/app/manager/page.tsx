@@ -88,7 +88,7 @@ const Manager: React.FC = () => {
               <span className="slider"></span>
             </label>
             <span className="toggle-label">
-              {isActivated ? 'Activated' : 'Deactivated'}
+              {isActivated ? 'Deactivate Restaurant' : 'Activate Restaurant'}
             </span>
           </div>
           <button className="back-button-manager" onClick={handleGoBack}>
