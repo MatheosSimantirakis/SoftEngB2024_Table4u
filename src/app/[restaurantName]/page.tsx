@@ -33,13 +33,11 @@ export default function RestaurantPage() {
         </div>
         <div className="left-panel-buttons-admin">
           {/* Navigation buttons for the admin */}
-          <button className="action-button-admin" onClick={() => window.history.back()}>
-            Go Back
-          </button>
           <button className="action-button-admin">Add Reservation</button>
           <button className="action-button-admin">Cancel Reservation</button>
           <button className="action-button-admin">Generate Availability Report</button>
           <button className="action-button-admin delete-button-admin">Delete Restaurant</button>
+          <button className="back-main-view-button-admin" onClick={() => window.history.back()}>Go Back</button>
         </div>
       </div>
       

@@ -135,7 +135,7 @@ body {
 
 .back-button-container {
   display: flex;
-  margin-top: 580px;
+  margin-top: 520px;
   flex-direction: column;
   align-items: center;
   width: 100%;
@@ -163,26 +163,22 @@ body {
 
 .left-panel-buttons-admin {
   display: flex;
+  margin-top: 160px;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  gap: 10px;
   width: 100%;
 }
 
 .action-button-admin {
-  width: 300px;
-  height: 45px;
+  width: 80%;
   padding: 10px 20px;
   font-size: 16px;
-  background-color: #007bff;
   color: white;
+  background-color: #007bff;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: pointer;
-  margin: 8px 0;
   transition: background-color 0.3s ease;
 }
 
@@ -243,6 +239,25 @@ body {
 
 .nav-button-admin:hover {
   background-color: #5a6268;
+}
+
+.back-main-view-button-admin {
+  width: 80%;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #007bff;
+  background-color: transparent;
+  border: 2px solid #007bff;
+  border-radius: 5px;
+  margin-top: 145px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+}
+
+.back-main-view-button-admin:hover {
+  color: white;
+  background-color: #007bff;
 }
 
 /* ---------------- Consumer View Styles ---------------- */
@@ -440,6 +455,8 @@ body {
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.6); 
+  z-index: 999;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -525,6 +542,13 @@ body {
 }
 
 /* ---------------- Manager View Styles ---------------- */
+
+.main-content-manager {
+  position: relative;
+  width: 75%;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
 
 .manager-view {
   display: flex;
@@ -641,11 +665,55 @@ body {
   background-color: #177538;
 }
 
-.main-content-manager {
-  width: 75%;
-  padding: 20px;
-  background-color: #f8f9fa;
+.delete-confirmation-popup {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 50%; 
+  left: 50%;
+  transform: translate(-50%, -50%); 
+  background: #ffffff; 
+  color: #000000;
+  padding: 30px; 
+  border: 1px solid #ced4da; 
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+  width: 300px; 
+  z-index: 1000; 
 }
+
+.confirm-button,
+.cancel-button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.confirm-button {
+  background-color: #dc3545; /* Red for confirmation */
+  color: #ffffff;
+}
+
+.confirm-button:hover {
+  background-color: #b02a37;
+}
+
+.cancel-button {
+  background-color: #6c757d; /* Gray for cancel */
+  color: #ffffff;
+}
+
+.cancel-button:hover {
+  background-color: #5a6268;
+}
+
 
 /* ---------------- Create Restaurant Form Styles ---------------- */
 
@@ -837,7 +905,8 @@ body {
   color: #000000;
 }
 
-/* Review Days Availability Form Styles */
+/* ---------------- Review Days Availability Form Styles ---------------- */
+
 .review-days-availability-form {
   border: 1px solid #ced4da;
   border-radius: 8px;
@@ -852,6 +921,65 @@ body {
   font-weight: bold;
   color: #000000;
   margin-bottom: 20px;
+}
+
+/* ---------------- Activate/ Deactivate Restaurant Toggle Styles ---------------- */
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 20px;
+}
+
+.slider:before {
+  position: absolute;
+  content: '';
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #007bff;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.toggle-label {
+  font-size: 16px;
+  color: #333;
 }
 
 /* ---------------- Form Buttons ---------------- */
@@ -872,6 +1000,7 @@ body {
 .submit-button-close-future-day:hover {
   background-color: #0056b3;
 }
+
 /* ---------------- Placeholder Text Manager Window ---------------- */
 
 .placeholder-manager {

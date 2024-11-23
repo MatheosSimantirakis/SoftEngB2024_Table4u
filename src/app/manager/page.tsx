@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const Manager: React.FC = () => {
+const ManagerView: React.FC = () => {
   // State variables to control the visibility of forms
   const [showCreateForm, setShowCreateForm] = useState(false); // Toggles Create Restaurant form
   const [showEditForm, setShowEditForm] = useState(false); // Toggles Edit Restaurant form
@@ -11,6 +11,7 @@ const Manager: React.FC = () => {
   const [showCloseForm, setShowCloseForm] = useState(false); // Toggles Close Future Day form
   const [showReviewForm, setShowReviewForm] = useState(false); // Toggles Review Days Availability form
   const [isActivated, setIsActivated] = useState(false); // Tracks Activate/Deactivate state
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false); // Controls Delete Confirmation popup
 
   const router = useRouter();
 
@@ -48,11 +49,27 @@ const Manager: React.FC = () => {
     if (current !== 'review') setShowReviewForm(false);
   };
 
-  const handleActivateToggle = () => {
-    setIsActivated((prevState) => !prevState); // Toggle activation state
+  // Toggle for activate/deactivate
+  const handleToggleSwitch = () => {
+    setIsActivated((prevState) => !prevState);
   };
 
+  // Navigation handler
   const handleGoBack = () => router.push('/consumer');
+
+  // Delete Confirmation Handlers
+  const handleDeleteClick = () => {
+    setShowDeleteConfirmation(true); // Show delete confirmation modal
+  };
+
+  const confirmDelete = () => {
+    setShowDeleteConfirmation(false);
+    console.log('Restaurant deleted'); // Replace with actual delete logic
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirmation(false); // Close modal
+  };
 
   return (
     <div className="manager-view">
@@ -64,23 +81,36 @@ const Manager: React.FC = () => {
         </div>
         <div className="left-panel-buttons-manager">
           <button className="create-restaurant-button-manager" onClick={handleCreateToggle}>
-            {showCreateForm ? 'Close Create Form' : 'Create Restaurant'}
+            {showCreateForm ? 'Exit' : 'Create Restaurant'}
           </button>
           <button className="action-button-manager" onClick={handleEditToggle}>
-            {showEditForm ? 'Close Edit Form' : 'Edit Restaurant'}
+            {showEditForm ? 'Exit' : 'Edit Restaurant'}
           </button>
           <button className="action-button-manager" onClick={handleOpenToggle}>
-            {showOpenForm ? 'Close Open Form' : 'Open Future Day'}
+            {showOpenForm ? 'Exit' : 'Open Future Day'}
           </button>
           <button className="action-button-manager" onClick={handleCloseToggle}>
-            {showCloseForm ? 'Close Close Form' : 'Close Future Day'}
+            {showCloseForm ? 'Exit' : 'Close Future Day'}
           </button>
           <button className="action-button-manager" onClick={handleReviewToggle}>
-            {showReviewForm ? 'Close Review Form' : 'Review Days Availability'}
+            {showReviewForm ? 'Exit' : 'Review Days Availability'}
           </button>
-          <button className="action-button-manager" onClick={handleActivateToggle}>
-            {isActivated ? 'Deactivate Restaurant' : 'Activate Restaurant'}
+          <button className="delete-button-manager" onClick={handleDeleteClick}>
+            Delete My Restaurant
           </button>
+          <div className="toggle-container">
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={isActivated}
+                onChange={handleToggleSwitch}
+              />
+              <span className="slider"></span>
+            </label>
+            <span className="toggle-label">
+              {isActivated ? 'Deactivate Restaurant' : 'Activate Restaurant'}
+            </span>
+          </div>
           <button className="back-button-manager" onClick={handleGoBack}>
             Back to Consumer View
           </button>
@@ -113,6 +143,17 @@ const Manager: React.FC = () => {
                   id="address"
                   type="text"
                   placeholder="Enter restaurant address"
+                  className="input-create-restaurant"
+                />
+              </div>
+              <div className="form-group-create-restaurant">
+                <label className="label-create-restaurant" htmlFor="number of tables">
+                  Number of Tables
+                </label>
+                <input
+                  id="number of tables"
+                  type="text"
+                  placeholder="Enter the number of tables"
                   className="input-create-restaurant"
                 />
               </div>
@@ -210,7 +251,22 @@ const Manager: React.FC = () => {
         {/* Review Days Availability Form */}
         {showReviewForm && (
           <div className="review-days-availability-form">
-            <h1 className="title-review-days">Review Days Availability</h1>
+            <h1 className="title-review-days">Today's Availability</h1>
+          </div>
+        )}
+
+        {/* Delete Confirmation Popup */}
+        {showDeleteConfirmation && (
+          <div className="modal-overlay" onClick={cancelDelete}>
+            <div className="delete-confirmation-popup" onClick={(e) => e.stopPropagation()}>
+              <p>Are you sure you want to delete your restaurant?</p>
+              <button className="confirm-button" onClick={confirmDelete}>
+                Yes, Delete
+              </button>
+              <button className="cancel-button" onClick={cancelDelete}>
+                Cancel
+              </button>
+            </div>
           </div>
         )}
 
@@ -219,7 +275,8 @@ const Manager: React.FC = () => {
           !showEditForm &&
           !showOpenForm &&
           !showCloseForm &&
-          !showReviewForm && (
+          !showReviewForm &&
+          !showDeleteConfirmation && (
             <div className="placeholder-manager">
               <p>Select an option from the left panel to get started.</p>
             </div>
@@ -229,4 +286,4 @@ const Manager: React.FC = () => {
   );
 };
 
-export default Manager;
+export default ManagerView;
