@@ -7,12 +7,6 @@ const Consumer: React.FC = () => {
   // State for toggling the login modal visibility
   const [isLoginVisible, setLoginVisible] = useState(false);
 
-<<<<<<< HEAD
-    {/* Gabe's Code for search bar*/}
-      <div className="search-bar">
-          <input type="text" placeholder="Search for a restaurant..." className="search-input"/>
-          <button className="search-button">Search</button>
-=======
   // State for storing login credentials
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -64,27 +58,9 @@ const Consumer: React.FC = () => {
             className="search-input-consumer"
           />
           <button className="search-button-consumer">Search</button>
->>>>>>> gabriel
         </div>
       </header>
 
-<<<<<<< HEAD
-    {/* Matheos reservation button */}
-        <button className="reservations-consumer" 
-            style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '250px', left: '100px', width: '180px', borderRadius: 4}}
-            >Reservations</button>
-      
-    {/* Matheos Date Dropdown */}
-      <div className="dateDropDown-consumer" style={{ marginTop: "20px" }}>
-      <select id="dateSelect-consumer" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '600px', width: '180px', borderRadius: 4}}>
-        <option value="All dates">Dates</option>
-      </select>
-      </div>
-
-    {/* Matheos Time Dropdown */}
-      <div className="timeDropDown" style={{ marginTop: "20px" }}>
-        <select id="timeSelect" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '900px', width: '180px', borderRadius: 4}}>
-=======
       {/* Filters Section: Buttons and dropdowns for filtering reservations */}
       <section className="filters-section-consumer">
         <button className="my-reservations-button-consumer">My Reservations</button>
@@ -95,7 +71,6 @@ const Consumer: React.FC = () => {
           onChange={handleDateChange}
         />
         <select className="dropdown-consumer">
->>>>>>> gabriel
           <option value="All times">Times</option>
           <option value="08:00">08:00</option>
           <option value="09:00">09:00</option>
@@ -116,25 +91,6 @@ const Consumer: React.FC = () => {
         </select>
       </section>
 
-<<<<<<< HEAD
-    {/* Matheos seats Dropdown */}
-      <div className="seatsDropDown-consumer" style={{ marginTop: "20px" }}>
-        <select id="numberOfSeats-consumer" style={{padding: "5px", fontSize: "18px", position: 'absolute', top: '150px', left: '1200px', width: '180px', borderRadius: 4}}>
-          <option value="Seats">Seats</option>
-          <option value="2 seats">2</option>
-          <option value="3 seats">3</option>
-          <option value="4 seats">4</option>
-          <option value="5 seats">5</option>
-          <option value="6 seats">6</option>
-        </select>
-      </div>
-      
-    {/* Gabe's Code logo and location*/}
-      <div className="left-panel">
-        <div className="left-panel-header">
-          <img src="/logo.svg" alt="Tables4U Logo" className="logo" />
-          <h2 className="subtitle">Consumer View</h2>
-=======
       {/* Results Section: List of available restaurants */}
       <section className="results-section-consumer">
         <h3 className="results-title-consumer">Available Restaurants</h3>
@@ -209,7 +165,6 @@ const Consumer: React.FC = () => {
               </button>
             </div>
           </div>
->>>>>>> gabriel
         </div>
       )}
     </div>
