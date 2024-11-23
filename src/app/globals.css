@@ -30,16 +30,19 @@ body {
 }
 
 /* Customer Window Setting: Start*/
-.reservations_consumer {
+
+/* .reservations-consumer {
   position: absolute;
   background-color: #000000;
   color: white;
   border-radius: 4px;
+  font-size: 20;
+  text-align: center;
   cursor: pointer;
   top: 150px;
   left: 50px;
   width: '100px'
-}
+} */
 
 .dates {
   position: absolute;
@@ -58,6 +61,13 @@ body {
   top: 170px;
   left: 550px;
 }
+
+.Customer-view {
+  display: flex;
+  height: 100vh;
+  background: var(--background);
+}
+
 /* Customer Window Setting: End*/
 
 .manager_button_container {
