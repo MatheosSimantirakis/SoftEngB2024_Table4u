@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {Manager, Reservation, Restaurant} from '../../model'
 
 const Manager: React.FC = () => {
   // State variables to control the visibility of forms

@@ -2,6 +2,8 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import {Admin, Reservation, Restaurant} from '../../model'
+
 
 export default function Home() {
   const router = useRouter();

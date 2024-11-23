@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {Consumer, Reservation, Restaurant} from '../../model'
+
 
 const Consumer: React.FC = () => {
   // State for toggling the login modal visibility
