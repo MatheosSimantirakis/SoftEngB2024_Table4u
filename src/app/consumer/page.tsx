@@ -71,7 +71,7 @@ const ConsumerView: React.FC = () => {
           onChange={handleDateChange}
         />
         <select className="dropdown-consumer">
-          <option value="All times">Times</option>
+          <option value="All times">Time</option>
           <option value="08:00">08:00</option>
           <option value="09:00">09:00</option>
           <option value="10:00">10:00</option>

@@ -64,19 +64,19 @@ const ManagerView: React.FC = () => {
         </div>
         <div className="left-panel-buttons-manager">
           <button className="create-restaurant-button-manager" onClick={handleCreateToggle}>
-            {showCreateForm ? 'Close Create Form' : 'Create Restaurant'}
+            {showCreateForm ? 'Exit' : 'Create Restaurant'}
           </button>
           <button className="action-button-manager" onClick={handleEditToggle}>
-            {showEditForm ? 'Close Edit Form' : 'Edit Restaurant'}
+            {showEditForm ? 'Exit' : 'Edit Restaurant'}
           </button>
           <button className="action-button-manager" onClick={handleOpenToggle}>
-            {showOpenForm ? 'Close Open Form' : 'Open Future Day'}
+            {showOpenForm ? 'Exit' : 'Open Future Day'}
           </button>
           <button className="action-button-manager" onClick={handleCloseToggle}>
-            {showCloseForm ? 'Close Close Form' : 'Close Future Day'}
+            {showCloseForm ? 'Exit' : 'Close Future Day'}
           </button>
           <button className="action-button-manager" onClick={handleReviewToggle}>
-            {showReviewForm ? 'Close Review Form' : 'Review Days Availability'}
+            {showReviewForm ? 'Exit' : 'Review Days Availability'}
           </button>
           <div className="toggle-container">
             <label className="toggle-switch">
@@ -123,6 +123,17 @@ const ManagerView: React.FC = () => {
                   id="address"
                   type="text"
                   placeholder="Enter restaurant address"
+                  className="input-create-restaurant"
+                />
+              </div>
+              <div className="form-group-create-restaurant">
+                <label className="label-create-restaurant" htmlFor="number of tables">
+                  Number of Tables
+                </label>
+                <input
+                  id="number of tables"
+                  type="text"
+                  placeholder="Enter the number of tables"
                   className="input-create-restaurant"
                 />
               </div>
@@ -220,7 +231,7 @@ const ManagerView: React.FC = () => {
         {/* Review Days Availability Form */}
         {showReviewForm && (
           <div className="review-days-availability-form">
-            <h1 className="title-review-days">Review Days Availability</h1>
+            <h1 className="title-review-days">Today's Availability</h1>
           </div>
         )}
 
