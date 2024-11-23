@@ -9,63 +9,61 @@ const Manager: React.FC = () => {
   const [showEditForm, setShowEditForm] = useState(false); // Toggles Edit Restaurant form
   const [showOpenForm, setShowOpenForm] = useState(false); // Toggles Open Future Day form
   const [showCloseForm, setShowCloseForm] = useState(false); // Toggles Close Future Day form
+  const [showReviewForm, setShowReviewForm] = useState(false); // Toggles Review Days Availability form
+  const [isActivated, setIsActivated] = useState(false); // Tracks Activate/Deactivate state
 
   const router = useRouter();
 
   // Handlers for toggling forms; ensure only one form is active at a time
   const handleCreateToggle = () => {
     setShowCreateForm((prevState) => !prevState);
-    if (showEditForm || showOpenForm || showCloseForm) {
-      setShowEditForm(false);
-      setShowOpenForm(false);
-      setShowCloseForm(false);
-    }
+    resetOtherForms('create');
   };
 
   const handleEditToggle = () => {
     setShowEditForm((prevState) => !prevState);
-    if (showCreateForm || showOpenForm || showCloseForm) {
-      setShowCreateForm(false);
-      setShowOpenForm(false);
-      setShowCloseForm(false);
-    }
+    resetOtherForms('edit');
   };
 
   const handleOpenToggle = () => {
     setShowOpenForm((prevState) => !prevState);
-    if (showCreateForm || showEditForm || showCloseForm) {
-      setShowCreateForm(false);
-      setShowEditForm(false);
-      setShowCloseForm(false);
-    }
+    resetOtherForms('open');
   };
 
   const handleCloseToggle = () => {
     setShowCloseForm((prevState) => !prevState);
-    if (showCreateForm || showEditForm || showOpenForm) {
-      setShowCreateForm(false);
-      setShowEditForm(false);
-      setShowOpenForm(false);
-    }
+    resetOtherForms('close');
   };
 
-  // Placeholder functions for other actions
-  const handleActivate = () => {};
-  const handleDelete = () => {};
-  const handleLogin = () => {};
+  const handleReviewToggle = () => {
+    setShowReviewForm((prevState) => !prevState);
+    resetOtherForms('review');
+  };
+
+  const resetOtherForms = (current: string) => {
+    if (current !== 'create') setShowCreateForm(false);
+    if (current !== 'edit') setShowEditForm(false);
+    if (current !== 'open') setShowOpenForm(false);
+    if (current !== 'close') setShowCloseForm(false);
+    if (current !== 'review') setShowReviewForm(false);
+  };
+
+  const handleActivateToggle = () => {
+    setIsActivated((prevState) => !prevState); // Toggle activation state
+  };
+
   const handleGoBack = () => router.push('/consumer');
 
   return (
     <div className="manager-view">
-      {/* Left Panel: Contains the logo, subheading, and action buttons */}
+      {/* Left Panel */}
       <div className="left-panel-manager">
         <div className="left-panel-header-manager">
           <img src="/logo.svg" alt="Tables4U Logo" className="logo-manager" />
           <h2 className="subtitle-manager">Manager View</h2>
         </div>
         <div className="left-panel-buttons-manager">
-          {/* Buttons for toggling forms */}
-          <button className="action-button-manager" onClick={handleCreateToggle}>
+          <button className="create-restaurant-button-manager" onClick={handleCreateToggle}>
             {showCreateForm ? 'Close Create Form' : 'Create Restaurant'}
           </button>
           <button className="action-button-manager" onClick={handleEditToggle}>
@@ -77,15 +75,11 @@ const Manager: React.FC = () => {
           <button className="action-button-manager" onClick={handleCloseToggle}>
             {showCloseForm ? 'Close Close Form' : 'Close Future Day'}
           </button>
-          {/* Other buttons for additional actions */}
-          <button className="action-button-manager" onClick={handleActivate}>
-            Activate Restaurant
+          <button className="action-button-manager" onClick={handleReviewToggle}>
+            {showReviewForm ? 'Close Review Form' : 'Review Days Availability'}
           </button>
-          <button className="action-button-manager" onClick={handleLogin}>
-            Login Restaurant
-          </button>
-          <button className="delete-button-manager" onClick={handleDelete}>
-            Delete Restaurant
+          <button className="action-button-manager" onClick={handleActivateToggle}>
+            {isActivated ? 'Deactivate Restaurant' : 'Activate Restaurant'}
           </button>
           <button className="back-button-manager" onClick={handleGoBack}>
             Back to Consumer View
@@ -93,7 +87,7 @@ const Manager: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content: Displays the forms or a placeholder */}
+      {/* Main Content */}
       <div className="main-content-manager">
         {/* Create Restaurant Form */}
         {showCreateForm && (
@@ -213,12 +207,23 @@ const Manager: React.FC = () => {
           </div>
         )}
 
-        {/* Placeholder if no form is active */}
-        {!showCreateForm && !showEditForm && !showOpenForm && !showCloseForm && (
-          <div className="placeholder-manager">
-            <p>Select an option from the left panel to get started.</p>
+        {/* Review Days Availability Form */}
+        {showReviewForm && (
+          <div className="review-days-availability-form">
+            <h1 className="title-review-days">Review Days Availability</h1>
           </div>
         )}
+
+        {/* Placeholder */}
+        {!showCreateForm &&
+          !showEditForm &&
+          !showOpenForm &&
+          !showCloseForm &&
+          !showReviewForm && (
+            <div className="placeholder-manager">
+              <p>Select an option from the left panel to get started.</p>
+            </div>
+          )}
       </div>
     </div>
   );
