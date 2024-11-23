@@ -48,8 +48,8 @@ const Manager: React.FC = () => {
     if (current !== 'review') setShowReviewForm(false);
   };
 
-  const handleActivateToggle = () => {
-    setIsActivated((prevState) => !prevState); // Toggle activation state
+  const handleToggleSwitch = () => {
+    setIsActivated((prevState) => !prevState); 
   };
 
   const handleGoBack = () => router.push('/consumer');
@@ -78,9 +78,19 @@ const Manager: React.FC = () => {
           <button className="action-button-manager" onClick={handleReviewToggle}>
             {showReviewForm ? 'Close Review Form' : 'Review Days Availability'}
           </button>
-          <button className="action-button-manager" onClick={handleActivateToggle}>
-            {isActivated ? 'Deactivate Restaurant' : 'Activate Restaurant'}
-          </button>
+          <div className="toggle-container">
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={isActivated}
+                onChange={handleToggleSwitch}
+              />
+              <span className="slider"></span>
+            </label>
+            <span className="toggle-label">
+              {isActivated ? 'Activated' : 'Deactivated'}
+            </span>
+          </div>
           <button className="back-button-manager" onClick={handleGoBack}>
             Back to Consumer View
           </button>
