@@ -4,11 +4,19 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const Consumer: React.FC = () => {
+  // State for toggling the login modal visibility
   const [isLoginVisible, setLoginVisible] = useState(false);
+
+  // State for storing login credentials
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  // State for storing the selected date from the calendar
+  const [selectedDate, setSelectedDate] = useState('');
+
   const router = useRouter();
 
+  // Handlers for showing and hiding the login modal
   const handleOpenLogin = () => {
     setLoginVisible(true);
   };
@@ -17,20 +25,27 @@ const Consumer: React.FC = () => {
     setLoginVisible(false);
   };
 
+  // Handler for login action based on role (manager or admin)
   const handleLogin = (role: string) => {
     if (role === 'manager') {
       console.log(`Logging in as Manager with username: ${username}`);
-      router.push('/manager');
+      router.push('/manager'); // Redirect to manager page
     } else if (role === 'admin') {
       console.log(`Logging in as Admin with username: ${username}`);
-      router.push('/admin');
+      router.push('/admin'); // Redirect to admin page
     }
     setLoginVisible(false); // Close the modal after login
   };
 
+  // Handler for date selection from the calendar input
+  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(event.target.value);
+    console.log(`Selected date: ${event.target.value}`);
+  };
+
   return (
     <div className="consumer-view">
-      {/* Top Section: Logo, Login Button, and Search */}
+      {/* Header Section: Contains the logo, login button, and search bar */}
       <header className="consumer-header">
         <img src="/logo.svg" alt="Tables4U Logo" className="logo-consumer" />
         <button className="login-button-consumer" onClick={handleOpenLogin}>
@@ -46,12 +61,15 @@ const Consumer: React.FC = () => {
         </div>
       </header>
 
-      {/* Filters Section */}
+      {/* Filters Section: Buttons and dropdowns for filtering reservations */}
       <section className="filters-section-consumer">
         <button className="my-reservations-button-consumer">My Reservations</button>
-        <select className="dropdown-consumer">
-          <option value="All dates">Dates</option>
-        </select>
+        <input
+          type="date" // Calendar input for selecting a date
+          className="date-input-consumer"
+          value={selectedDate}
+          onChange={handleDateChange}
+        />
         <select className="dropdown-consumer">
           <option value="All times">Times</option>
           <option value="08:00">08:00</option>
@@ -73,10 +91,11 @@ const Consumer: React.FC = () => {
         </select>
       </section>
 
-      {/* Results Section */}
+      {/* Results Section: List of available restaurants */}
       <section className="results-section-consumer">
         <h3 className="results-title-consumer">Available Restaurants</h3>
         <ul className="results-list-consumer">
+          {/* Example of a restaurant card */}
           <li className="result-item-consumer">
             <h4 className="restaurant-name-consumer">Tech Pizza</h4>
             <p className="restaurant-info-consumer">
@@ -106,7 +125,7 @@ const Consumer: React.FC = () => {
         </ul>
       </section>
 
-      {/* Login Modal */}
+      {/* Login Modal: Displayed when the login button is clicked */}
       {isLoginVisible && (
         <div className="modal-overlay">
           <div className="login-modal">

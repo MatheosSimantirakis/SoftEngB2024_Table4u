@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 export default function Home() {
   const router = useRouter();
 
+  // Handler to navigate back to the Consumer View
   const handleGoBack = () => {
     router.push("/consumer");
   };
 
   return (
     <div className="admin-view">
-      {/* Left Side: Logo and Subheading */}
+      {/* Left Panel: Contains Logo, Subheading, and Back Button */}
       <div className="left-panel-admin">
         <div className="left-panel-header-admin">
           <img src="/logo.svg" alt="Tables4U Logo" className="logo-admin" />
@@ -26,8 +27,9 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Main Content: Search Bar & Restaurant List */}
+      {/* Main Content: Includes Search Bar and Restaurant List */}
       <div className="main-content-admin">
+        {/* Search Bar Section */}
         <div className="search-bar-admin">
           <input
             type="text"
@@ -37,10 +39,11 @@ export default function Home() {
           <button className="search-button-admin">Search</button>
         </div>
 
-        {/* Restaurant List Inside Rectangle */}
+        {/* Restaurant List Section */}
         <div className="restaurant-list-admin">
           <h3 className="list-title-admin">Restaurants</h3>
           <ul className="list-admin">
+            {/* Example of a restaurant entry */}
             <li className="list-item-admin">
               <a href="/TechPizza">
                 <strong>Name:</strong> Tech Pizza<br />
@@ -49,6 +52,7 @@ export default function Home() {
                 <strong>Close:</strong> 10:00 PM
               </a>
             </li>
+            {/* Another restaurant entry */}
             <li className="list-item-admin">
               <strong>Name:</strong> Boyton<br />
               <strong>Address:</strong> 456 Beach Blvd<br />

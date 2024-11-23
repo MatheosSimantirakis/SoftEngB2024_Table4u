@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
 
 :root {
   --background: #ffffff;
@@ -11,13 +12,14 @@
   :root {
     --background: #F3F4F8;
     --foreground: #ededed;
+    --font-family: var(--font-family);
   }
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
+  font-family: var(--font-family);
   background: var(--background);
   color: var(--foreground);
 }
@@ -29,7 +31,7 @@ body {
   height: auto;
   margin-bottom: 10px;
   margin-top: 10px;
-  margin-left: 60px;
+  margin-left: 107px;
 }
 
 .admin-view {
@@ -139,27 +141,31 @@ body {
 }
 
 .back-button-container {
-  position: absolute;
-  bottom: 30px;
-  left: 85px;
+  display: flex;
+  margin-top: 580px;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .back-button-admin {
+  width: 80%; 
   padding: 10px 20px;
   font-size: 16px;
-  color: white;
-  background-color: #007bff; 
-  border: none;
+  color: #007bff; 
+  background-color: transparent;
+  border: 2px solid #007bff; 
   border-radius: 5px;
+  margin-top: 60px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  text-align: center;
 }
 
 .back-button-admin:hover {
-  background-color: #0056b3; 
+  color: white;
+  background-color: #007bff; 
 }
-
-/* ---------------- Admin View Styles End ---------------- */
 
 /* ---------------- Admin (Single Restaurant) View Styles ---------------- */
 
@@ -184,7 +190,7 @@ body {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  margin: 10px 0;
+  margin: 8px 0;
   transition: background-color 0.3s ease;
 }
 
@@ -193,7 +199,6 @@ body {
 }
 
 .delete-button-admin {
-  margin-top: 25px;
   background-color: #dc3545;
 }
 
@@ -247,9 +252,6 @@ body {
 .nav-button-admin:hover {
   background-color: #5a6268;
 }
-
-/* ---------------- Admin (Single Restaurant) View Styles End ---------------- */
-
 
 /* ---------------- Consumer View Styles ---------------- */
 
@@ -358,6 +360,21 @@ body {
   background-color: #ffffff;
 }
 
+.date-input-consumer {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  color: #000000;
+  background-color: #ffffff;
+}
+
+.date-input-consumer:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
 .results-section-consumer {
   width: 100%;
   max-width: 1200px;
@@ -422,9 +439,8 @@ body {
   background-color: #0056b3;
 }
 
-/* ---------------- Consumer View Styles End ---------------- */
-
 /* ---------------- Login Pop-Up Styles ---------------- */
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -517,4 +533,348 @@ body {
   background-color: #0056b3; 
 }
 
-/* ---------------- Login Pop-Up Styles End ---------------- */
+/* ---------------- Manager View Styles ---------------- */
+
+.manager-view {
+  display: flex;
+  height: 100vh;
+  background: var(--background);
+}
+
+.logo-manager {
+  width: 225px;
+  height: auto;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  margin-left: 107px;
+}
+
+.left-panel-manager {
+  width: 25%;
+  background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-right: 1px solid #dee2e6;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+}
+
+.left-panel-header-manager {
+  text-align: center;
+  width: 100%;
+}
+
+.subtitle-manager {
+  font-size: 18px;
+  font-style: italic;
+  color: #6c757d;
+  margin-bottom: 20px;
+}
+
+.left-panel-buttons-manager {
+  display: flex;
+  margin-top: 40px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.action-button-manager {
+  width: 80%;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.action-button-manager:hover {
+  background-color: #0056b3;
+}
+
+.back-button-manager {
+  width: 80%;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #007bff;
+  background-color: transparent;
+  border: 2px solid #007bff;
+  border-radius: 5px;
+  margin-top: 60px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+}
+
+.back-button-manager:hover {
+  color: white;
+  background-color: #007bff;
+}
+
+.delete-button-manager {
+  width: 80%;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: #dc3545;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+}
+
+.delete-button-manager:hover {
+  background-color: #b02a37;
+}
+
+.create-restaurant-button-manager {
+  width: 80%;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: #1EB954;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+}
+
+.create-restaurant-button-manager:hover {
+  background-color: #177538;
+}
+
+.main-content-manager {
+  width: 75%;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+/* ---------------- Create Restaurant Form Styles ---------------- */
+
+.create-restaurant-form {
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.title-create-restaurant {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 20px;
+}
+
+.form-group-create-restaurant {
+  margin-bottom: 15px;
+}
+
+.label-create-restaurant {
+  display: block;
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+.input-create-restaurant {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  color: #000000;
+  background-color: #ffffff;
+}
+
+.input-create-restaurant:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
+.submit-button-create-restaurant {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #ffffff;
+  background-color: #1EB954;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submit-button-create-restaurant:hover {
+  background-color: #177538;
+}
+
+/* ---------------- Edit Restaurant Form Styles ---------------- */
+
+.edit-restaurant-form {
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.title-edit-restaurant {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 20px;
+}
+
+.form-group-edit-restaurant {
+  margin-bottom: 15px;
+}
+
+.label-edit-restaurant {
+  display: block;
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+.input-edit-restaurant {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  box-sizing: border-box;
+  color: #000000;
+}
+
+.submit-button-edit-restaurant {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #ffffff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submit-button-edit-restaurant:hover {
+  background-color: #0056b3;
+}
+
+/* ---------------- Open Future Day Form Styles ---------------- */
+
+.open-future-day-form {
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.title-open-future-day {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 20px;
+}
+
+.form-group-open-future-day {
+  margin-bottom: 15px;
+}
+
+.label-open-future-day {
+  display: block;
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+.input-open-future-day {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  color: #000000;
+}
+
+/* ---------------- Close Future Day Form Styles ---------------- */
+
+.close-future-day-form {
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.title-close-future-day {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 20px;
+}
+
+.form-group-close-future-day {
+  margin-bottom: 15px;
+}
+
+.label-close-future-day {
+  display: block;
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+.input-close-future-day {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  color: #000000;
+}
+
+/* ---------------- Form Buttons ---------------- */
+
+.submit-button-open-future-day,
+.submit-button-close-future-day {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #ffffff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submit-button-open-future-day:hover,
+.submit-button-close-future-day:hover {
+  background-color: #0056b3;
+}
+/* ---------------- Placeholder Text Manager Window ---------------- */
+
+.placeholder-manager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 18px;
+  color: #6c757d;
+}
+
+
+
