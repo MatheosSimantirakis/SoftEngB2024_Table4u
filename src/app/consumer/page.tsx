@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {Consumer, Reservation, Restaurant} from '../../model'
 
 
-const Consumer: React.FC = () => {
+const ConsumerView: React.FC = () => {
   // State for toggling the login modal visibility
   const [isLoginVisible, setLoginVisible] = useState(false);
 
@@ -173,4 +173,4 @@ const Consumer: React.FC = () => {
   );
 };
 
-export default Consumer;
+export default ConsumerView;

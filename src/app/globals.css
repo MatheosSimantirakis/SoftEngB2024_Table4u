@@ -163,26 +163,22 @@ body {
 
 .left-panel-buttons-admin {
   display: flex;
+  margin-top: 160px;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  gap: 10px;
   width: 100%;
 }
 
 .action-button-admin {
-  width: 300px;
-  height: 45px;
+  width: 80%;
   padding: 10px 20px;
   font-size: 16px;
-  background-color: #007bff;
   color: white;
+  background-color: #007bff;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: pointer;
-  margin: 8px 0;
   transition: background-color 0.3s ease;
 }
 
@@ -243,6 +239,25 @@ body {
 
 .nav-button-admin:hover {
   background-color: #5a6268;
+}
+
+.back-main-view-button-admin {
+  width: 80%;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #007bff;
+  background-color: transparent;
+  border: 2px solid #007bff;
+  border-radius: 5px;
+  margin-top: 145px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+}
+
+.back-main-view-button-admin:hover {
+  color: white;
+  background-color: #007bff;
 }
 
 /* ---------------- Consumer View Styles ---------------- */

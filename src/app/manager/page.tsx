@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {Manager, Reservation, Restaurant} from '../../model'
 
-const Manager: React.FC = () => {
+const ManagerView: React.FC = () => {
   // State variables to control the visibility of forms
   const [showCreateForm, setShowCreateForm] = useState(false); // Toggles Create Restaurant form
   const [showEditForm, setShowEditForm] = useState(false); // Toggles Edit Restaurant form
@@ -240,4 +240,4 @@ const Manager: React.FC = () => {
   );
 };
 
-export default Manager;
+export default ManagerView;
