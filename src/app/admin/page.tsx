@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div className="admin-view">
       {/* Left Side: Logo and Subheading */}
-      <div className="left-panel">
+      <div className="left-panel-admin">
         <div className="left-panel-header">
           <img src="/logo.svg" alt="Tables4U Logo" className="logo" />
           <h2 className="subtitle">Administrator View</h2>
@@ -14,18 +14,18 @@ export default function Home() {
       </div>
 
       {/* Main Content: Search Bar & Restaurant List */}
-      <div className="main-content">
-        <div className="search-bar">
+      <div className="main-content-admin">
+        <div className="search-bar-admin">
           <input
             type="text"
-            placeholder="Search for a restaurant..."
-            className="search-input"
+            placeholder="Search for a restaurant"
+            className="search-input-admin"
           />
-          <button className="search-button">Search</button>
+          <button className="search-button-admin">Search</button>
         </div>
 
         {/* Restaurant List Inside Rectangle */}
-        <div className="content-box">
+        <div className="restaurant-list-admin">
           <h3 className="list-title">Restaurants</h3>
           <ul className="list">
             <li className="list-item">

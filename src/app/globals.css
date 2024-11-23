@@ -60,21 +60,20 @@ body {
 }
 /* Customer Window Setting: End*/
 
-
 .manager_button_container {
   text-align:center;
 }
 
 .manager_button {
-  background-color: green; /* Green background */
-  color: white;              /* White text */
-  border: none;              /* No border */
-  padding: 10px 20px;        /* Padding inside the button */
-  text-align: center;        /* Center the text */
-  text-decoration: none;     /* Remove underline */
-  display: inline-block;     /* Display as inline block */
-  font-size: 16px;           /* Font size */
-  border-radius: 5px;        /* Rounded corners */
+  background-color: green; 
+  color: white;            
+  border: none;              
+  padding: 10px 20px;       
+  text-align: center;        
+  text-decoration: none;     
+  display: inline-block;    
+  font-size: 16px;          
+  border-radius: 5px;     
   cursor: pointer;
   transition: background-color 0.3s ease;
   margin: 5px;
@@ -121,7 +120,7 @@ body {
   background: var(--background);
 }
 
-.left-panel {
+.left-panel-admin {
   width: 25%;
   background-color: #f8f9fa;
   display: flex;
@@ -147,7 +146,7 @@ body {
 }
 
 .subtitle {
-  font-size: 16px;
+  font-size: 18px;
   font-style: italic;
   color: #6c757d;
   margin-top: 5px;
@@ -182,6 +181,7 @@ body {
 }
 
 .delete-button {
+  margin-top: 25px;
   background-color: #dc3545; 
 }
 
@@ -189,12 +189,12 @@ body {
   background-color: #b02a37; 
 }
 
-.main-content {
+.main-content-admin {
   width: 75%;
   padding: 20px;
 }
 
-.content-box {
+.restaurant-list-admin {
   border: 1px solid #ced4da; 
   border-radius: 8px; 
   background-color: #ffffff; 
@@ -229,13 +229,13 @@ body {
   text-decoration: underline;
 }
 
-.search-bar {
+.search-bar-admin {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
 }
 
-.search-input {
+.search-input-admin {
   flex: 1;
   padding: 10px;
   font-size: 16px;
@@ -245,7 +245,7 @@ body {
   background-color: #ffffff; 
 }
 
-.search-button {
+.search-button-admin {
   padding: 10px 20px;
   font-size: 16px;
   background-color: #007bff;
