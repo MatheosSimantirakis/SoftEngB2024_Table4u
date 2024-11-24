@@ -2,6 +2,11 @@
 
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'https://your-api-gateway-id.execute-api.region.amazonaws.com/prod/', // TODO: Change to ours
+});
 
 export default function RestaurantPage() {
   const { restaurantName } = useParams(); // Extracts the restaurant name from the route
@@ -24,25 +29,28 @@ export default function RestaurantPage() {
   };
 
   return (
-    <div className="admin-view">
+    <div className="left-panel-view">
       {/* Left Panel: Contains Logo, Subheading, and Action Buttons */}
-      <div className="left-panel-admin">
-        <div className="left-panel-header-admin">
-          <img src="/logo.svg" alt="Tables4U Logo" className="logo-admin" />
-          <h2 className="subtitle-admin">Administrator View</h2>
-        </div>
-        <div className="left-panel-buttons-admin">
+      <div className="left-panel">   <div className="left-panel-header">
+        <img src="/logo.svg" alt="Tables4U Logo" className="left-panel-logo" />
+        <h2 className="left-panel-subtitle">Administrator View</h2>
+      </div>
+        <div className="left-panel-buttons">
           {/* Navigation buttons for the admin */}
-          <button className="action-button-admin">Add Reservation</button>
-          <button className="action-button-admin">Cancel Reservation</button>
-          <button className="action-button-admin">Generate Availability Report</button>
-          <button className="action-button-admin delete-button-admin">Delete Restaurant</button>
-          <button className="back-main-view-button-admin" onClick={() => window.history.back()}>Go Back</button>
+          <button className="action-button">Add Reservation</button>
+          <button className="action-button">Cancel Reservation</button>
+          <button className="action-button">Generate Availability Report</button>
+          <button className="delete-restaurant-button">Delete Restaurant</button>
+        </div>
+        <div className="back-button-container">
+          <button className="left-panel-back-button" onClick={() => window.history.back()}>
+            Go Back
+          </button>
         </div>
       </div>
-      
+
       {/* Main Content */}
-      <div className="main-content-admin">
+      <div className="right-panel-view">
         {/* Displays the restaurant name */}
         <h1 className="restaurant-name-admin">{restaurantName || "Loading..."}</h1>
 

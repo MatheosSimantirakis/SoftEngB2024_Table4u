@@ -2,6 +2,11 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'https://your-api-gateway-id.execute-api.region.amazonaws.com/prod/', // TODO: Change to ours
+});
 
 export default function Home() {
   const router = useRouter();
@@ -12,23 +17,23 @@ export default function Home() {
   };
 
   return (
-    <div className="admin-view">
+    <div className="left-panel-view">
       {/* Left Panel: Contains Logo, Subheading, and Back Button */}
-      <div className="left-panel-admin">
-        <div className="left-panel-header-admin">
-          <img src="/logo.svg" alt="Tables4U Logo" className="logo-admin" />
-          <h2 className="subtitle-admin">Administrator View</h2>
+      <div className="left-panel">
+        <div className="left-panel-header">
+          <img src="/logo.svg" alt="Tables4U Logo" className="left-panel-logo" />
+          <h2 className="left-panel-subtitle">Administrator View</h2>
         </div>
         {/* Back to Consumer View Button */}
         <div className="back-button-container">
-          <button className="back-button-admin" onClick={handleGoBack}>
+          <button className="left-panel-back-button" onClick={handleGoBack}>
             Back to Consumer View
           </button>
         </div>
       </div>
 
       {/* Main Content: Includes Search Bar and Restaurant List */}
-      <div className="main-content-admin">
+      <div className="right-panel-view">
         {/* Search Bar Section */}
         <div className="search-bar-admin">
           <input

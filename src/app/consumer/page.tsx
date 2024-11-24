@@ -2,6 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'https://your-api-gateway-id.execute-api.region.amazonaws.com/prod/', // TODO: Change to ours
+});
 
 const ConsumerView: React.FC = () => {
   // State for toggling the login modal visibility
