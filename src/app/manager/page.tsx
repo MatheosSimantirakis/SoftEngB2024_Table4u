@@ -37,7 +37,7 @@ const Manager: React.FC = () => {
   }
 
   const handleDelete = () => {
-
+    router.push('manager/deleteRestaurant')
   }
 
   const handleLogin = () => {
