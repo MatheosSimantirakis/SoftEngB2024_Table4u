@@ -32,6 +32,7 @@ const Manager: React.FC = () => {
   }
 
   const handleActivate = () => {
+    router.push('manager/activateRestaurant')
     setActivated(true);
   }
 
@@ -65,7 +66,7 @@ const Manager: React.FC = () => {
   }
 
   const pressActivate = () => {
-    if(loggedIn && created && !activated){
+    if(1){
       return "manager_button press"
     }
     else{
