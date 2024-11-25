@@ -5,8 +5,11 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #F3F4F8;
+  --foreground: #f3f4f8;
   --font-family: 'Open Sans', sans-serif;
+  --primary-color: #007bff;
+  --danger-color: #dc3545;
+  --gray-color: #6c757d;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -26,33 +29,37 @@ body {
 
 /* ---------------- General Reusable Styles ---------------- */
 
-.right-panel-view {
-  position: relative;
-  width: 75%;
-  padding: 20px;
+.page-container {
+  display: flex;
+  height: 100vh; 
 }
 
-.left-panel-view {
-  display: flex;
-  height: 100vh;
-  background: var(--background);
+.right-panel {
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background-color: #ffffff;
 }
 
 .left-panel {
   width: 25%;
-  background-color: #f8f9fa;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background-color: #f8f9fa;
   border-right: 1px solid #dee2e6;
   padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   text-align: center;
+  position: relative;
 }
 
 .left-panel-subtitle {
   font-size: 18px;
   font-style: italic;
-  color: #6c757d;
+  color: var(--gray-color);
   margin-bottom: 20px;
 }
 
@@ -69,51 +76,62 @@ body {
 }
 
 .back-button-container {
-  position: absolute; 
-  bottom: 50px; 
-  width: 100%; 
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: column; 
+  position: absolute; 
+  bottom: 40px; 
+  width: 100%; 
+  align-items: center; 
 }
 
 .left-panel-back-button {
-  width: 17.85%;
+  display: block; 
+  width: 71%; 
+  padding: 10px 20px;
+  font-size: 16px; 
+  color: var(--primary-color);
+  background-color: transparent;
+  border: 2px solid var(--primary-color);
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.left-panel-back-button:hover {
+  color: white;
+  background-color: var(--primary-color);
+}
+
+.action-button-container {
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+  gap: 10px; 
+  width: 100%;
+  margin-top: 160px;
+}
+
+.action-button {
+  width: 80%; 
   padding: 10px 20px;
   font-size: 16px;
-  color: #007bff;
-  background-color: transparent;
-  border: 2px solid #007bff;
+  color: white;
+  background-color: var(--primary-color);
+  border: none;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
   text-align: center;
 }
 
-.left-panel-back-button:hover {
-  color: white;
-  background-color: #007bff;
+.action-button:hover {
+  background-color: #0056b3;
 }
 
-.left-panel-buttons {
-  display: flex;
-  margin-top: 160px;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-}
-
-.action-button {
-  width: 80%;
-  padding: 10px 20px;
-  font-size: 16px;
+.action-button.active {
+  background-color: #0056b3;
   color: white;
-  background-color: #007bff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
 .delete-restaurant-button {
@@ -121,7 +139,7 @@ body {
   padding: 10px 20px;
   font-size: 16px;
   color: white;
-  background-color: #dc3545;
+  background-color: var(--danger-color);
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -157,7 +175,7 @@ body {
 }
 
 .confirm-button {
-  background-color: #dc3545;
+  background-color: var(--danger-color);
   color: #ffffff;
 }
 
@@ -166,50 +184,15 @@ body {
 }
 
 .cancel-button {
-  background-color: #6c757d;
+  background-color: var(--gray-color);
   color: #ffffff;
 }
 
 .cancel-button:hover {
-  background-color: #5a6268;
-}
-
-.action-button:hover {
-  background-color: #0056b3;
+  background-color: var(--gray-color);
 }
 
 /* ---------------- Admin View Styles ---------------- */
-
-.search-bar-admin {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.search-input-admin {
-  flex: 1;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  color: #000000;
-  background-color: #ffffff;
-}
-
-.search-button-admin {
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.search-button-admin:hover {
-  background-color: #0056b3;
-}
 
 .list-admin {
   list-style: none;
@@ -227,9 +210,10 @@ body {
 }
 
 .list-title-admin {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: bold;
-  margin-bottom: 10px;
+  color: #000000;
+  margin-bottom: 20px;
 }
 
 .list-item-admin {
@@ -277,7 +261,7 @@ body {
 .nav-button-admin {
   padding: 10px 20px;
   font-size: 16px;
-  background-color: #6c757d;
+  background-color: var(--gray-color);
   color: white;
   border: none;
   border-radius: 4px;
@@ -323,8 +307,8 @@ body {
   right: 0px;
   padding: 8px 16px;
   font-size: 14px;
-  color: #007bff;
-  border: 1px solid #007bff;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
   background-color: transparent;
   border-radius: 4px;
   cursor: pointer;
@@ -333,7 +317,7 @@ body {
 
 .login-button-consumer:hover {
   color: white;
-  background-color: #007bff;
+  background-color: var(--primary-color);
 }
 
 .search-container-consumer {
@@ -356,7 +340,7 @@ body {
 .search-button-consumer {
   padding: 10px 20px;
   font-size: 16px;
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 4px;
@@ -377,7 +361,7 @@ body {
 .my-reservations-button-consumer {
   padding: 10px 20px;
   font-size: 16px;
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 4px;
@@ -408,7 +392,7 @@ body {
 
 .date-input-consumer:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: var(--primary-color);
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
 }
 
@@ -464,7 +448,7 @@ body {
   margin-top: auto;
   padding: 8px 16px;
   font-size: 14px;
-  background-color: #007bff;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: 4px;
@@ -510,7 +494,7 @@ body {
   background: transparent;
   border: none;
   font-size: 20px;
-  color: #6c757d;
+  color: var(--gray-color);
   cursor: pointer;
   transition: color 0.3s ease;
 }
@@ -528,7 +512,7 @@ body {
 
 .login-subtitle {
   font-size: 16px;
-  color: #6c757d;
+  color: var(--gray-color);
   margin-bottom: 20px;
 }
 
@@ -559,7 +543,7 @@ body {
   padding: 12px 20px;
   font-size: 16px;
   color: #ffffff;
-  background-color: #007bff;
+  background-color: var(--primary-color);
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -572,7 +556,14 @@ body {
 
 /* ---------------- Manager View Styles ---------------- */
 
-
+.placeholder-manager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 18px;
+  color: var(--gray-color);
+}
 
 /* ---------------- Forms Styles ---------------- */
 
@@ -612,14 +603,14 @@ body {
 
 .form-input:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: var(--primary-color);
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
 }
 
 .form-label {
   display: block;
   font-size: 14px;
-  color: #6c757d;
+  color: var(--gray-color);
   margin-bottom: 5px;
 }
 
@@ -628,7 +619,7 @@ body {
   padding: 10px 20px;
   font-size: 16px;
   color: #ffffff;
-  background-color: #007bff;
+  background-color: var(--primary-color);
   border: none;
   border-radius: 4px;
   margin: 0 auto;
@@ -675,7 +666,7 @@ body {
 }
 
 .remove-table-button {
-  background-color: #dc3545;
+  background-color: var(--danger-color);
   color: white;
   border: none;
   margin-left: 50px;
@@ -694,8 +685,8 @@ body {
   margin-bottom: 16px;
   padding: 8px 16px;
   font-size: 14px;
-  color: #007bff;
-  border: 1px solid #007bff;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
   background-color: transparent;
   border-radius: 4px;
   cursor: pointer;
@@ -705,7 +696,7 @@ body {
 
 .add-tables-button:hover {
   color: white;
-  background-color: #007bff;
+  background-color: var(--primary-color);
 }
 
 /* ---------------- Dates Open Styles ---------------- */
@@ -727,7 +718,7 @@ body {
 }
 
 .remove-date-button {
-  background-color: #dc3545;
+  background-color: var(--danger-color);
   color: white;
   border: none;
   margin-left: 50px;
@@ -803,7 +794,7 @@ body {
 }
 
 input:checked+.slider {
-  background-color: #007bff;
+  background-color: var(--primary-color);
 }
 
 input:checked+.slider:before {
@@ -815,13 +806,51 @@ input:checked+.slider:before {
   color: #333;
 }
 
-/* ---------------- Placeholder Text Manager Window ---------------- */
+/* ----------------On-Screen Notification Styles ---------------- */
 
-.placeholder-manager {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  font-size: 18px;
-  color: #6c757d;
+.notification {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 14px;
+  z-index: 1000;
+  color: #fff;
+  max-width: 90%;
+  animation: fadeInOut 3s ease-in-out forwards; 
+  visibility: visible; 
+  opacity: 0;
 }
+
+.notification.success {
+  background-color: #4caf50; 
+}
+
+.notification.error {
+  background-color: #DC3645; 
+}
+
+@keyframes fadeInOut {
+  0% { 
+    opacity: 0; 
+    transform: translate(-50%, 90px); 
+  } 
+  10% { 
+    opacity: 1; 
+    transform: translate(-50%, 0); 
+  } 
+  90% { 
+    opacity: 1; 
+    transform: translate(-50%, 0); 
+  } 
+  100% { 
+    opacity: 0; 
+    transform: translate(-50%, 90px); 
+  } 
+}
+
+/* * {
+  outline: 1px solid red; 
+} */

@@ -3,6 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import {
+  Table,
+  TableEntryProps,
+  DateEntryProps,
+  FormWrapperProps,
+} from '../types';
 
 // Dynamic baseURL for all APIs
 const createApiInstance = (baseURL: string) => {
@@ -20,42 +26,24 @@ const deleteRestaurantApi = createApiInstance('https://ub4vssj8g4.execute-api.us
 const activateRestaurantApi = createApiInstance('https://ys2gzedx59.execute-api.us-east-2.amazonaws.com');
 
 // Reusable component for wrapping forms with a consistent layout
-const FormWrapper = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}): JSX.Element => (
+const FormWrapper: React.FC<FormWrapperProps> = ({ title, children }) => (
   <div className="form-wrapper">
     <h1 className="form-title">{title}</h1>
     <div className="form-content">{children}</div>
   </div>
 );
 
-// A reusable component for managing a single table entry in the table list
-const TableEntry = ({
-  table,
-  updateSeats,
-  removeTable,
-}: {
-  table: { id: number; seats: number };
-  updateSeats: (id: number, seats: number) => void;
-  removeTable: (id: number) => void;
-}): JSX.Element => (
+// Reusable component for managing a single table entry in the table list
+const TableEntry: React.FC<TableEntryProps> = ({ table, updateSeats, removeTable }) => (
   <div className="table-entry">
     <label>Table {table.id}</label>
     <select
-      value={table.seats === 1 ? "" : table.seats}
+      value={table.num_seats === 1 ? '' : table.num_seats}
       onChange={(e) => updateSeats(table.id, parseInt(e.target.value) || 1)}
     >
-      <option value="" disabled>
-        Seats
-      </option>
+      <option value="" disabled>Seats</option>
       {Array.from({ length: 20 }, (_, i) => i + 1).map((seatCount) => (
-        <option key={seatCount} value={seatCount}>
-          {seatCount}
-        </option>
+        <option key={seatCount} value={seatCount}>{seatCount}</option>
       ))}
     </select>
     <button
@@ -69,15 +57,7 @@ const TableEntry = ({
 );
 
 // Reusable component for managing a single date entry in the date list
-const DateEntry = ({
-  date,
-  index,
-  removeDate,
-}: {
-  date: string;
-  index: number;
-  removeDate: (index: number) => void;
-}): JSX.Element => (
+const DateEntry: React.FC<DateEntryProps> = ({ date, index, removeDate }) => (
   <div className="date-entry">
     <label>{date}</label>
     <button
@@ -90,12 +70,14 @@ const DateEntry = ({
   </div>
 );
 
+// Notification component
+const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
+  if (!visible) return null;
+  return <div className={`notification ${type}`}>{message}</div>;
+};
+
 const ManagerView = (): JSX.Element => {
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [showOpenForm, setShowOpenForm] = useState(false);
-  const [showCloseForm, setShowCloseForm] = useState(false);
-  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [currentForm, setCurrentForm] = useState<string | null>(null);
   const [isActivated, setIsActivated] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [hasRestaurant, setHasRestaurant] = useState(false);
@@ -105,55 +87,43 @@ const ManagerView = (): JSX.Element => {
   const [openTime, setOpenTime] = useState('');
   const [closeTime, setCloseTime] = useState('');
   const [datesOpen, setDatesOpen] = useState<string[]>([]);
-  const [tables, setTables] = useState<{ id: number; seats: number }[]>([]);
-  const addTable = () => {
-    setTables((prev) => [...prev, { id: prev.length + 1, seats: 1 }]);
-  };
-  const removeTable = (id: number) => {
-    setTables((prev) => prev.filter((table) => table.id !== id));
-  };
-  const updateSeats = (id: number, seats: number) => {
-    setTables((prev) =>
-      prev.map((table) => (table.id === id ? { ...table, seats } : table))
-    );
-  };
+  const [tables, setTables] = useState<Table[]>([]);
   const [date, setDate] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  const addTable = () => {
+    setTables((prev) => [
+      ...prev,
+      { id: prev.length + 1, num_seats: 1, available: true },
+    ]);
+  };
+  const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
+    message: '',
+    visible: false,
+    type: '',
+  });
 
-  // Handlers for toggle
-  const handleCreateToggle = () => {
-    setShowCreateForm((prevState) => !prevState);
-    resetOtherForms('create');
+
+  const removeTable = (id: number) => {
+    setTables((prev) => prev.filter((table) => table.id !== id));
   };
 
-  const handleEditToggle = () => {
-    setShowEditForm((prevState) => !prevState);
-    resetOtherForms('edit');
+  const updateSeats = (id: number, num_seats: number) => {
+    setTables((prev) =>
+      prev.map((table) =>
+        table.id === id ? { ...table, num_seats } : table
+      )
+    );
   };
 
-  const handleOpenToggle = () => {
-    setShowOpenForm((prevState) => !prevState);
-    resetOtherForms('open');
+  // Handler for toggle forms
+  const handleToggleForm = (form: string | null) => {
+    setCurrentForm(currentForm === form ? null : form);
+    resetState();
   };
 
-  const handleCloseToggle = () => {
-    setShowCloseForm((prevState) => !prevState);
-    resetOtherForms('close');
-  };
-
-  const handleReviewToggle = () => {
-    setShowReviewForm((prevState) => !prevState);
-    resetOtherForms('review');
-  };
-
-  const resetOtherForms = (current: string) => {
-    if (current !== 'create') setShowCreateForm(false);
-    if (current !== 'edit') setShowEditForm(false);
-    if (current !== 'open') setShowOpenForm(false);
-    if (current !== 'close') setShowCloseForm(false);
-    if (current !== 'review') setShowReviewForm(false);
-    // Reset tables and dates when switching forms
+  // Reset form after closing out
+  const resetState = () => {
     setTables([]);
     setDatesOpen([]);
     setError('');
@@ -168,6 +138,8 @@ const ManagerView = (): JSX.Element => {
 
   // Allow activation only if not already activated
   const handleToggleSwitch = async () => {
+    console.log('Toggling activation for:', name);
+
     if (!isActivated) {
       try {
         await activateRestaurant();
@@ -179,27 +151,41 @@ const ManagerView = (): JSX.Element => {
     }
   };
 
+  // Helper function to show notifications for 3 seconds
+  const showNotification = (
+    message: string,
+    params: Record<string, string> = {},
+    type: string = 'success'
+  ) => {
+    const formattedMessage = Object.keys(params).reduce(
+      (msg, key) => msg.replace(`{${key}}`, params[key]),
+      message
+    );
+    setNotification({ message: formattedMessage, visible: true, type });
+    setTimeout(() => {
+      setNotification({ message: '', visible: false, type: '' });
+    }, 3000);
+  };
+
   const handleGoBack = () => router.push('/consumer');
 
   // API: Create Restaurant
   const handleCreateRestaurant = async () => {
-    if (name && address && numTables) {
-      console.log('Creating restaurant with the following details:', { name, address, numTables });
+    if (name && address) {
+      console.log('Creating restaurant with the following details:', { name, address });
       try {
-        const response = await createRestaurantApi.post('/create-restaurant', { name, address, numTables });
+        const response = await createRestaurantApi.post('/create-restaurant', { name, address });
         console.log('Create Restaurant API response:', response);
         if (response.data.statusCode === 200) {
-          setName(name);
-          setAddress('');
-          setNumTables('');
-          setShowCreateForm(false);
           setHasRestaurant(true);
+          setCurrentForm(null);
+          setName(response.data.name || name);
+          setAddress('');
+          showNotification(`Successfully created ${name}`);
         } else {
-          console.error('Error creating restaurant:', response.data.body);
-          setError('Failed to create restaurant.');
+          showNotification('Could not create Restaurant', {}, 'error');
         }
       } catch (error) {
-        console.error('Error creating restaurant:', error);
         setError('Failed to create restaurant. Please try again.');
       }
     } else {
@@ -210,7 +196,7 @@ const ManagerView = (): JSX.Element => {
   // API: Edit Restaurant
   const handleEditRestaurant = async () => {
     if (name && address && openTime && closeTime && tables.length > 0) {
-      const tablesData = tables.map((table) => ({ id: table.id, seats: table.seats }));
+      const tablesData = tables.map((table) => ({ id: table.id, seats: table.num_seats }));
       try {
         const response = await editRestaurantApi.post('/edit-restaurant', {
           name,
@@ -220,16 +206,16 @@ const ManagerView = (): JSX.Element => {
           tables: tablesData,
         });
         if (response.data.statusCode === 200) {
-          alert(`Successfully updated restaurant ${name}`);
+          showNotification('Restaurant successfully edited');
           setName('');
           setAddress('');
           setOpenTime('');
           setCloseTime('');
           setTables([]);
-          setShowEditForm(false);
+          setCurrentForm(null);
         } else {
           console.error('Error editing restaurant:', response.data.body);
-          setError('Failed to edit restaurant.');
+          showNotification('Could not edit Restaurant', {}, 'error');
         }
       } catch (error) {
         console.error('Error editing restaurant:', error);
@@ -246,16 +232,16 @@ const ManagerView = (): JSX.Element => {
       openDayApi
         .post('/open-day', { date })
         .then(() => {
-          alert(`Future day ${date} opened successfully`);
+          showNotification(`Future day ${date} opened successfully`);
           setDate('');
-          setShowOpenForm(false);
+          setCurrentForm(null);
         })
         .catch((error) => {
           console.error('Error opening future day:', error);
-          setError('Failed to open future day. Please try again.');
+          showNotification('Failed to set future day open', {}, 'error');
         });
     } else {
-      setError('Date is required.');
+      showNotification('Date is required.', {}, 'error');
     }
   };
 
@@ -265,13 +251,13 @@ const ManagerView = (): JSX.Element => {
       closeDayApi
         .post('/close-day', { date })
         .then(() => {
-          alert(`Future day ${date} closed successfully`);
+          showNotification(`Future day ${date} closed successfully`);
           setDate('');
-          setShowCloseForm(false);
+          setCurrentForm(null);
         })
         .catch((error) => {
           console.error('Error closing future day:', error);
-          setError('Failed to close future day. Please try again.');
+          showNotification('Failed to set future day close', {}, 'error');
         });
     } else {
       setError('Date is required.');
@@ -284,12 +270,11 @@ const ManagerView = (): JSX.Element => {
       .get('/availability')
       .then((response) => {
         console.log('Availability:', response.data);
-        alert('Availability data fetched successfully.');
-        setShowReviewForm(false);
+        setCurrentForm(null);
       })
       .catch((error) => {
         console.error('Error fetching availability:', error);
-        setError('Failed to fetch availability data. Please try again.');
+        showNotification('Failed to fetch availability data', {}, 'error');
       });
   };
 
@@ -300,20 +285,21 @@ const ManagerView = (): JSX.Element => {
       console.error('Error: Restaurant name is missing.');
       return;
     }
-    console.log('Sending request to delete restaurant:', name);
+    console.log('Sending request to delete restaurant:', { name });
+
     try {
       const response = await deleteRestaurantApi.post('/deleteRestaurant', { name });
-      console.log('API response:', response);
-      const status = response?.data?.statusCode;
-      const resultComp = response?.data?.body;
-      if (status === 200) {
+      console.log('API response:', response.data);
+
+      if (response.data.statusCode === 200) {
         setShowDeleteConfirmation(false);
         setHasRestaurant(false);
         setIsActivated(false);
+        showNotification(`Successfully deleted ${name}`);
         setName('');
       } else {
-        console.error('Failed to delete restaurant:', resultComp);
-        setError('Failed to delete restaurant.');
+        console.error('Failed to delete restaurant:', response.data.body);
+        showNotification('Failed to delete restaurant', {}, 'error');
       }
     } catch (error) {
       console.error('Delete Error:', error);
@@ -327,21 +313,21 @@ const ManagerView = (): JSX.Element => {
   // API: Activate Restaurant
   const activateRestaurant = async () => {
     if (!name) {
-      setError('Restaurant name is required to activate.');
+      setError('Restaurant name is missing.');
       console.error('Error: Restaurant name is missing.');
       return;
     }
-    console.log('Sending request to activate restaurant:', name);
+    console.log('Sending request to activate restaurant:', { name });
+
     try {
       const response = await activateRestaurantApi.post('/activateRestaurant', { name });
-      console.log('API response:', response);
-      const status = response?.data?.statusCode;
-      const resultComp = response?.data?.body;
-      if (status === 200) {
+      console.log('API response:', response.data);
+
+      if (response.data.statusCode === 200) {
         setIsActivated(true);
+        showNotification(`${name} successfully activated`);
       } else {
-        console.error('Failed to activate restaurant:', resultComp);
-        setError('Failed to activate restaurant.');
+        showNotification(`Failed to activate restaurant`, {}, 'error');
       }
     } catch (error) {
       console.error('Activate Error:', error);
@@ -350,31 +336,46 @@ const ManagerView = (): JSX.Element => {
   };
 
   return (
-    <div className="left-panel-view">
-      {/* Sidebar panel */}
+    <div className="page-container">
+      {/* Left Panel: Contains Logo, Subheading, and Action Buttons */}
       <div className="left-panel">
         <div className="left-panel-header">
           <img src="/logo.svg" alt="Tables4U Logo" className="left-panel-logo" />
           <h2 className="left-panel-subtitle">Manager View</h2>
         </div>
-        <div className="left-panel-buttons">
+        <div className="action-button-container">
           {/* Show the "Create Restaurant" button only if the user doesn't have a restaurant */}
           {!hasRestaurant && (
-            <button className="action-button" onClick={handleCreateToggle}>
-              {showCreateForm ? 'Exit' : 'Create Restaurant'}
+            <button
+              className={`action-button ${currentForm === 'create' ? 'active' : ''}`}
+              onClick={() => handleToggleForm('create')}
+            >
+              {currentForm === 'create' ? 'Exit' : 'Create Restaurant'}
             </button>
           )}
-          <button className="action-button" onClick={handleEditToggle}>
-            {showEditForm ? 'Exit' : 'Edit Restaurant'}
+          <button
+            className={`action-button ${currentForm === 'edit' ? 'active' : ''}`}
+            onClick={() => handleToggleForm('edit')}
+          >
+            {currentForm === 'edit' ? 'Exit' : 'Edit Restaurant'}
           </button>
-          <button className="action-button" onClick={handleOpenToggle}>
-            {showOpenForm ? 'Exit' : 'Open Future Day'}
+          <button
+            className={`action-button ${currentForm === 'open' ? 'active' : ''}`}
+            onClick={() => handleToggleForm('open')}
+          >
+            {currentForm === 'open' ? 'Exit' : 'Open Future Day'}
           </button>
-          <button className="action-button" onClick={handleCloseToggle}>
-            {showCloseForm ? 'Exit' : 'Close Future Day'}
+          <button
+            className={`action-button ${currentForm === 'close' ? 'active' : ''}`}
+            onClick={() => handleToggleForm('close')}
+          >
+            {currentForm === 'close' ? 'Exit' : 'Close Future Day'}
           </button>
-          <button className="action-button" onClick={handleReviewToggle}>
-            {showReviewForm ? 'Exit' : 'Review Availability'}
+          <button
+            className={`action-button ${currentForm === 'review' ? 'active' : ''}`}
+            onClick={() => handleToggleForm('review')}
+          >
+            {currentForm === 'review' ? 'Exit' : 'Review Availability'}
           </button>
           {/* Show the "Delete Restaurant" button only if the user has a restaurant */}
           {hasRestaurant && (
@@ -391,7 +392,7 @@ const ManagerView = (): JSX.Element => {
                   checked={isActivated}
                   onChange={async () => {
                     if (!isActivated) {
-                      await handleToggleSwitch(); // Handle toggle logic
+                      await handleToggleSwitch();
                     }
                   }}
                 />
@@ -402,17 +403,18 @@ const ManagerView = (): JSX.Element => {
               </span>
             </div>
           )}
-          <div className="back-button-container">
-            <button className="left-panel-back-button" onClick={handleGoBack}>
-              Back to Consumer View
-            </button>
-          </div>
+        </div>
+        <div className="back-button-container">
+          <button className="left-panel-back-button" onClick={handleGoBack}>
+            Back to Consumer View
+          </button>
         </div>
       </div>
 
-      <div className="right-panel-view">
+      {/* Right Panel: Contains all Forms */}
+      <div className="right-panel">
         {/* Check if the Create Form should be displayed */}
-        {showCreateForm && (
+        {currentForm === 'create' && (
           <FormWrapper title="Create Restaurant">
             {/* Restaurant name */}
             <div className="form-group">
@@ -433,20 +435,6 @@ const ManagerView = (): JSX.Element => {
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className="form-input"
-              />
-            </div>
-
-            {/* Input for the number of tables */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="number-of-tables">Number of Tables</label>
-              <input
-                id="number-of-tables"
-                type="number"
-                value={numTables}
-                onChange={(e) => setNumTables(e.target.value)}
-                className="form-input"
-                required
-                min="0"
               />
             </div>
 
@@ -551,7 +539,7 @@ const ManagerView = (): JSX.Element => {
           </FormWrapper>
         )}
 
-        {showEditForm && (
+        {currentForm === 'edit' && (
           <FormWrapper title="Edit Restaurant">
             {/* Name */}
             <div className="form-group">
@@ -675,7 +663,7 @@ const ManagerView = (): JSX.Element => {
           </FormWrapper>
         )}
 
-        {showOpenForm && (
+        {currentForm === 'open' && (
           <FormWrapper title="Open Future Day">
             <div className="form-group">
               <label className="form-label" htmlFor="date">Date</label>
@@ -685,6 +673,7 @@ const ManagerView = (): JSX.Element => {
                 onChange={(e) => setDate(e.target.value)}
                 className="form-input"
                 type="date"
+                min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
@@ -694,8 +683,8 @@ const ManagerView = (): JSX.Element => {
           </FormWrapper>
         )}
 
-        {showCloseForm && (
-          <FormWrapper title="Close Future Day">
+        {currentForm === 'close' && (
+          <FormWrapper title="Open Future Day">
             <div className="form-group">
               <label className="form-label" htmlFor="date">Date</label>
               <input
@@ -704,21 +693,23 @@ const ManagerView = (): JSX.Element => {
                 onChange={(e) => setDate(e.target.value)}
                 className="form-input"
                 type="date"
+                min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
-            <button onClick={handleCloseFutureDay} className="form-submit-button">
-              Close Day
+            <button onClick={handleOpenFutureDay} className="form-submit-button">
+              Open Day
             </button>
           </FormWrapper>
         )}
 
-        {showReviewForm && (
+        {currentForm === 'review' && (
           <FormWrapper title="Review Availability">
             <p className="form-label">Work in progress</p>
           </FormWrapper>
         )}
 
+        {/* Delete Confirmation Popup */}
         {showDeleteConfirmation && (
           <div className="modal-overlay" onClick={cancelDelete}>
             <div className="delete-confirmation-popup" onClick={(e) => e.stopPropagation()}>
@@ -733,10 +724,18 @@ const ManagerView = (): JSX.Element => {
           </div>
         )}
 
-        {!showCreateForm && !showEditForm && !showOpenForm && !showCloseForm && !showReviewForm && !showDeleteConfirmation && (
+        {!currentForm && !showDeleteConfirmation && (
           <div className="placeholder-manager">
             <p>Select an option from the left panel to get started.</p>
           </div>
+        )}
+
+        {notification.visible && (
+          <Notification
+            message={notification.message}
+            visible={notification.visible}
+            type={notification.type}
+          />
         )}
       </div>
     </div>

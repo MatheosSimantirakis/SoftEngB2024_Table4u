@@ -4,9 +4,19 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: 'https://your-api-gateway-id.execute-api.region.amazonaws.com/prod/', // TODO: Change to ours
-});
+// Dynamic baseURL for all APIs
+const createApiInstance = (baseURL: string) => {
+  return axios.create({
+    baseURL,
+  });
+};
+
+const listActiveRestaurants = createApiInstance('https://example.com'); // Replace with actual URL
+const searchAvailableRestaurants = createApiInstance('https://example.com'); // Replace with actual URL
+const searchSpecificRestaurant = createApiInstance('https://example.com'); // Replace with actual URL
+const makeReservation = createApiInstance('https://example.com'); // Replace with actual URL
+const findExistingReservation = createApiInstance('https://example.com'); // Replace with actual URL
+const cancelExistingReservation = createApiInstance('https://example.com'); // Replace with actual URL
 
 const ConsumerView: React.FC = () => {
   // State for toggling the login modal visibility
