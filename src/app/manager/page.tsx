@@ -57,7 +57,7 @@ const Manager: React.FC = () => {
   }
 
   const pressEdit = () => {
-    if(loggedIn && created){
+    if(1){
       return "manager_button press"
     }
     else{
