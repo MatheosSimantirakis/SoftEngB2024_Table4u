@@ -24,6 +24,11 @@ const ConsumerView: React.FC = () => {
   // State for toggling the login modal visibility
   const [isLoginVisible, setLoginVisible] = useState(false);
 
+  // State for togglingcreate
+  const [isCreateManVisible, setCreateManVisible] = useState(false); 
+  const [isCreateAdmVisible, setCreateAdmVisible] = useState(false); 
+
+
   // State for storing login credentials
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -42,6 +47,22 @@ const ConsumerView: React.FC = () => {
     setLoginVisible(false);
   };
 
+  const openCreateMananger = () => {
+    setCreateManVisible(true);
+  }
+
+  const closeCreateManager = () => {
+    setCreateManVisible(false); 
+  }
+
+  const openCreateAdmin = () => {
+    setCreateAdmVisible(true);
+  }
+
+  const closeCreateAdmin = () => {
+    setCreateAdmVisible(false); 
+  }
+
   // Handler for login action based on role (manager or admin)
   const handleLogin = (role: string) => {
     if (role === 'manager') {
@@ -53,6 +74,14 @@ const ConsumerView: React.FC = () => {
     }
     setLoginVisible(false); // Close the modal after login
   };
+
+  const handleCreateAccount = (role: String) =>{
+    if(role === 'manager'){
+      router.push('/createAdmin')
+    } else if (role ='admin'){
+      
+    }
+  }
 
   // Handler for date selection from the calendar input
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,7 +179,6 @@ const ConsumerView: React.FC = () => {
               ✕
             </button>
             <h2 className="login-title">Log in</h2>
-            <p className="login-subtitle">Enter your credentials</p>
             <div className="login-inputs">
               <input
                 type="text"
@@ -175,15 +203,108 @@ const ConsumerView: React.FC = () => {
                 Login as Manager
               </button>
               <button
+               className='create-account-button'
+               onClick={() =>openCreateMananger()}
+               >
+                Create Manager?
+                </button>
+
+              <button
                 className="login-button"
                 onClick={() => handleLogin('admin')}
               >
                 Login as Administrator
               </button>
+              
+              
+                <button
+               className='create-account-button'
+               onClick={() =>openCreateAdmin()}
+               >
+                Create Administrator?
+                </button>
             </div>
           </div>
         </div>
       )}
+
+      {isCreateManVisible &&(
+        <div className="modal-overlay">
+        <div className="login-modal">
+          <button className="close-button" onClick={closeCreateManager}>
+            ✕
+          </button>
+          <h2 className="login-title">Create Manager</h2>
+          <div className="login-inputs">
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="login-input"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="login-input"
+            />
+          </div>
+          <div className="login-buttons">
+            <button className='login-button'>
+              Submit
+              {/**send onlclick to lambda function to database*/}
+            </button>
+            
+          </div>
+        </div>
+      </div>
+        
+
+      )}
+
+{isCreateAdmVisible &&(
+        <div className="modal-overlay">
+        <div className="login-modal">
+          <button className="close-button" onClick={closeCreateAdmin}>
+            ✕
+          </button>
+          <h2 className="login-title">Create Aministrator</h2>
+          <div className="login-inputs">
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="login-input"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="login-input"
+            />
+          </div>
+          <div className="login-buttons">
+            <button className='login-button'>
+              Submit
+              {/**send onlclick to lambda function to database*/} 
+              
+            </button>
+            
+          </div>
+        </div>
+      </div>
+        
+
+      )}
+
+
+
+
+
     </div>
   );
 };
