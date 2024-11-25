@@ -2,8 +2,16 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import {Admin, Reservation, Restaurant} from '../../model'
+import axios from "axios";
 
+// Dynamic baseURL for all APIs
+const createApiInstance = (baseURL: string) => {
+  return axios.create({
+    baseURL,
+  });
+};
+
+const listRestaurantsApi = createApiInstance("https://example.com"); // Replace with actual URL
 
 export default function Home() {
   const router = useRouter();
@@ -14,51 +22,45 @@ export default function Home() {
   };
 
   return (
-    <div className="admin-view">
+    <div className="page-container">
       {/* Left Panel: Contains Logo, Subheading, and Back Button */}
-      <div className="left-panel-admin">
-        <div className="left-panel-header-admin">
-          <img src="/logo.svg" alt="Tables4U Logo" className="logo-admin" />
-          <h2 className="subtitle-admin">Administrator View</h2>
+      <div className="left-panel">
+        <div className="left-panel-header">
+          <img src="/logo.svg" alt="Tables4U Logo" className="left-panel-logo" />
+          <h2 className="left-panel-subtitle">Administrator View</h2>
         </div>
-        {/* Back to Consumer View Button */}
         <div className="back-button-container">
-          <button className="back-button-admin" onClick={handleGoBack}>
+          <button className="left-panel-back-button" onClick={handleGoBack}>
             Back to Consumer View
           </button>
         </div>
       </div>
 
-      {/* Main Content: Includes Search Bar and Restaurant List */}
-      <div className="main-content-admin">
-        {/* Search Bar Section */}
-        <div className="search-bar-admin">
-          <input
-            type="text"
-            placeholder="Search for a restaurant"
-            className="search-input-admin"
-          />
-          <button className="search-button-admin">Search</button>
-        </div>
-
+      {/* Right Panel: Main Content */}
+      <div className="right-panel">
         {/* Restaurant List Section */}
         <div className="restaurant-list-admin">
           <h3 className="list-title-admin">Restaurants</h3>
           <ul className="list-admin">
-            {/* Example of a restaurant entry */}
+            {/* Example restaurant entries */}
             <li className="list-item-admin">
               <a href="/TechPizza">
-                <strong>Name:</strong> Tech Pizza<br />
-                <strong>Address:</strong> 123 Main St<br />
-                <strong>Open:</strong> 9:00 AM<br />
+                <strong>Name:</strong> Tech Pizza
+                <br />
+                <strong>Address:</strong> 123 Main St
+                <br />
+                <strong>Open:</strong> 9:00 AM
+                <br />
                 <strong>Close:</strong> 10:00 PM
               </a>
             </li>
-            {/* Another restaurant entry */}
             <li className="list-item-admin">
-              <strong>Name:</strong> Boyton<br />
-              <strong>Address:</strong> 456 Beach Blvd<br />
-              <strong>Open:</strong> 11:00 AM<br />
+              <strong>Name:</strong> Boyton
+              <br />
+              <strong>Address:</strong> 456 Beach Blvd
+              <br />
+              <strong>Open:</strong> 11:00 AM
+              <br />
               <strong>Close:</strong> 11:00 PM
             </li>
           </ul>

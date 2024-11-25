@@ -4,6 +4,21 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {Consumer, Reservation, Restaurant} from '../../model'
 
+import axios from 'axios';
+
+// Dynamic baseURL for all APIs
+const createApiInstance = (baseURL: string) => {
+  return axios.create({
+    baseURL,
+  });
+};
+
+const listActiveRestaurants = createApiInstance('https://example.com'); // Replace with actual URL
+const searchAvailableRestaurants = createApiInstance('https://example.com'); // Replace with actual URL
+const searchSpecificRestaurant = createApiInstance('https://example.com'); // Replace with actual URL
+const makeReservation = createApiInstance('https://example.com'); // Replace with actual URL
+const findExistingReservation = createApiInstance('https://example.com'); // Replace with actual URL
+const cancelExistingReservation = createApiInstance('https://example.com'); // Replace with actual URL
 
 const ConsumerView: React.FC = () => {
   // State for toggling the login modal visibility
@@ -73,7 +88,7 @@ const ConsumerView: React.FC = () => {
           onChange={handleDateChange}
         />
         <select className="dropdown-consumer">
-          <option value="All times">Times</option>
+          <option value="All times">Time</option>
           <option value="08:00">08:00</option>
           <option value="09:00">09:00</option>
           <option value="10:00">10:00</option>

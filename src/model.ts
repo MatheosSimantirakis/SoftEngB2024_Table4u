@@ -1,4 +1,3 @@
-
 export class Consumer {
     email: string
     reservation: Reservation
