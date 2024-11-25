@@ -1,62 +1,80 @@
-export class Constant {
-    name:string
-    value:number
+export class Consumer {
+    email: string
+    reservation: Reservation
 
-    constructor(name:string, value:number) {
+    constructor(email: string, reservation : Reservation){
+        this.email = email
+        this.reservation = reservation
+    }
+}
+
+export class Manager{
+    name: string
+    restaurant: Restaurant
+
+    constructor(name: string, restaurant: Restaurant){
         this.name = name
-        this.value = value
-    }
-
-    toString() {
-        return this.name + "=" + this.value
+        this.restaurant = restaurant
     }
 }
 
-export class Model {
-    constants:Array<Constant> = []
-
-    constructor() { 
-        this.constants = []
-    }
-
-    getValue(name:string):number {
-        // if name is a STRING try to find constant with that name
-        // o/w parse as double and continue
-        let value = parseFloat(name)
-        if (isNaN(value)) {
-            // must be CONSTANT name!
-            let foundConstant = this.constants.find((c) => c.name === name)
-            if (foundConstant) {
-                return foundConstant.value
-            } else {
-                return NaN   // shows error
-            }
-        } else {
-            return value
-        }
-    }
-
-    // Return TRUE if newly created; return FALSE if replace
-    define(name:string, value:number):boolean {
-        let foundConstant = this.constants.find((c) => c.name === name)
-        if (foundConstant) {
-            foundConstant.value = value
-            return false
-        }
-        let c = new Constant(name, value)
-        this.constants.push(c)
-        return true
-    }
-
-    remove (name:string):boolean {
-        let foundConstant = this.constants.find((c) => c.name === name)
-        if (foundConstant) {
-            // seems like perhaps does one extra step...
-            const index = this.constants.indexOf(foundConstant)
-            this.constants.splice(index, 1)
-            return true
-        }
-
-        return false
+export class Admin{
+    name: string
+    username: string 
+    password: string 
+    
+    constructor(name : string, username: string, password: string){
+        this.name = name
+        this.username = username
+        this.password = password
     }
 }
+
+export class Reservation{
+    seats: number 
+    table: Table
+    time: number
+    id: number
+    confirmationCode: number
+
+    constructor(seats: number, table: Table, time: number, id: number, confirmationCode: number){
+        this.seats = seats
+        this.table = table
+        this.time = time
+        this.id = id
+        this.confirmationCode = confirmationCode
+    }
+    
+}
+
+export class Table{
+    id: number
+    num_seats: number 
+    available: boolean
+
+    constructor(id: number, num_seats: number, available: boolean){
+        this.id = id
+        this.num_seats = num_seats 
+        this.available = available
+    }
+}
+
+
+export class Restaurant {
+    name : string 
+    address : string
+    numTables : number
+    tables : Table
+
+    constructor(name: string, address: string, numTables: number, tables: Table) {
+      this.name = name;
+      this.address = address;
+      this.numTables = numTables;
+      this.tables = tables;
+    }
+  }
+
+  
+
+
+
