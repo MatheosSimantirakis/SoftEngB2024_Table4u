@@ -80,12 +80,14 @@ export default function RestaurantPage() {
 
   // API: Delete Restaurant
   const handleDeleteRestaurant = async () => {
-    setIsLoading(true);
+    console.log('Sending request to delete restaurant:', { name });
+
     try {
       const response = await deleteRestaurantApi.post('/deleteRestaurant', { name });
+      console.log('API response:', response.data);
+
       if (response.data.statusCode === 200) {
         setShowDeleteConfirmation(false);
-        setError('');
         showNotification(`Successfully deleted ${name}`);
       } else {
         console.error('Failed to delete restaurant:', response.data.body);
@@ -94,8 +96,6 @@ export default function RestaurantPage() {
     } catch (error) {
       console.error('Delete Error:', error);
       setError('An error occurred while deleting the restaurant.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -115,11 +115,7 @@ export default function RestaurantPage() {
             <button className="action-button" onClick={() => showNotification('Availability report generated')}>
               Generate Availability Report
             </button>
-            <button 
-              className="delete-restaurant-button" 
-              onClick={handleDeleteClick}
-              disabled={isLoading}
-              >
+            <button className="delete-restaurant-button" onClick={handleDeleteClick}>
               Delete Restaurant
             </button>
           </div>
@@ -165,7 +161,6 @@ export default function RestaurantPage() {
             <p>Are you sure you want to delete {name}?</p>
             <button
               className="confirm-button"
-              disabled={isLoading}
               onClick={() => showNotification(`Restaurant ${name} deleted`)}
             >
               Yes, Delete

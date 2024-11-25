@@ -353,57 +353,72 @@ const ManagerView = (): JSX.Element => {
               {currentForm === 'create' ? 'Exit' : 'Create Restaurant'}
             </button>
           )}
-          <button
-            className={`action-button ${currentForm === 'edit' ? 'active' : ''}`}
-            onClick={() => handleToggleForm('edit')}
-          >
-            {currentForm === 'edit' ? 'Exit' : 'Edit Restaurant'}
-          </button>
-          <button
-            className={`action-button ${currentForm === 'open' ? 'active' : ''}`}
-            onClick={() => handleToggleForm('open')}
-          >
-            {currentForm === 'open' ? 'Exit' : 'Open Future Day'}
-          </button>
-          <button
-            className={`action-button ${currentForm === 'close' ? 'active' : ''}`}
-            onClick={() => handleToggleForm('close')}
-          >
-            {currentForm === 'close' ? 'Exit' : 'Close Future Day'}
-          </button>
-          <button
-            className={`action-button ${currentForm === 'review' ? 'active' : ''}`}
-            onClick={() => handleToggleForm('review')}
-          >
-            {currentForm === 'review' ? 'Exit' : 'Review Availability'}
-          </button>
-          {/* Show the "Delete Restaurant" button only if the user has a restaurant */}
+
+          {/* Show other buttons only if the user has a restaurant */}
           {hasRestaurant && (
-            <button className="delete-restaurant-button" onClick={handleDeleteClick}>
-              Delete Restaurant
-            </button>
-          )}
-          {/* Show the "Activate" button only if the user has a restaurant */}
-          {hasRestaurant && (
-            <div className="toggle-container">
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={isActivated}
-                  onChange={async () => {
-                    if (!isActivated) {
-                      await handleToggleSwitch();
-                    }
-                  }}
-                />
-                <span className="slider"></span>
-              </label>
-              <span className="toggle-label">
-                {isActivated ? 'Activated' : 'Activate'}
-              </span>
-            </div>
+            <>
+              {/* Edit Restaurant Button */}
+              <button
+                className={`action-button ${currentForm === 'edit' ? 'active' : ''}`}
+                onClick={() => handleToggleForm('edit')}
+              >
+                {currentForm === 'edit' ? 'Exit' : 'Edit Restaurant'}
+              </button>
+
+              {/* Open Future Day Button */}
+              <button
+                className={`action-button ${currentForm === 'open' ? 'active' : ''}`}
+                onClick={() => handleToggleForm('open')}
+              >
+                {currentForm === 'open' ? 'Exit' : 'Open Future Day'}
+              </button>
+
+              {/* Close Future Day Button */}
+              <button
+                className={`action-button ${currentForm === 'close' ? 'active' : ''}`}
+                onClick={() => handleToggleForm('close')}
+              >
+                {currentForm === 'close' ? 'Exit' : 'Close Future Day'}
+              </button>
+
+              {/* Review Availability Button */}
+              <button
+                className={`action-button ${currentForm === 'review' ? 'active' : ''}`}
+                onClick={() => handleToggleForm('review')}
+              >
+                {currentForm === 'review' ? 'Exit' : 'Review Availability'}
+              </button>
+
+              {/* Delete Restaurant Button */}
+              <button
+                className="delete-restaurant-button"
+                onClick={handleDeleteClick}
+              >
+                Delete Restaurant
+              </button>
+
+              {/* Activate Restaurant Toggle */}
+              <div className="toggle-container">
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={isActivated}
+                    onChange={async () => {
+                      if (!isActivated) {
+                        await handleToggleSwitch();
+                      }
+                    }}
+                  />
+                  <span className="slider"></span>
+                </label>
+                <span className="toggle-label">
+                  {isActivated ? 'Activated' : 'Activate'}
+                </span>
+              </div>
+            </>
           )}
         </div>
+        {/* Back button to go to Consumer View */}
         <div className="back-button-container">
           <button className="left-panel-back-button" onClick={handleGoBack}>
             Back to Consumer View
