@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function HomePage() {
   const router = useRouter();
 
+
   useEffect(() => {
     // Redirect to /consumer when the root page is accessed
     router.push('/consumer');

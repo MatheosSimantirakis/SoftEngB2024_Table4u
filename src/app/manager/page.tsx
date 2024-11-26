@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import {Manager, Reservation, Restaurant} from '../../model'
 import axios from 'axios';
 import {
   Table,

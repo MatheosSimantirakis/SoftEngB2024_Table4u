@@ -31,46 +31,68 @@ export class Admin{
 }
 
 export class Reservation{
-    seats: number 
-    table: Table
+    reservationId: number
+    restaurantId : number
+    email: string
+    day: Date
+    seats: number
     time: number
-    id: number
-    confirmationCode: number
+    confirmationNumber: string
 
-    constructor(seats: number, table: Table, time: number, id: number, confirmationCode: number){
+    constructor(reservationId: number, restaurantId : number, email: string, day: Date, seats: number, time: number, confirmationNumber: string){
+        this.reservationId = reservationId
+        this.restaurantId = restaurantId
+        this.email = email 
+        this.day = day
         this.seats = seats
-        this.table = table
         this.time = time
-        this.id = id
-        this.confirmationCode = confirmationCode
-    }
-    
+        this.confirmationNumber = confirmationNumber
+    }    
 }
 
-export class Table{
-    id: number
-    num_seats: number 
-    available: boolean
+export class Tables{
 
-    constructor(id: number, num_seats: number, available: boolean){
-        this.id = id
-        this.num_seats = num_seats 
-        this.available = available
+    tableId : number 
+    restaurantId : number 
+    tableNumber : number 
+    seats : number
+
+    constructor(tableId : number, restaurantId: number, tableNumber: number, seats: number){
+        this.tableId = tableId
+        this.restaurantId = restaurantId
+        this.tableNumber = tableNumber
+        this.seats = seats
     }
 }
-
 
 export class Restaurant {
+    restaurantId : number
     name : string 
     address : string
-    numTables : number
-    tables : Table
+    activated : boolean
+    startTime : string
+    endTime : string
+    
+    constructor(restaurantId: number, name: string, address: string, activated: boolean, startTime: string, endTime: string) {
+        this.restaurantId = restaurantId
+        this.name = name;
+        this.address = address;
+        this.activated = activated
+        this.startTime = startTime
+        this.endTime = endTime
+    }
+  }
 
-    constructor(name: string, address: string, numTables: number, tables: Table) {
-      this.name = name;
-      this.address = address;
-      this.numTables = numTables;
-      this.tables = tables;
+  export class OpenDays{
+    dayId: number
+    restaurantId : number 
+    openDate : Date
+
+    constructor(dayId : number, restaurantId : number, openDate : Date){
+        this.dayId = dayId
+        this.restaurantId = restaurantId
+        this.openDate = openDate
+
     }
   }
 
