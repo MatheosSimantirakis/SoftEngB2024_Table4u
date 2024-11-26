@@ -19,6 +19,7 @@ const searchSpecificRestaurant = createApiInstance('https://example.com'); // Re
 const makeReservation = createApiInstance('https://example.com'); // Replace with actual URL
 const findExistingReservation = createApiInstance('https://example.com'); // Replace with actual URL
 const cancelExistingReservation = createApiInstance('https://example.com'); // Replace with actual URL
+const loginInfo = createApiInstance('https://example.com'); // need to find URL
 
 const ConsumerView: React.FC = () => {
   // State for toggling the login modal visibility
@@ -62,6 +63,8 @@ const ConsumerView: React.FC = () => {
   const closeCreateAdmin = () => {
     setCreateAdmVisible(false); 
   }
+
+
 
   // Handler for login action based on role (manager or admin)
   const handleLogin = (role: string) => {
@@ -198,20 +201,56 @@ const ConsumerView: React.FC = () => {
             <div className="login-buttons">
               <button
                 className="login-button"
-                onClick={() => handleLogin('manager')}
+                onClick={async () => {
+                  try{
+                    const response = await loginInfo.post('/',{
+                      action: 'register',
+                      username,
+                      password,
+                      role: 'Manager'
+                  }); 
+                  if(response.status === 201){
+                    alert("Error creating manager: " + response.data.message);
+                  }
+                }catch (err){
+                  console.error('Error creating manager: ', err); 
+                  alert('An error occurrend. Please try aginan.'); 
+                }
+              }}
               >
                 Login as Manager
               </button>
               <button
                className='create-account-button'
                onClick={() =>openCreateMananger()}
+
                >
                 Create Manager?
                 </button>
 
+
               <button
                 className="login-button"
-                onClick={() => handleLogin('admin')}
+                onClick={async () =>{
+                  try{
+                    const response = await loginInfo.post('/',{
+                      action: 'register',
+                      username,
+                      password, 
+                      role: 'Admin',
+                    });
+
+                    if(response.status === 201){
+                      alert('Administrator created successfully'); 
+                      closeCreateAdmin
+                    } else {
+                      alert('Error creating administrator: ' + response.data.message); 
+                    }
+                  } catch (err) {
+                    console.error('Error creating administrator:', err);
+                    alert("An error occurred. Please try again."); 
+                  }
+                } }
               >
                 Login as Administrator
               </button>
@@ -300,11 +339,6 @@ const ConsumerView: React.FC = () => {
         
 
       )}
-
-
-
-
-
     </div>
   );
 };
