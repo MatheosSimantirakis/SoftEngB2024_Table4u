@@ -226,7 +226,7 @@ const ConsumerView: React.FC = () => {
                 className="login-button"
                 onClick={async () =>{
                   try{
-                    const response = await loginInfo.post('/',{
+                    const response = await loginInfo.post('https://tcg8mewv25.execute-api.us-east-2.amazonaws.com/login',{
                       action: 'register',
                       username,
                       password, 
@@ -237,7 +237,7 @@ const ConsumerView: React.FC = () => {
                       alert('Administrator created successfully'); 
                       closeCreateAdmin
                     } else {
-                      alert('Error creating administrator: ' + response.data.message); 
+                      alert('Error creating : ' + response.data.message); 
                     }
                   } catch (err) {
                     console.error('Error creating administrator:', err);
@@ -268,42 +268,6 @@ const ConsumerView: React.FC = () => {
         </div>
       )}
 
-      {isCreateManVisible &&(
-        <div className="modal-overlay">
-        <div className="login-modal">
-          <button className="close-button" onClick={closeCreateManager}>
-            ✕
-          </button>
-          <h2 className="login-title">Create Manager</h2>
-          <div className="login-inputs">
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="login-input"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="login-input"
-            />
-          </div>
-          <div className="login-buttons">
-            <button className='login-button'>
-              Submit
-              {/**send onlclick to lambda function to database*/}
-            </button>
-            
-          </div>
-        </div>
-      </div>
-        
-
-      )}
-
 {isCreateAdmVisible &&(
         <div className="modal-overlay">
         <div className="login-modal">
@@ -329,16 +293,13 @@ const ConsumerView: React.FC = () => {
           </div>
           <div className="login-buttons">
             <button className='login-button'>
-              Submit
-              {/**send onlclick to lambda function to database*/} 
               
+  
             </button>
             
           </div>
         </div>
       </div>
-        
-
       )}
 
       {/* Account Creation Modals */}
