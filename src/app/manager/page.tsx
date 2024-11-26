@@ -93,9 +93,10 @@ const ManagerView = (): JSX.Element => {
   const [date, setDate] = useState(''); // Selected date for opening or closing the restaurant
   const [error, setError] = useState(''); // Error messages for the form or actions
   const router = useRouter(); // Router instance for navigation
-  const [restaurantId, setRestaurantId] = useState(''); // Restaurant ID for editing and deleting
   const [showActivatePopup, setShowActivatePopup] = useState(false); // To show/hide the activate popup
   const [activateRestaurantId, setActivateRestaurantId] = useState(''); // To store the entered restaurant ID
+  const [showInitialPopup, setShowInitialPopup] = useState(true); // For the initial popup
+  const [restaurantId, setRestaurantId] = useState(''); // For the restaurant ID entered in the popup
 
   // Function for on-screen notifications
   const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
@@ -186,69 +187,106 @@ const ManagerView = (): JSX.Element => {
     }
   };
 
-// Helper function to show notifications
-const showNotification = (
-  message: string,
-  params: Record<string, string> = {},
-  type: string = 'success',
-  duration: number = 10000 // Default duration: 10 seconds
-) => {
-  const formattedMessage = Object.keys(params).reduce(
-    (msg, key) => msg.replace(`{${key}}`, params[key]),
-    message
-  );
+  // Helper function to show notifications
+  const showNotification = (
+    message: string,
+    params: Record<string, string> = {},
+    type: string = 'success',
+    duration: number = 10000 // Default duration: 10 seconds
+  ) => {
+    const formattedMessage = Object.keys(params).reduce(
+      (msg, key) => msg.replace(`{${key}}`, params[key]),
+      message
+    );
 
-  setNotification({ message: formattedMessage, visible: true, type });
+    setNotification({ message: formattedMessage, visible: true, type });
 
-  // Clear notification after specified duration
-  setTimeout(() => {
-    setNotification({ message: '', visible: false, type: '' });
-  }, duration);
-};
+    // Clear notification after specified duration
+    setTimeout(() => {
+      setNotification({ message: '', visible: false, type: '' });
+    }, duration);
+  };
 
   // Go back to consumer 
   const handleGoBack = () => router.push('/consumer');
 
+
+  // Handles submission of the restaurant ID entered by the manager
+  const handleSubmitRestaurantId = () => {
+    if (restaurantId.trim() === '') {
+      setError('Please enter a valid restaurant ID.');
+      return;
+    }
+    setHasRestaurant(true);
+    setShowInitialPopup(false);
+    setError('');
+  };
+
+  // Handles the case when the manager doesn't have a restaurant
+  const handleNoRestaurant = () => {
+    setShowInitialPopup(false);
+    setError(''); // Clear any errors
+  };
+
   // API: Create Restaurant
   const handleCreateRestaurant = async () => {
-    if (name && address && startTime && endTime && datesOpen.length > 0 && tables.length > 0) {
-      const payload = {
-        name,
-        address,
-        startTime: `${startTime}:00`,
-        endTime: `${endTime}:00`,
-        openDays: datesOpen,
-        tables: tables.map((table) => ({
+    if (!name || !address) {
+      setError('Name and Address are required.');
+      return;
+    }
+
+    // Get the current date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+
+    // Default values for optional fields
+    const payload = {
+      name,
+      address,
+      startTime: startTime || '08:00', // Default to 8:00 if not provided
+      endTime: endTime || '23:00', // Default to 23:00 if not provided
+      openDays: datesOpen.length > 0 ? datesOpen : [today], // Default to current day if not provided
+      tables: tables.length > 0
+        ? tables.map((table) => ({
           tableNumber: table.tableNumber,
           seats: table.num_seats,
-        })),
-      };
+        }))
+        : [{ tableNumber: 1, seats: 1 }], // Default to one table with one seat
+    };
 
-      console.log('Sending payload to create restaurant API:', payload);
+    console.log('Sending payload to create restaurant API:', payload);
 
-      try {
-        const response = await createRestaurantApi.post('/create-restaurant', payload);
+    try {
+      const response = await createRestaurantApi.post('/create-restaurant', payload);
 
-        if (response.data.statusCode === 200) {
-          setHasRestaurant(true);
-          setCurrentForm(null);
-          setName(response.data.name || name);
-          setAddress('');
+      if (response.data.statusCode === 200) {
+        setHasRestaurant(true);
+        setCurrentForm(null);
+        setName('');
+        setAddress('');
+        setStartTime('');
+        setEndTime('');
+        setDatesOpen([]);
+        setTables([]);
 
-          const message = JSON.parse(response.data.body)?.message || 'Restaurant created successfully';
-          showNotification(`${message}`);
-        } else {
-          showNotification('Could not create Restaurant', {}, 'error');
-        }
-      } catch (error) {
-        console.error('Error creating restaurant:', error);
-        setError('Failed to create restaurant. Please try again.');
+        const message =
+          JSON.parse(response.data.body)?.message || 'Restaurant created successfully';
+        showNotification(`${message}`);
+      } else {
+        console.error('API responded with an error:', response.data);
+        showNotification('Could not create Restaurant', {}, 'error');
       }
-    } else {
-      setError('All fields are required, including open/close times, dates, and tables.');
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error:', error.response?.data || error.message);
+        setError(`API Error: ${error.response?.data?.message || error.message}`);
+      } else {
+        console.error('Unexpected error:', error);
+        setError('An unexpected error occurred. Please try again.');
+      }
     }
   };
 
+  // API: Edit Restaurant
   const handleEditRestaurant = async () => {
     if (!restaurantId || !name || !address || !startTime || !endTime || tables.length === 0) {
       setError('All fields are required, including ID, name, address, opening/closing times, and tables.');
@@ -409,6 +447,31 @@ const showNotification = (
 
   return (
     <div className="page-container">
+      {/* Initial Popup asking if the Manager has a restaurant already or not */}
+      {showInitialPopup && (
+        <div className="modal-overlay">
+          <div className="existing-restaurant-popup">
+            <h2>Do you an existing restaurant?</h2>
+            <input
+              type="text"
+              placeholder="Restaurant ID"
+              value={restaurantId}
+              onChange={(e) => setRestaurantId(e.target.value)}
+              className="popup-input"
+            />
+            {error && <p className="form-error-message">{error}</p>}
+            <div className="popup-buttons">
+              <button className="id-submit-button" onClick={handleSubmitRestaurantId}>
+                Find Existing Restaurant
+              </button>
+              <button className="cancel-button" onClick={handleNoRestaurant}>
+                I Don't Have One
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Left Panel: Contains Logo, Subheading, and Action Buttons */}
       <div className="left-panel">
         <div className="left-panel-header">
@@ -439,13 +502,15 @@ const showNotification = (
                 </button>
               )}
 
-              {/* Edit Restaurant Button */}
-              <button
-                className={`action-button ${currentForm === 'edit' ? 'active' : ''}`}
-                onClick={() => handleToggleForm('edit')}
-              >
-                {currentForm === 'edit' ? 'Exit' : 'Edit Restaurant'}
-              </button>
+              {/* Show the "Edit Restaurant" button only if the restaurant is not activated */}
+              {!isActivated && (
+                <button
+                  className={`action-button ${currentForm === 'edit' ? 'active' : ''}`}
+                  onClick={() => handleToggleForm('edit')}
+                >
+                  {currentForm === 'edit' ? 'Exit' : 'Edit Restaurant'}
+                </button>
+              )}
 
               {/* Open Future Day Button */}
               <button
@@ -494,25 +559,28 @@ const showNotification = (
         {/* Check if the Create Form should be displayed */}
         {currentForm === 'create' && (
           <FormWrapper title="Create Restaurant">
-            {/* Restaurant name */}
+
+            {/* Restaurant Name */}
             <div className="form-group">
-              <label className="form-label" htmlFor="name">Name</label>
+              <label className="form-label" htmlFor="name">Name *</label>
               <input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="form-input"
+                required
               />
             </div>
 
             {/* Address */}
             <div className="form-group">
-              <label className="form-label" htmlFor="address">Address</label>
+              <label className="form-label" htmlFor="address">Address *</label>
               <input
                 id="address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className="form-input"
+                required
               />
             </div>
 

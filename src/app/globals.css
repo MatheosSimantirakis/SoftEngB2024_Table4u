@@ -152,80 +152,6 @@ body {
   background-color: #b02a37;
 }
 
-.delete-confirmation-popup {
-  color: #000000;
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  width: 300px;
-}
-
-.activate-confirmation-popup {
-  color: #000000;
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  width: 300px;
-}
-
-.popup-input {
-  width: 100%; 
-  padding: 10px; 
-  margin-top: 10px;
-  margin-bottom: 2px; 
-  border: 1px solid #ccc; 
-  border-radius: 4px;
-  font-size: 16px; 
-  box-sizing: border-box; 
-  transition: border-color 0.3s ease; 
-}
-
-.activate-confirm-button,
-.delete-confirm-button,
-.cancel-button {
-  margin-top: 10px;
-  padding: 10px 20px;
-  font-size: 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
-  transition: background-color 0.3s ease;
-}
-
-.delete-confirm-button {
-  background-color: var(--danger-color);
-  color: #ffffff;
-}
-
-.delete-confirm-button:hover {
-  background-color: #b02a37;
-}
-
-.activate-confirm-button {
-  background-color: var(--safe-color);
-  color: #ffffff;
-}
-
-.activate-confirm-button:hover {
-  background-color: #2f9e5b;
-}
-
-.cancel-button {
-  background-color: var(--gray-color);
-  color: #ffffff;
-}
-
-.cancel-button:hover {
-  background-color: #565d63;
-}
-
 /* ---------------- Admin View Styles ---------------- */
 
 .list-admin {
@@ -925,6 +851,103 @@ input:checked+.slider:before {
 .login-input:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
+/* ---------------- On-Screen Popups Styles ---------------- */
+
+.delete-confirmation-popup {
+  color: #000000;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 300px;
+}
+
+.activate-confirmation-popup {
+  color: #000000;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 300px;
+}
+
+.existing-restaurant-popup {
+  color: #000000;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 300px;
+}
+
+.popup-input {
+  width: 100%; 
+  padding: 10px; 
+  margin-top: 10px;
+  margin-bottom: 2px; 
+  border: 1px solid #ccc; 
+  border-radius: 4px;
+  font-size: 16px; 
+  box-sizing: border-box; 
+  transition: border-color 0.3s ease; 
+}
+
+.id-submit-button,
+.activate-confirm-button,
+.delete-confirm-button,
+.cancel-button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.id-submit-button {
+  background-color: var(--primary-color);
+  color: #ffffff;
+}
+
+.id-submit-button:hover {
+  background-color: #0056b3;
+}
+
+.delete-confirm-button {
+  background-color: var(--danger-color);
+  color: #ffffff;
+}
+
+.delete-confirm-button:hover {
+  background-color: #b02a37;
+}
+
+.activate-confirm-button {
+  background-color: var(--safe-color);
+  color: #ffffff;
+}
+
+.activate-confirm-button:hover {
+  background-color: #2f9e5b;
+}
+
+.cancel-button {
+  background-color: var(--gray-color);
+  color: #ffffff;
+}
+
+.cancel-button:hover {
+  background-color: #565d63;
 }
 
 /* ---------------- On-Screen Notification Styles ---------------- */
