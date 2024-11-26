@@ -1,6 +1,6 @@
 // Table Type
 export interface Table {
-    id: number;
+    tableNumber: number;
     num_seats: number;
     available: boolean;
   }

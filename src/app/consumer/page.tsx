@@ -4,55 +4,84 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 
-// Dynamic baseURL for all APIs
+// Function to create API instances with base URLs
 const createApiInstance = (baseURL: string) => {
   return axios.create({
     baseURL,
   });
 };
 
-const listActiveRestaurants = createApiInstance('https://example.com'); // Replace with actual URL
-const searchAvailableRestaurants = createApiInstance('https://example.com'); // Replace with actual URL
-const searchSpecificRestaurant = createApiInstance('https://example.com'); // Replace with actual URL
-const makeReservation = createApiInstance('https://example.com'); // Replace with actual URL
-const findExistingReservation = createApiInstance('https://example.com'); // Replace with actual URL
-const cancelExistingReservation = createApiInstance('https://example.com'); // Replace with actual URL
+// Placeholder API instances for backend endpoints
+const listActiveRestaurants = createApiInstance('https://example.com');
+const searchAvailableRestaurants = createApiInstance('https://example.com');
+const searchSpecificRestaurant = createApiInstance('https://example.com');
+const makeReservation = createApiInstance('https://example.com');
+const findExistingReservation = createApiInstance('https://example.com');
+const cancelExistingReservation = createApiInstance('https://example.com');
+
+// Reusable component for account creation modal
+const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
+  <div className="modal-overlay">
+    <div className="login-modal">
+      <button className="close-button" onClick={onClose}>
+        ✕
+      </button>
+      <h2 className="login-title">{title}</h2>
+      <div className="login-inputs">
+        <input type="text" placeholder="Username" className="login-input" />
+        <input type="password" placeholder="Password" className="login-input" />
+      </div>
+      <div className="login-buttons">
+        <button className="create-account-button">Create Account</button>
+      </div>
+    </div>
+  </div>
+);
 
 const ConsumerView: React.FC = () => {
-  // State for toggling the login modal visibility
-  const [isLoginVisible, setLoginVisible] = useState(false);
+  const [isLoginVisible, setLoginVisible] = useState(false); // Login modal visibility
+  const [isCreateManVisible, setCreateManVisible] = useState(false); // Manager account modal visibility
+  const [isCreateAdmVisible, setCreateAdmVisible] = useState(false); // Admin account modal visibility
+  const [isLoading, setIsLoading] = useState(false); // Loading state for transitions
 
-  // State for storing login credentials
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState(''); // Username input state
+  const [password, setPassword] = useState(''); // Password input state
 
-  // State for storing the selected date from the calendar
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(''); // Date filter state
+  const router = useRouter(); // Router instance for navigation
 
-  const router = useRouter();
+  // Show/hide the login modal
+  const handleOpenLogin = () => setLoginVisible(true);
+  const handleCloseLogin = () => setLoginVisible(false);
 
-  // Handlers for showing and hiding the login modal
-  const handleOpenLogin = () => {
-    setLoginVisible(true);
-  };
-
-  const handleCloseLogin = () => {
+  // Show/hide the account creation modals, ensuring only one modal is visible
+  const openCreateManager = () => {
     setLoginVisible(false);
+    setCreateManVisible(true);
   };
 
-  // Handler for login action based on role (manager or admin)
-  const handleLogin = (role: string) => {
+  const closeCreateManager = () => setCreateManVisible(false);
+
+  const openCreateAdmin = () => {
+    setLoginVisible(false);
+    setCreateAdmVisible(true);
+  };
+
+  const closeCreateAdmin = () => setCreateAdmVisible(false);
+
+  // Handle login based on role and redirect
+  const handleLogin = async (role: string) => {
+    setIsLoading(true); // Set loading state
     if (role === 'manager') {
-      console.log(`Logging in as Manager with username: ${username}`);
-      router.push('/manager'); // Redirect to manager page
+      await router.push('/manager'); // Redirect to manager dashboard
     } else if (role === 'admin') {
-      console.log(`Logging in as Admin with username: ${username}`);
-      router.push('/admin'); // Redirect to admin page
+      await router.push('/admin'); // Redirect to admin dashboard
     }
-    setLoginVisible(false); // Close the modal after login
+    setIsLoading(false); // Clear loading state
+    setLoginVisible(false); // Close login modal
   };
 
-  // Handler for date selection from the calendar input
+  // Update the selected date for filtering
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(event.target.value);
     console.log(`Selected date: ${event.target.value}`);
@@ -60,53 +89,33 @@ const ConsumerView: React.FC = () => {
 
   return (
     <div className="consumer-view">
-      {/* Header Section: Contains the logo, login button, and search bar */}
+      {/* Header with logo, login button, and search bar */}
       <header className="consumer-header">
         <img src="/logo.svg" alt="Tables4U Logo" className="logo-consumer" />
         <button className="login-button-consumer" onClick={handleOpenLogin}>
           Log in
         </button>
         <div className="search-container-consumer">
-          <input
-            type="text"
-            placeholder="Search for a restaurant..."
-            className="search-input-consumer"
-          />
+          <input type="text" placeholder="Search for a restaurant..." className="search-input-consumer" />
           <button className="search-button-consumer">Search</button>
         </div>
       </header>
 
-      {/* Filters Section: Buttons and dropdowns for filtering reservations */}
+      {/* Filters for reservations (date and time) */}
       <section className="filters-section-consumer">
         <button className="my-reservations-button-consumer">My Reservations</button>
-        <input
-          type="date" // Calendar input for selecting a date
-          className="date-input-consumer"
-          value={selectedDate}
-          onChange={handleDateChange}
-        />
+        <input type="date" className="date-input-consumer" value={selectedDate} onChange={handleDateChange} />
         <select className="dropdown-consumer">
           <option value="All times">Time</option>
-          <option value="08:00">08:00</option>
-          <option value="09:00">09:00</option>
-          <option value="10:00">10:00</option>
-          <option value="11:00">11:00</option>
-          <option value="12:00">12:00</option>
-          <option value="13:00">13:00</option>
-          <option value="14:00">14:00</option>
-          <option value="15:00">15:00</option>
-          <option value="16:00">16:00</option>
-          <option value="17:00">17:00</option>
-          <option value="18:00">18:00</option>
-          <option value="19:00">19:00</option>
-          <option value="20:00">20:00</option>
-          <option value="21:00">21:00</option>
-          <option value="22:00">22:00</option>
-          <option value="23:00">23:00</option>
+          {Array.from({ length: 16 }, (_, i) => i + 8).map((hour) => (
+            <option key={hour} value={`${hour}:00`}>
+              {`${hour}:00`}
+            </option>
+          ))}
         </select>
       </section>
 
-      {/* Results Section: List of available restaurants */}
+      {/* Display list of available restaurants */}
       <section className="results-section-consumer">
         <h3 className="results-title-consumer">Available Restaurants</h3>
         <ul className="results-list-consumer">
@@ -140,7 +149,7 @@ const ConsumerView: React.FC = () => {
         </ul>
       </section>
 
-      {/* Login Modal: Displayed when the login button is clicked */}
+      {/* Login Modal */}
       {isLoginVisible && (
         <div className="modal-overlay">
           <div className="login-modal">
@@ -148,7 +157,6 @@ const ConsumerView: React.FC = () => {
               ✕
             </button>
             <h2 className="login-title">Log in</h2>
-            <p className="login-subtitle">Enter your credentials</p>
             <div className="login-inputs">
               <input
                 type="text"
@@ -165,23 +173,29 @@ const ConsumerView: React.FC = () => {
                 className="login-input"
               />
             </div>
-            <div className="login-buttons">
-              <button
-                className="login-button"
-                onClick={() => handleLogin('manager')}
-              >
+            <div className="login-buttons-container">
+              <button className="login-button" onClick={() => handleLogin('manager')}>
                 Login as Manager
               </button>
-              <button
-                className="login-button"
-                onClick={() => handleLogin('admin')}
-              >
+              <button className="login-button" onClick={() => handleLogin('admin')}>
                 Login as Administrator
               </button>
+            </div>
+            <div className="create-account-link-container">
+              <span className="create-account-link" onClick={openCreateManager}>
+                Create Manager Account
+              </span>
+              <span className="create-account-link" onClick={openCreateAdmin}>
+                Create Administrator Account
+              </span>
             </div>
           </div>
         </div>
       )}
+
+      {/* Account Creation Modals */}
+      {isCreateManVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}
+      {isCreateAdmVisible && <AccountCreationModal title="Create Administrator Account" onClose={closeCreateAdmin} />}
     </div>
   );
 };

@@ -32,9 +32,9 @@ export default function RestaurantPage() {
 
   // Sample reservation data using the Reservation type
   const [reservations] = useState<Reservation[]>([
-    { seats: 2, table: { id: 1, num_seats: 4, available: true }, time: 10, id: 101, confirmationCode: 12345 },
-    { seats: 4, table: { id: 2, num_seats: 4, available: true }, time: 11.5, id: 102, confirmationCode: 12346 },
-    { seats: 1, table: { id: 3, num_seats: 2, available: true }, time: 13, id: 103, confirmationCode: 12347 },
+    { seats: 2, table: { tableNumber: 1, num_seats: 4, available: true }, time: 10, id: 101, confirmationCode: 12345 },
+    { seats: 4, table: { tableNumber: 2, num_seats: 4, available: true }, time: 11.5, id: 102, confirmationCode: 12346 },
+    { seats: 1, table: { tableNumber: 3, num_seats: 2, available: true }, time: 13, id: 103, confirmationCode: 12347 },
   ]);
 
   // Handles changes in the selected date
@@ -80,12 +80,14 @@ export default function RestaurantPage() {
 
   // API: Delete Restaurant
   const handleDeleteRestaurant = async () => {
-    setIsLoading(true);
+    console.log('Sending request to delete restaurant:', { name });
+
     try {
       const response = await deleteRestaurantApi.post('/deleteRestaurant', { name });
+      console.log('API response:', response.data);
+
       if (response.data.statusCode === 200) {
         setShowDeleteConfirmation(false);
-        setError('');
         showNotification(`Successfully deleted ${name}`);
       } else {
         console.error('Failed to delete restaurant:', response.data.body);
@@ -94,8 +96,6 @@ export default function RestaurantPage() {
     } catch (error) {
       console.error('Delete Error:', error);
       setError('An error occurred while deleting the restaurant.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -115,11 +115,7 @@ export default function RestaurantPage() {
             <button className="action-button" onClick={() => showNotification('Availability report generated')}>
               Generate Availability Report
             </button>
-            <button 
-              className="delete-restaurant-button" 
-              onClick={handleDeleteClick}
-              disabled={isLoading}
-              >
+            <button className="delete-restaurant-button" onClick={handleDeleteClick}>
               Delete Restaurant
             </button>
           </div>
@@ -165,7 +161,6 @@ export default function RestaurantPage() {
             <p>Are you sure you want to delete {name}?</p>
             <button
               className="confirm-button"
-              disabled={isLoading}
               onClick={() => showNotification(`Restaurant ${name} deleted`)}
             >
               Yes, Delete
