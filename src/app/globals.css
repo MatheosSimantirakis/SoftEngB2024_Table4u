@@ -109,7 +109,7 @@ body {
   align-items: center;
   gap: 10px; 
   width: 100%;
-  margin-top: 160px;
+  margin-top: 140px;
 }
 
 .action-button {
@@ -824,28 +824,33 @@ input:checked+.slider:before {
   opacity: 0;
 }
 
-.submit-button-open-future-day:hover,
-.submit-button-close-future-day:hover {
-  background-color: #0056b3;
+.notification.success {
+  background-color: #4caf50; 
 }
 
-/* ---------------- Placeholder Text Manager Window ---------------- */
-
-.placeholder-manager {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  font-size: 18px;
-  color: #6c757d;
+.notification.error {
+  background-color: #DC3645; 
 }
 
-.create-account-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 12px;
-  color: black;
+@keyframes fadeInOut {
+  0% { 
+    opacity: 0; 
+    transform: translate(-50%, 90px); 
+  } 
+  10% { 
+    opacity: 1; 
+    transform: translate(-50%, 0); 
+  } 
+  90% { 
+    opacity: 1; 
+    transform: translate(-50%, 0); 
+  } 
+  100% { 
+    opacity: 0; 
+    transform: translate(-50%, 90px); 
+  } 
 }
 
-
+* {
+  outline: 1px solid red; 
+}
