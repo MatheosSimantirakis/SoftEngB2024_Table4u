@@ -50,18 +50,18 @@ export class Reservation{
     }    
 }
 
-export class Table{
-    tableId: number
-    localId: number
-    restaurantId: number 
-    numSeats: number 
+export class Tables{
 
-    constructor(tableId: number, localId: number, restuarantId: number, numSeats: number){
+    tableId : number 
+    restaurantId : number 
+    tableNumber : number 
+    seats : number
+
+    constructor(tableId : number, restaurantId: number, tableNumber: number, seats: number){
         this.tableId = tableId
-        this.localId = localId
-        this.restaurantId = restuarantId
-        this.numSeats = numSeats 
-        
+        this.restaurantId = restaurantId
+        this.tableNumber = tableNumber
+        this.seats = seats
     }
 }
 
@@ -69,15 +69,30 @@ export class Restaurant {
     restaurantId : number
     name : string 
     address : string
-    numTables : number
+    activated : boolean
+    startTime : string
+    endTime : string
     
-
-    constructor(restaurantId: number, name: string, address: string, numTables: number, tables: Table) {
+    constructor(restaurantId: number, name: string, address: string, activated: boolean, startTime: string, endTime: string) {
         this.restaurantId = restaurantId
         this.name = name;
         this.address = address;
-        this.numTables = numTables;
-      
+        this.activated = activated
+        this.startTime = startTime
+        this.endTime = endTime
+    }
+  }
+
+  export class OpenDays{
+    dayId: number
+    restaurantId : number 
+    openDate : Date
+
+    constructor(dayId : number, restaurantId : number, openDate : Date){
+        this.dayId = dayId
+        this.restaurantId = restaurantId
+        this.openDate = openDate
+
     }
   }
 
