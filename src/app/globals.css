@@ -9,6 +9,7 @@
   --font-family: 'Open Sans', sans-serif;
   --primary-color: #007bff;
   --danger-color: #dc3545;
+  --safe-color: #38C871;
   --gray-color: #6c757d;
 }
 
@@ -109,7 +110,7 @@ body {
   align-items: center;
   gap: 10px; 
   width: 100%;
-  margin-top: 140px;
+  margin-top: 120px;
 }
 
 .action-button {
@@ -162,7 +163,31 @@ body {
   width: 300px;
 }
 
-.confirm-button,
+.activate-confirmation-popup {
+  color: #000000;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 300px;
+}
+
+.popup-input {
+  width: 100%; 
+  padding: 10px; 
+  margin-top: 10px;
+  margin-bottom: 2px; 
+  border: 1px solid #ccc; 
+  border-radius: 4px;
+  font-size: 16px; 
+  box-sizing: border-box; 
+  transition: border-color 0.3s ease; 
+}
+
+.activate-confirm-button,
+.delete-confirm-button,
 .cancel-button {
   margin-top: 10px;
   padding: 10px 20px;
@@ -174,13 +199,22 @@ body {
   transition: background-color 0.3s ease;
 }
 
-.confirm-button {
+.delete-confirm-button {
   background-color: var(--danger-color);
   color: #ffffff;
 }
 
-.confirm-button:hover {
+.delete-confirm-button:hover {
   background-color: #b02a37;
+}
+
+.activate-confirm-button {
+  background-color: var(--safe-color);
+  color: #ffffff;
+}
+
+.activate-confirm-button:hover {
+  background-color: #2f9e5b;
 }
 
 .cancel-button {
@@ -189,7 +223,7 @@ body {
 }
 
 .cancel-button:hover {
-  background-color: var(--gray-color);
+  background-color: #565d63;
 }
 
 /* ---------------- Admin View Styles ---------------- */
@@ -460,7 +494,7 @@ body {
   background-color: #0056b3;
 }
 
-/* ---------------- Login Pop-Up Styles ---------------- */
+/* ---------------- Login/ Create Account Popup Styles ---------------- */
 
 .modal-overlay {
   position: fixed;
@@ -480,7 +514,7 @@ body {
   background: #ffffff;
   padding: 30px;
   border-radius: 10px;
-  width: 400px;
+  width: 700px; 
   max-width: 90%;
   text-align: center;
   position: relative;
@@ -554,6 +588,24 @@ body {
   background-color: #0056b3;
 }
 
+.create-account-button {
+  display: block; 
+  margin: 0 auto;
+  padding: 8px 10px; 
+  font-size: 16px;
+  color: #ffffff;
+  background-color: var(--primary-color);
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease;
+  width: 380px; 
+}
+
+.create-account-button:hover {
+  background-color: #0056b3;
+}
+
 /* ---------------- Manager View Styles ---------------- */
 
 .placeholder-manager {
@@ -624,8 +676,11 @@ body {
   border-radius: 4px;
   margin: 0 auto;
   cursor: pointer;
-  margin-top: 25px;
   transition: all 0.3s ease;
+}
+
+.form-submit-button:hover {
+  background-color: #0056b3;
 }
 
 .form-submit-button:hover {
@@ -637,6 +692,36 @@ body {
   font-size: 14px;
   margin-top: 8px;
   margin-bottom: 8px;
+}
+
+.inline-fields {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.inline-fields .id-field {
+  flex: 0 0 100px; 
+}
+
+.inline-fields .name-field {
+  flex-grow: 1; 
+}
+
+.create-account-link-container {
+  margin-top: 5px;
+}
+
+.create-account-link {
+  color: var(--gray-color);
+  cursor: pointer;
+  font-size: 13px;
+  margin: 0 15px;
+}
+
+.create-account-link:hover {
+  color: #565d63;;
 }
 
 /* ---------------- Tables and Seats Styles ---------------- */
@@ -705,7 +790,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   background-color: #f0f0f0;
   padding: 8px;
   border-radius: 5px;
@@ -749,26 +834,6 @@ body {
 
 /* ---------------- Activate/ Deactivate Restaurant Toggle Styles ---------------- */
 
-.toggle-container {
-  display: flex;
-  align-items: center;
-  margin-top: 10px;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 20px;
-  margin-right: 10px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
 .slider {
   position: absolute;
   cursor: pointer;
@@ -806,7 +871,63 @@ input:checked+.slider:before {
   color: #333;
 }
 
-/* ----------------On-Screen Notification Styles ---------------- */
+/* ---------------- Login Styles ---------------- */
+
+.inline-create-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.login-buttons-container{
+  display: flex;
+  justify-content: space-between;
+}
+
+.login-button {
+  flex: 1;
+  margin: 0px 5px;
+  padding: 10px 15px;
+  font-size: 15px;
+  color: #ffffff;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.inline-button:hover {
+  background-color: #0056b3;
+}
+
+.login-modal {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 10px;
+  width: 460px;
+  max-width: 90%;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+
+.login-input {
+  width: calc(100% - 20px);
+  margin: 5px auto;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.login-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
+/* ---------------- On-Screen Notification Styles ---------------- */
 
 .notification {
   position: fixed;
@@ -819,7 +940,7 @@ input:checked+.slider:before {
   z-index: 1000;
   color: #fff;
   max-width: 90%;
-  animation: fadeInOut 3s ease-in-out forwards; 
+  animation: fadeInOut 9s ease-in-out forwards; 
   visibility: visible; 
   opacity: 0;
 }
@@ -851,6 +972,8 @@ input:checked+.slider:before {
   } 
 }
 
-* {
+/* ---------------- For Debugging ---------------- */
+
+/* * {
   outline: 1px solid red; 
-}
+} */

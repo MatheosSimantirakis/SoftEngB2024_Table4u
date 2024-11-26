@@ -32,9 +32,9 @@ export default function RestaurantPage() {
 
   // Sample reservation data using the Reservation type
   const [reservations] = useState<Reservation[]>([
-    { seats: 2, table: { id: 1, num_seats: 4, available: true }, time: 10, id: 101, confirmationCode: 12345 },
-    { seats: 4, table: { id: 2, num_seats: 4, available: true }, time: 11.5, id: 102, confirmationCode: 12346 },
-    { seats: 1, table: { id: 3, num_seats: 2, available: true }, time: 13, id: 103, confirmationCode: 12347 },
+    { seats: 2, table: { tableNumber: 1, num_seats: 4, available: true }, time: 10, id: 101, confirmationCode: 12345 },
+    { seats: 4, table: { tableNumber: 2, num_seats: 4, available: true }, time: 11.5, id: 102, confirmationCode: 12346 },
+    { seats: 1, table: { tableNumber: 3, num_seats: 2, available: true }, time: 13, id: 103, confirmationCode: 12347 },
   ]);
 
   // Handles changes in the selected date
