@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {Consumer, Reservation, Restaurant} from '../../model'
+import { Consumer, Reservation, Restaurant } from '../../model'
 
 import axios from 'axios';
 
@@ -39,12 +39,13 @@ const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = (
     </div>
   </div>
 );
+
 const loginInfo = createApiInstance('https://example.com'); // need to find URL
 
 const ConsumerView: React.FC = () => {
   const [isLoginVisible, setLoginVisible] = useState(false); // Login modal visibility
-  const [isCreateManVisible, setCreateManVisible] = useState(false); // Manager account modal visibility
-  const [isCreateAdmVisible, setCreateAdmVisible] = useState(false); // Admin account modal visibility
+  const [isCreateManagerVisible, setCreateManagerVisible] = useState(false); // Manager account modal visibility
+  const [isCreateAdminVisible, setCreateAdminVisible] = useState(false); // Admin account modal visibility
   const [isLoading, setIsLoading] = useState(false); // Loading state for transitions
 
   const [username, setUsername] = useState(''); // Username input state
@@ -57,38 +58,19 @@ const ConsumerView: React.FC = () => {
   const handleOpenLogin = () => setLoginVisible(true);
   const handleCloseLogin = () => setLoginVisible(false);
 
-  // Show/hide the account creation modals, ensuring only one modal is visible
-  const openCreateManager = () => {
+   // Functions to toggle manager account creation modal visibility
+   const openCreateManager = () => {
     setLoginVisible(false);
-    setCreateManVisible(true);
+    setCreateManagerVisible(true);
   };
+  const closeCreateManager = () => setCreateManagerVisible(false);
 
-  const closeCreateManager = () => setCreateManVisible(false);
-
+  // Functions to toggle admin account creation modal visibility
   const openCreateAdmin = () => {
     setLoginVisible(false);
-    setCreateAdmVisible(true);
+    setCreateAdminVisible(true);
   };
-
-  // const openCreateMananger = () => {
-  //   setCreateManVisible(true);
-  // }
-
-  // const closeCreateManager = () => {
-  //   setCreateManVisible(false); 
-  // }
-
-  // const openCreateAdmin = () => {
-  //   setCreateAdmVisible(true);
-  // }
-
-  // const closeCreateAdmin = () => {
-  //   setCreateAdmVisible(false); 
-  // }
-
-
-
-  const closeCreateAdmin = () => setCreateAdmVisible(false);
+  const closeCreateAdmin = () => setCreateAdminVisible(false);
 
   // Handle login based on role and redirect
   const handleLogin = async (role: string) => {
@@ -103,14 +85,14 @@ const ConsumerView: React.FC = () => {
   };
 
   const handleManager = () => {
-    router.push('/manager'); 
+    router.push('/manager');
   }
 
-  const handleCreateAccount = (role: String) =>{
-    if(role === 'manager'){
+  const handleCreateAccount = (role: String) => {
+    if (role === 'manager') {
       router.push('/createAdmin')
-    } else if (role ='admin'){
-      
+    } else if (role = 'admin') {
+
     }
   }
 
@@ -121,7 +103,8 @@ const ConsumerView: React.FC = () => {
   };
 
   return (
-    <div className="consumer-view">
+    <div className="consumer-view">\
+
       {/* Header with logo, login button, and search bar */}
       <header className="consumer-header">
         <img src="/logo.svg" alt="Tables4U Logo" className="logo-consumer" />
@@ -152,6 +135,7 @@ const ConsumerView: React.FC = () => {
       <section className="results-section-consumer">
         <h3 className="results-title-consumer">Available Restaurants</h3>
         <ul className="results-list-consumer">
+
           {/* Example of a restaurant card */}
           <li className="result-item-consumer">
             <h4 className="restaurant-name-consumer">Tech Pizza</h4>
@@ -211,55 +195,35 @@ const ConsumerView: React.FC = () => {
                 className="login-button"
                 onClick={handleManager}
               >
-                Login Manager/Create Restaurant
+                Login Manager/ Create Restaurant
               </button>
-              {/* <button
-               className='create-account-button'
-               onClick={() =>openCreateManager()}
-
-               >
-                Create Manager?
-                </button>
- */}
-
               <button
                 className="login-button"
-                onClick={async () =>{
-                  try{
-                    const response = await loginInfo.post('/',{
+                onClick={async () => {
+                  try {
+                    const response = await loginInfo.post('/', {
                       action: 'register',
                       username,
-                      password, 
+                      password,
                       role: 'Admin',
                     });
 
-                    if(response.status === 201){
-                      alert('Administrator created successfully'); 
+                    if (response.status === 201) {
+                      alert('Administrator created successfully');
                       closeCreateAdmin
                     } else {
-                      alert('Error creating administrator: ' + response.data.message); 
+                      alert('Error creating administrator: ' + response.data.message);
                     }
                   } catch (err) {
                     console.error('Error creating administrator:', err);
-                    alert("An error occurred. Please try again."); 
+                    alert("An error occurred. Please try again.");
                   }
-                } }
+                }}
               >
                 Login as Administrator
               </button>
-              
-              
-                {/* <button
-               className='create-account-button'
-               onClick={() =>openCreateAdmin()}
-               >
-                Create Administrator?
-                </button> */}
             </div>
             <div className="create-account-link-container">
-              {/* <span className="create-account-link" onClick={openCreateManager}>
-                Create Manager Account
-              </span> */}
               <span className="create-account-link" onClick={openCreateAdmin}>
                 Create Administrator Account
               </span>
@@ -268,82 +232,9 @@ const ConsumerView: React.FC = () => {
         </div>
       )}
 
-      {isCreateManVisible &&(
-        <div className="modal-overlay">
-        <div className="login-modal">
-          <button className="close-button" onClick={closeCreateManager}>
-            ✕
-          </button>
-          <h2 className="login-title">Create Manager</h2>
-          <div className="login-inputs">
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="login-input"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="login-input"
-            />
-          </div>
-          <div className="login-buttons">
-            <button className='login-button'>
-              Submit
-              {/**send onlclick to lambda function to database*/}
-            </button>
-            
-          </div>
-        </div>
-      </div>
-        
-
-      )}
-
-{isCreateAdmVisible &&(
-        <div className="modal-overlay">
-        <div className="login-modal">
-          <button className="close-button" onClick={closeCreateAdmin}>
-            ✕
-          </button>
-          <h2 className="login-title">Create Aministrator</h2>
-          <div className="login-inputs">
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="login-input"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="login-input"
-            />
-          </div>
-          <div className="login-buttons">
-            <button className='login-button'>
-              Submit
-              {/**send onlclick to lambda function to database*/} 
-              
-            </button>
-            
-          </div>
-        </div>
-      </div>
-        
-
-      )}
-
       {/* Account Creation Modals */}
-      {isCreateManVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}
-      {isCreateAdmVisible && <AccountCreationModal title="Create Administrator Account" onClose={closeCreateAdmin} />}
+      {isCreateManagerVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}
+      {isCreateAdminVisible && <AccountCreationModal title="Create Administrator Account" onClose={closeCreateAdmin} />}
     </div>
   );
 };
