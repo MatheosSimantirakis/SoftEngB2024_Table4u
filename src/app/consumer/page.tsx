@@ -48,8 +48,8 @@ const Notification = ({ message, visible, type }: { message: string; visible: bo
 
 const ConsumerView: React.FC = () => {
   const [isLoginVisible, setLoginVisible] = useState(false); // Login modal visibility
-  const [isCreateManagerVisible, setCreateManagerVisible] = useState(false); // Manager account modal visibility
-  const [isCreateAdminVisible, setCreateAdminVisible] = useState(false); // Admin account modal visibility
+  const [isCreateManVisible, setCreateManVisible] = useState(false); // Manager account modal visibility
+  const [isCreateAdmVisible, setCreateAdmVisible] = useState(false); // Admin account modal visibility
   const [isLoading, setIsLoading] = useState(false); // Loading state for transitions
   const [username, setUsername] = useState(''); // Username input state
   const [password, setPassword] = useState(''); // Password input state
@@ -93,16 +93,33 @@ const ConsumerView: React.FC = () => {
   // Functions to toggle manager account creation modal visibility
   const openCreateManager = () => {
     setLoginVisible(false);
-    setCreateManagerVisible(true);
+    setCreateManVisible(true);
   };
-  const closeCreateManager = () => setCreateManagerVisible(false);
 
-  // Functions to toggle admin account creation modal visibility
+  const closeCreateManager = () => setCreateManVisible(false);
+
   const openCreateAdmin = () => {
     setLoginVisible(false);
-    setCreateAdminVisible(true);
+    setCreateAdmVisible(true);
   };
-  const closeCreateAdmin = () => setCreateAdminVisible(false);
+
+  // const openCreateMananger = () => {
+  //   setCreateManVisible(true);
+  // }
+
+  // const closeCreateManager = () => {
+  //   setCreateManVisible(false); 
+  // }
+
+  // const openCreateAdmin = () => {
+  //   setCreateAdmVisible(true);
+  // }
+
+  // const closeCreateAdmin = () => {
+  //   setCreateAdmVisible(false); 
+  // }
+  
+  const closeCreateAdmin = () => setCreateAdmVisible(false);
 
   // Handle login based on role and redirect
   const handleLogin = async (role: string) => {
@@ -159,6 +176,7 @@ const ConsumerView: React.FC = () => {
   }, []);  
 
   return (
+    <div className="consumer-view">
     <div className="consumer-view">
       {/* Header with logo, login button, and search bar */}
       <header className="consumer-header">
@@ -241,6 +259,15 @@ const ConsumerView: React.FC = () => {
               <button className="login-button" onClick={handleManager}>
                 Login Manager/ Create Restaurant
               </button>
+              {/* <button
+               className='create-account-button'
+               onClick={() =>openCreateManager()}
+
+               >
+                Create Manager?
+                </button>
+ */}
+
               <button
                 className="login-button"
                 onClick={async () => {
@@ -248,7 +275,7 @@ const ConsumerView: React.FC = () => {
                     const response = await loginInfoApi.post('/', {
                       action: 'register',
                       username,
-                      password,
+                      password, 
                       role: 'Admin',
                     });
 
@@ -256,18 +283,30 @@ const ConsumerView: React.FC = () => {
                       alert('Administrator created successfully');
                       closeCreateAdmin();
                     } else {
-                      alert('Error creating administrator: ' + response.data.message);
+                      alert('Error creating : ' + response.data.message); 
                     }
                   } catch (err) {
                     console.error('Error creating administrator:', err);
                     alert('An error occurred. Please try again.');
                   }
-                }}
+                  closeCreateAdmin
+                } }
               >
                 Login as Administrator
               </button>
+              
+              
+                {/* <button
+               className='create-account-button'
+               onClick={() =>openCreateAdmin()}
+               >
+                Create Administrator?
+                </button> */}
             </div>
             <div className="create-account-link-container">
+              {/* <span className="create-account-link" onClick={openCreateManager}>
+                Create Manager Account
+              </span> */}
               <span className="create-account-link" onClick={openCreateAdmin}>
                 Create Administrator Account
               </span>
@@ -284,8 +323,8 @@ const ConsumerView: React.FC = () => {
         )}
 
       {/* Account Creation Modals */}
-      {isCreateManagerVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}
-      {isCreateAdminVisible && <AccountCreationModal title="Create Administrator Account" onClose={closeCreateAdmin} />}
+      {/* {isCreateManVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}
+      {isCreateAdmVisible && <AccountCreationModal title="Create Administrator Account" onClose={closeCreateAdmin} />} */}
     </div>
   );
 };
