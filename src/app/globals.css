@@ -636,7 +636,7 @@ body {
 }
 
 .create-account-link-container {
-  margin-top: 5px;
+  margin-top: 10px;
 }
 
 .create-account-link {
@@ -830,7 +830,7 @@ input:checked+.slider:before {
   background: #ffffff;
   padding: 30px;
   border-radius: 10px;
-  width: 460px;
+  width: 400px;
   max-width: 90%;
   text-align: center;
   position: relative;

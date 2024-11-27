@@ -20,26 +20,27 @@ const searchSpecificRestaurant = createApiInstance('https://example.com');
 const makeReservation = createApiInstance('https://example.com');
 const findExistingReservation = createApiInstance('https://example.com');
 const cancelExistingReservation = createApiInstance('https://example.com');
+const loginInfo = createApiInstance('https://tcg8mewv25.execute-api.us-east-2.amazonaws.com/login'); // need to find URL
 
-// Reusable component for account creation modal
-const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
-  <div className="modal-overlay">
-    <div className="login-modal">
-      <button className="close-button" onClick={onClose}>
-        ✕
-      </button>
-      <h2 className="login-title">{title}</h2>
-      <div className="login-inputs">
-        <input type="text" placeholder="Username" className="login-input" />
-        <input type="password" placeholder="Password" className="login-input" />
-      </div>
-      <div className="login-buttons">
-        <button className="create-account-button">Create Account</button>
-      </div>
-    </div>
-  </div>
-);
-const loginInfo = createApiInstance('https://example.com'); // need to find URL
+
+//Reusable component for account creation modal
+// const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
+//   <div className="modal-overlay">
+//     <div className="login-modal">
+//       <button className="close-button" onClick={onClose}>
+//         ✕
+//       </button>
+//       <h2 className="login-title">{title}</h2>
+//       <div className="login-inputs">
+//         <input type="text" placeholder="Username" className="login-input" />
+//         <input type="password" placeholder="Password" className="login-input" />
+//       </div>
+//       <div className="login-buttons">
+//         <button className="create-account-button">Create Account</button>
+//       </div>
+//     </div>
+//   </div>
+// );
 
 const ConsumerView: React.FC = () => {
   const [isLoginVisible, setLoginVisible] = useState(false); // Login modal visibility
@@ -85,9 +86,7 @@ const ConsumerView: React.FC = () => {
   // const closeCreateAdmin = () => {
   //   setCreateAdmVisible(false); 
   // }
-
-
-
+  
   const closeCreateAdmin = () => setCreateAdmVisible(false);
 
   // Handle login based on role and redirect
@@ -109,7 +108,7 @@ const ConsumerView: React.FC = () => {
   const handleCreateAccount = (role: String) =>{
     if(role === 'manager'){
       router.push('/createAdmin')
-    } else if (role ='admin'){
+    } else if (role ==='admin'){
       
     }
   }
@@ -226,7 +225,7 @@ const ConsumerView: React.FC = () => {
                 className="login-button"
                 onClick={async () =>{
                   try{
-                    const response = await loginInfo.post('https://tcg8mewv25.execute-api.us-east-2.amazonaws.com/login',{
+                    const response = await loginInfo.post('',{
                       action: 'register',
                       username,
                       password, 
@@ -243,6 +242,7 @@ const ConsumerView: React.FC = () => {
                     console.error('Error creating administrator:', err);
                     alert("An error occurred. Please try again."); 
                   }
+                  closeCreateAdmin
                 } }
               >
                 Login as Administrator
@@ -292,19 +292,40 @@ const ConsumerView: React.FC = () => {
             />
           </div>
           <div className="login-buttons">
-            <button className='login-button'>
-              
-  
-            </button>
-            
+            <button className='login-button' 
+                onClick={async () =>{
+                  try{
+                    const response = await loginInfo.post('',{
+                      action: 'register',
+                      username,
+                      password, 
+                      role: 'Admin',
+                    });
+
+                    if(response.status === 201){
+                      alert('Administrator created successfully'); 
+                      closeCreateAdmin
+                    } else {
+                      alert('Erroring : ' + (response.data?.message || 'Unknown error occurred'));
+
+                    }
+                  } catch (err) {
+                    console.error('Error creating administrator:', err);
+                    alert("An error occurred. Please try again."); 
+                  }
+                } }
+              >
+                Create Aministrator
+
+              </button>
           </div>
         </div>
       </div>
       )}
 
       {/* Account Creation Modals */}
-      {isCreateManVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}
-      {isCreateAdmVisible && <AccountCreationModal title="Create Administrator Account" onClose={closeCreateAdmin} />}
+      {/* {isCreateManVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}
+      {isCreateAdmVisible && <AccountCreationModal title="Create Administrator Account" onClose={closeCreateAdmin} />} */}
     </div>
   );
 };
