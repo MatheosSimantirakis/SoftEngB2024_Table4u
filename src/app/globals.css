@@ -152,80 +152,6 @@ body {
   background-color: #b02a37;
 }
 
-.delete-confirmation-popup {
-  color: #000000;
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  width: 300px;
-}
-
-.activate-confirmation-popup {
-  color: #000000;
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  width: 300px;
-}
-
-.popup-input {
-  width: 100%; 
-  padding: 10px; 
-  margin-top: 10px;
-  margin-bottom: 2px; 
-  border: 1px solid #ccc; 
-  border-radius: 4px;
-  font-size: 16px; 
-  box-sizing: border-box; 
-  transition: border-color 0.3s ease; 
-}
-
-.activate-confirm-button,
-.delete-confirm-button,
-.cancel-button {
-  margin-top: 10px;
-  padding: 10px 20px;
-  font-size: 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
-  transition: background-color 0.3s ease;
-}
-
-.delete-confirm-button {
-  background-color: var(--danger-color);
-  color: #ffffff;
-}
-
-.delete-confirm-button:hover {
-  background-color: #b02a37;
-}
-
-.activate-confirm-button {
-  background-color: var(--safe-color);
-  color: #ffffff;
-}
-
-.activate-confirm-button:hover {
-  background-color: #2f9e5b;
-}
-
-.cancel-button {
-  background-color: var(--gray-color);
-  color: #ffffff;
-}
-
-.cancel-button:hover {
-  background-color: #565d63;
-}
-
 /* ---------------- Admin View Styles ---------------- */
 
 .list-admin {
@@ -431,37 +357,50 @@ body {
 }
 
 .results-section-consumer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  max-width: 1200px;
-  padding: 20px;
-}
-
-.results-title-consumer {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 15px;
-  text-align: center;
-  color: #000000;
+  margin-top: 20px;
 }
 
 .results-list-consumer {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+  gap: 15px; 
+  width: 100%;
+  margin-top: 10px;
+  padding: 0 10px; 
 }
 
 .result-item-consumer {
-  flex: 1 1 calc(50% - 20px);
   border: 1px solid #ced4da;
   border-radius: 8px;
   background-color: #ffffff;
   padding: 15px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: column; 
+  height: 150px; 
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.results-title-consumer {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #000000;
+}
+
+.results-content-consumer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+  width: 100%;
+  min-height: 200px; 
 }
 
 .restaurant-name-consumer {
@@ -476,6 +415,7 @@ body {
 .restaurant-info-consumer {
   font-size: 14px;
   color: #000000;
+  margin-bottom: 5px;
 }
 
 .action-button-consumer {
@@ -608,14 +548,7 @@ body {
 
 /* ---------------- Manager View Styles ---------------- */
 
-.placeholder-manager {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  font-size: 18px;
-  color: var(--gray-color);
-}
+
 
 /* ---------------- Forms Styles ---------------- */
 
@@ -625,6 +558,7 @@ body {
   background-color: #ffffff;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px; 
 }
 
 .form-title {
@@ -710,7 +644,7 @@ body {
 }
 
 .create-account-link-container {
-  margin-top: 5px;
+  margin-top: 10px;
 }
 
 .create-account-link {
@@ -728,12 +662,34 @@ body {
 
 .table-entry {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: center; 
+  justify-content: space-between;
   margin-bottom: 10px;
-  background-color: #f0f0f0;
-  padding: 8px;
-  border-radius: 5px;
+  padding: 5px 10px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.table-info {
+  display: flex;
+  align-items: center;
+}
+
+.table-id {
+  margin-right: 10px; 
+  font-weight: bold;
+}
+
+.table-seats-static {
+  color: #495057; 
+  margin-right: 10px; 
+}
+
+
+.table-seats-dropdown {
+  padding: 4px;
+  font-size: 14px;
+  margin-right: 10px;
 }
 
 .table-entry label {
@@ -750,14 +706,32 @@ body {
   color: #495057;
 }
 
-.remove-table-button {
-  background-color: var(--danger-color);
-  color: white;
+.save-table-button {
+  padding: 8px 12px;
+  font-size: 14px;
+  background-color: var(--primary-color);
+  color: #fff;
   border: none;
-  margin-left: 50px;
-  padding: 5px 10px;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.save-table-button:hover {
+  background-color: #0056b3; 
+}
+
+
+.remove-table-button {
+  padding: 8px 12px;
+  font-size: 14px;
+  background-color: var(--danger-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 650px;
+  transition: background-color 0.2s;
 }
 
 .remove-table-button:hover {
@@ -904,7 +878,7 @@ input:checked+.slider:before {
   background: #ffffff;
   padding: 30px;
   border-radius: 10px;
-  width: 460px;
+  width: 400px;
   max-width: 90%;
   text-align: center;
   position: relative;
@@ -925,6 +899,120 @@ input:checked+.slider:before {
 .login-input:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
+/* ---------------- Placeholder Styles ---------------- */
+
+.placeholder-manager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 18px;
+  color: var(--gray-color);
+}
+
+.placeholder-consumer {
+  font-size: 14px;
+  color: var(--gray-color);
+  text-align: center;
+}
+
+/* ---------------- On-Screen Popups Styles ---------------- */
+
+.delete-confirmation-popup {
+  color: #000000;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 300px;
+}
+
+.activate-confirmation-popup {
+  color: #000000;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 300px;
+}
+
+.existing-restaurant-popup {
+  color: #000000;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 300px;
+}
+
+.popup-input {
+  width: 100%; 
+  padding: 10px; 
+  margin-top: 10px;
+  margin-bottom: 2px; 
+  border: 1px solid #ccc; 
+  border-radius: 4px;
+  font-size: 16px; 
+  box-sizing: border-box; 
+  transition: border-color 0.3s ease; 
+}
+
+.id-submit-button,
+.activate-confirm-button,
+.delete-confirm-button,
+.cancel-button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.id-submit-button {
+  background-color: var(--primary-color);
+  color: #ffffff;
+}
+
+.id-submit-button:hover {
+  background-color: #0056b3;
+}
+
+.delete-confirm-button {
+  background-color: var(--danger-color);
+  color: #ffffff;
+}
+
+.delete-confirm-button:hover {
+  background-color: #b02a37;
+}
+
+.activate-confirm-button {
+  background-color: var(--safe-color);
+  color: #ffffff;
+}
+
+.activate-confirm-button:hover {
+  background-color: #2f9e5b;
+}
+
+.cancel-button {
+  background-color: var(--gray-color);
+  color: #ffffff;
+}
+
+.cancel-button:hover {
+  background-color: #565d63;
 }
 
 /* ---------------- On-Screen Notification Styles ---------------- */

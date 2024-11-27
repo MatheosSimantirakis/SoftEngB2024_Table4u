@@ -9,6 +9,7 @@ import {
   DateEntryProps,
   FormWrapperProps,
 } from '../types';
+import { Restaurant } from '@/model';
 
 // Dynamic baseURL for all APIs
 const createApiInstance = (baseURL: string) => {
@@ -18,13 +19,15 @@ const createApiInstance = (baseURL: string) => {
 };
 
 // baseURLs for APIs
-const createRestaurantApi = createApiInstance('https://kwd94qobx2.execute-api.us-east-2.amazonaws.com');
-const editRestaurantApi = createApiInstance('https://doo8y94tle.execute-api.us-east-2.amazonaws.com');
-const openDaysApi = createApiInstance('https://example.com'); // Replace with actual URL
-const closeDayApi = createApiInstance('https://example.com'); // Replace with actual URL
+const managerLoginApi = createApiInstance('https://y4c1d1bns8.execute-api.us-east-2.amazonaws.com/managerLogin/');
+const createRestaurantApi = createApiInstance('https://kwd94qobx2.execute-api.us-east-2.amazonaws.com/create-restaurant/');
+const editRestaurantInfoApi = createApiInstance('https://doo8y94tle.execute-api.us-east-2.amazonaws.com/editRestaurant/');
+const editRestaurantTablesApi = createApiInstance('https://2ss0b3tpbj.execute-api.us-east-2.amazonaws.com/editTables');
+const openFutureDaysApi = createApiInstance('https://cxj6su3ix7.execute-api.us-east-2.amazonaws.com/openFutureDay/');
+const closeFutureDaysApi = createApiInstance('https://example.com'); // Replace with actual URL
 const reviewAvailabilityApi = createApiInstance('https://example.com'); // Replace with actual URL
-const deleteRestaurantApi = createApiInstance('https://ub4vssj8g4.execute-api.us-east-2.amazonaws.com');
-const activateRestaurantApi = createApiInstance('https://ys2gzedx59.execute-api.us-east-2.amazonaws.com');
+const deleteRestaurantApi = createApiInstance('https://ub4vssj8g4.execute-api.us-east-2.amazonaws.com/deleteRestaurant');
+const activateRestaurantApi = createApiInstance('https://ys2gzedx59.execute-api.us-east-2.amazonaws.com/activateRestaurant/');
 
 // Reusable component for wrapping forms with a consistent layout
 const FormWrapper: React.FC<FormWrapperProps> = ({ title, children }) => (
@@ -35,18 +38,47 @@ const FormWrapper: React.FC<FormWrapperProps> = ({ title, children }) => (
 );
 
 // Reusable component for managing a single table entry in the table list
-const TableEntry: React.FC<TableEntryProps> = ({ table, updateSeats, removeTable }) => (
+const TableEntry: React.FC<TableEntryProps> = ({
+  table,
+  updateSeats,
+  removeTable,
+  saveTable,
+}) => (
   <div className="table-entry">
-    <label>Table {table.tableNumber}</label>
-    <select
-      value={table.num_seats === 1 ? '' : table.num_seats}
-      onChange={(e) => updateSeats(table.tableNumber, parseInt(e.target.value) || 1)}
-    >
-      <option value="" disabled>Seats</option>
-      {Array.from({ length: 20 }, (_, i) => i + 1).map((seatCount) => (
-        <option key={seatCount} value={seatCount}>{seatCount}</option>
-      ))}
-    </select>
+    <div className="table-info">
+      <label className="table-id">Table {table.tableNumber}</label>
+      {/* Conditionally render based on table.isNew and table.saved */}
+      {table.isNew && !table.saved ? (
+        // Dropdown for new tables
+        <select
+          className="table-seats-dropdown"
+          value={table.seats || 1}
+          onChange={(e) => updateSeats(table, parseInt(e.target.value) || 1)}
+        >
+          <option value="" disabled>
+            Seats
+          </option>
+          {Array.from({ length: 20 }, (_, i) => i + 1).map((seatCount) => (
+            <option key={seatCount} value={seatCount}>
+              {seatCount}
+            </option>
+          ))}
+        </select>
+      ) : (
+        // Static display for tables that are saved or auto-populated
+        <span className="table-seats-static">{table.seats} Seat(s)</span>
+      )}
+    </div>
+    {/* Render the Save button only for new tables that are not saved */}
+    {table.isNew && !table.saved && (
+      <button
+        type="button"
+        className="save-table-button"
+        onClick={() => saveTable(table)}
+      >
+        Save
+      </button>
+    )}
     <button
       type="button"
       className="remove-table-button"
@@ -71,12 +103,6 @@ const DateEntry: React.FC<DateEntryProps> = ({ date, index, removeDate }) => (
   </div>
 );
 
-// Notification component
-const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
-  if (!visible) return null;
-  return <div className={`notification ${type}`}>{message}</div>;
-};
-
 const ManagerView = (): JSX.Element => {
   const [currentForm, setCurrentForm] = useState<string | null>(null); // Tracks the currently open form (create, edit...)
   const [isActivated, setIsActivated] = useState(false); // Whether the restaurant is activated
@@ -92,48 +118,89 @@ const ManagerView = (): JSX.Element => {
   const [nextTableNumber, setNextTableNumber] = useState(1); // Next available number for adding a new table
   const [date, setDate] = useState(''); // Selected date for opening or closing the restaurant
   const [error, setError] = useState(''); // Error messages for the form or actions
-  const router = useRouter(); // Router instance for navigation
-  const [restaurantId, setRestaurantId] = useState(''); // Restaurant ID for editing and deleting
   const [showActivatePopup, setShowActivatePopup] = useState(false); // To show/hide the activate popup
   const [activateRestaurantId, setActivateRestaurantId] = useState(''); // To store the entered restaurant ID
-
-  // Function for on-screen notifications
-  const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
-    message: '',
-    visible: false,
-    type: '',
-  });
+  const [showInitialPopup, setShowInitialPopup] = useState(true); // For the initial popup
+  const [restaurantId, setRestaurantId] = useState(''); // For the restaurant ID entered in the popup
+  const router = useRouter(); // Router instance for navigation
+  const [tablesReady, setTablesReady] = useState(false); // Track when the tables data is ready
 
   // Function to remove a table by its ID
-  const removeTable = (id: number) => {
-    setTables((prev) => {
-      const updatedTables = prev.filter((table) => table.tableNumber !== id);
+  const removeTable = async (tableNumber: number) => {
+    try {
+      // Call the handler to remove the table, automatically sending seats: 1
+      await editTableHandler("delete", restaurantId, tableNumber);
 
-      // Reset nextTableNumber to 1 if no tables remain
-      if (updatedTables.length === 0) {
-        setNextTableNumber(1);
-      }
+      // Update local state to remove the table
+      setTables((prevTables) => prevTables.filter((table) => table.tableNumber !== tableNumber));
 
-      return updatedTables;
-    });
+      showNotification(`Table ${tableNumber} removed successfully`, {}, "success");
+    } catch (error) {
+      console.error("Error removing table:", error);
+      showNotification("Failed to remove the table.", {}, "error");
+    }
   };
 
   // Function to add a new table
   const addTable = () => {
+    // Find the next available number that doesn’t conflict with existing numbers
+    const existingNumbers = tables.map((table) => table.tableNumber);
+    let nextAvailableNumber = nextTableNumber;
+    while (existingNumbers.includes(nextAvailableNumber)) {
+      nextAvailableNumber += 1;
+    }
+    // Add the new table
     setTables((prev) => [
       ...prev,
-      { tableNumber: nextTableNumber, num_seats: 1, available: true },
+      {
+        tableId: nextAvailableNumber,
+        restaurantId: parseInt(restaurantId),
+        tableNumber: nextAvailableNumber,
+        seats: 1,
+        available: true,
+        isNew: true,
+        saved: false,
+      },
     ]);
-    setNextTableNumber((previousNumber) => previousNumber + 1); // Increment the number for the next table
+    // Update nextTableNumber
+    setNextTableNumber(nextAvailableNumber + 1);
   };
 
   // Function to update the number of seats for a specific table
-  const updateSeats = (tableNumber: number, num_seats: number) => {
-    setTables((prev) =>
-      prev.map((table) =>
-        table.tableNumber === tableNumber ? { ...table, num_seats } : table
+  const updateSeats = (table: Table, seats: number): void => {
+    setTables((prev: Table[]) =>
+      prev.map((t: Table) =>
+        t.tableNumber === table.tableNumber ? { ...t, seats } : t
       )
     );
+  };
+
+  // Function to save tables
+  const saveTable = async (table: Table) => {
+    try {
+      const isSuccess = await editTableHandler(
+        'save',
+        restaurantId,
+        table.tableNumber,
+        table.seats || 1
+      );
+
+      if (isSuccess) {
+        setTables((prevTables) =>
+          prevTables.map((t) =>
+            t.tableNumber === table.tableNumber ? { ...t, saved: true } : t
+          )
+        );
+        // Show success notification
+        showNotification(`Table ${table.tableNumber} saved successfully`, {}, "success");
+      } else {
+        // Show failure notification
+        showNotification(`Failed to save table ${table.tableNumber}`, {}, "error");
+      }
+    } catch (error) {
+      console.error('Error saving table:', error);
+      showNotification('An unexpected error occurred while saving the table.', {}, 'error');
+    }
   };
 
   // Handler for toggle forms
@@ -169,8 +236,8 @@ const ManagerView = (): JSX.Element => {
 
     if (!isActivated) {
       try {
-        const payload = { id: activateRestaurantId }; // Replace `activateRestaurantId` with the correct ID source
-        const response = await activateRestaurantApi.post('/activateRestaurant', payload);
+        const payload = { id: activateRestaurantId };
+        const response = await activateRestaurantApi.post('', payload);
 
         if (response.status === 200) {
           setIsActivated(true);
@@ -186,138 +253,299 @@ const ManagerView = (): JSX.Element => {
     }
   };
 
-// Helper function to show notifications
-const showNotification = (
-  message: string,
-  params: Record<string, string> = {},
-  type: string = 'success',
-  duration: number = 10000 // Default duration: 10 seconds
-) => {
-  const formattedMessage = Object.keys(params).reduce(
-    (msg, key) => msg.replace(`{${key}}`, params[key]),
-    message
-  );
+  // Function for on-screen notifications
+  const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
+    message: '',
+    visible: false,
+    type: '',
+  });
 
-  setNotification({ message: formattedMessage, visible: true, type });
+  // Notification component
+  const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
+    if (!visible) return null;
+    return <div className={`notification ${type}`}>{message}</div>;
+  };
 
-  // Clear notification after specified duration
-  setTimeout(() => {
-    setNotification({ message: '', visible: false, type: '' });
-  }, duration);
-};
+  // Helper function to show notifications
+  const showNotification = (
+    message: string,
+    params: Record<string, string> = {},
+    type: string = 'success',
+    duration: number = 10000 // Default duration: 10 seconds
+  ) => {
+    const formattedMessage = Object.keys(params).reduce(
+      (msg, key) => msg.replace(`{${key}}`, params[key]),
+      message
+    );
+
+    setNotification({ message: formattedMessage, visible: true, type });
+
+    // Clear notification after specified duration
+    setTimeout(() => {
+      setNotification({ message: '', visible: false, type: '' });
+    }, duration);
+  };
 
   // Go back to consumer 
   const handleGoBack = () => router.push('/consumer');
 
-  // API: Create Restaurant
-  const handleCreateRestaurant = async () => {
-    if (name && address && startTime && endTime && datesOpen.length > 0 && tables.length > 0) {
-      const payload = {
-        name,
-        address,
-        startTime: `${startTime}:00`,
-        endTime: `${endTime}:00`,
-        openDays: datesOpen,
-        tables: tables.map((table) => ({
-          tableNumber: table.tableNumber,
-          seats: table.num_seats,
-        })),
-      };
 
-      console.log('Sending payload to create restaurant API:', payload);
-
-      try {
-        const response = await createRestaurantApi.post('/create-restaurant', payload);
-
-        if (response.data.statusCode === 200) {
-          setHasRestaurant(true);
-          setCurrentForm(null);
-          setName(response.data.name || name);
-          setAddress('');
-
-          const message = JSON.parse(response.data.body)?.message || 'Restaurant created successfully';
-          showNotification(`${message}`);
-        } else {
-          showNotification('Could not create Restaurant', {}, 'error');
-        }
-      } catch (error) {
-        console.error('Error creating restaurant:', error);
-        setError('Failed to create restaurant. Please try again.');
-      }
-    } else {
-      setError('All fields are required, including open/close times, dates, and tables.');
+  // Handles submission of the restaurant ID entered by the manager
+  const handleSubmitRestaurantId = () => {
+    if (restaurantId.trim() === '') {
+      setError('Please enter a valid restaurant ID.');
+      return;
     }
+    setHasRestaurant(true);
+    setShowInitialPopup(false);
+    setError('');
   };
 
-  const handleEditRestaurant = async () => {
-    if (!restaurantId || !name || !address || !startTime || !endTime || tables.length === 0) {
-      setError('All fields are required, including ID, name, address, opening/closing times, and tables.');
+  // Handles the case when the manager doesn't have a restaurant
+  const handleNoRestaurant = () => {
+    setShowInitialPopup(false);
+    setError(''); // Clear any errors
+  };
+
+  // API: Manager Login
+  const handleManagerLogin = async () => {
+    if (!restaurantId.trim()) {
+      showNotification("Restaurant ID is required.", {}, "error");
+      console.error("Error: Restaurant ID is empty.");
       return;
     }
 
+    // Prepare payload with restaurantId
+    const payload = {
+      restaurantId: restaurantId.toString(),
+    };
+
+    console.log("Sending payload to manager login API:", payload);
+
     try {
-      const payload = {
-        id: restaurantId,
-        name,
-        address,
-        startTime: `${startTime}:00`,
-        endTime: `${endTime}:00`,
-        tables: tables.map((table) => ({
+      // Send POST request to manager login API
+      const response = await managerLoginApi.post("", payload);
+      console.log("Raw Response received from API:", response);
+
+      // Parse the body if it's a string
+      let parsedBody = response.data;
+      if (typeof response.data.body === "string") {
+        parsedBody = JSON.parse(response.data.body);
+      }
+
+      console.log("Parsed Response Data:", parsedBody);
+
+      // Extract data from the parsed response
+      const { data } = parsedBody;
+
+      if (data && data.restaurant) {
+        const { restaurant, openDays, tables } = data;
+
+        // Update state with restaurant details
+        setName(restaurant.name);
+        setAddress(restaurant.address);
+        setStartTime(restaurant.startTime.slice(0, 5));
+        setEndTime(restaurant.endTime.slice(0, 5));
+        setIsActivated(restaurant.activated === 1);
+        setHasRestaurant(true);
+        setShowInitialPopup(false);
+
+        // Process openDays and tables
+        const formattedOpenDays = openDays.map((day: { openDate: string }) => day.openDate);
+        const formattedTables = tables.map((table: Table) => ({
           tableNumber: table.tableNumber,
-          seats: table.num_seats,
-        })),
-      };
+          seats: table.seats,
+          available: true,
+          tableId: table.tableNumber,
+          isNew: false,
+        }));
 
-      console.log('Sending API request to edit restaurant with payload:', payload);
+        setDatesOpen(formattedOpenDays);
+        setTables(formattedTables);
+        setNextTableNumber(
+          formattedTables.length > 0
+            ? Math.max(...formattedTables.map((t: Table) => t.tableNumber)) + 1
+            : 1
+        );
+        setTablesReady(true);
 
-      const response = await editRestaurantApi.post('/editRestaurant', payload);
+        // Switch to edit form after all updates
+        setCurrentForm('edit');
+
+        console.log('Tables from API:', tables);
+        showNotification("Restaurant details retrieved successfully", {}, "success");
+      } else {
+        console.error("No restaurant data found in API response:", parsedBody);
+        showNotification("Failed to retrieve restaurant details", {}, "error");
+      }
+    } catch (error) {
+      // Handle errors during API request
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        showNotification(`API Error: ${errorMessage}`, {}, "error");
+        console.error("Axios error:", errorMessage);
+      } else {
+        showNotification("An unexpected error occurred while logging in.", {}, "error");
+        console.error("Unexpected error:", error);
+      }
+    }
+  };
+
+  // API: Create Restaurant
+  const handleCreateRestaurant = async () => {
+    if (!name || !address) {
+      setError('Name and Address are required.');
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const payload = {
+      name,
+      address,
+      startTime: `${startTime}:00`,
+      endTime: `${endTime}:00`,
+      openDays: datesOpen.length > 0 ? datesOpen : [today],
+      tables: tables.length > 0
+        ? tables.map((table) => ({
+          tableNumber: table.tableNumber,
+          seats: table.seats,
+        }))
+        : [{ tableNumber: 1, seats: 1 }],
+    };
+
+    console.log('Sending payload to create restaurant API:', payload);
+
+    try {
+      const response = await createRestaurantApi.post('', payload);
 
       if (response.data.statusCode === 200) {
-        showNotification(`Successfully updated ${name}`);
+        setHasRestaurant(true);
         setCurrentForm(null);
-        resetState();
+        setName('');
+        setAddress('');
+        setStartTime('');
+        setEndTime('');
+        setDatesOpen([]);
+        setTables([]);
+
+        const message =
+          JSON.parse(response.data.body)?.message || 'Restaurant created successfully';
+        showNotification(`${message}`);
+      } else {
+        console.error('API responded with an error:', response.data);
+        showNotification('Could not create Restaurant', {}, 'error');
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error:', error.response?.data || error.message);
+        setError(`API Error: ${error.response?.data?.message || error.message}`);
+      } else {
+        console.error('Unexpected error:', error);
+        setError('An unexpected error occurred. Please try again.');
+      }
+    }
+  };
+
+  // API: Edit Restaurant
+  const handleEditRestaurantInfo = async () => {
+    if (!restaurantId) {
+      setError('Restaurant ID is missing. Please log in again.');
+      showNotification('Restaurant ID is required.', {}, 'error');
+      return;
+    }
+  
+    const payload = {
+      restaurantId, 
+      name: name || '', 
+      address: address || '',
+      startTime: startTime ? `${startTime}:00` : '', 
+      endTime: endTime ? `${endTime}:00` : '', 
+    };
+  
+    console.log('Sending API request to edit restaurant with payload:', payload);
+  
+    try {
+      const response = await editRestaurantInfoApi.post('', payload);
+  
+      if (response.data.statusCode === 200) {
+        showNotification(`Successfully updated restaurant`, {}, 'success');
+        setCurrentForm(null); 
+        resetState(); 
       } else {
         console.error('API error:', response.data.body || response.data);
         showNotification('Failed to update restaurant', {}, 'error');
       }
     } catch (error) {
       console.error('Error editing restaurant:', error);
-      setError('An error occurred while editing the restaurant.');
+      showNotification('An error occurred while editing the restaurant.', {}, 'error');
+    }
+  };  
+
+  // API: Edit Tables
+  const editTableHandler = async (
+    type: string,
+    restaurantId: string,
+    tableNumber: number,
+    seats: number = 1
+  ): Promise<boolean> => {
+    try {
+      const payload = {
+        type,
+        restaurantId,
+        tableNumber,
+        seats,
+      };
+
+      console.log("Sending payload to edit table API:", payload);
+
+      const response = await editRestaurantTablesApi.post('', payload);
+
+      if (response.status === 200) {
+        console.log(
+          `Successfully ${type === "delete" ? "deleted" : "edited"} table.`
+        );
+        return true;
+      } else {
+        console.error("API responded with an error:", response.data);
+        return false;
+      }
+    } catch (error) {
+      console.error("Error editing table:", error);
+      return false;
     }
   };
 
-  // API: Open Future Day
-  const handleOpenFutureDay = async () => {
+  // API: Open Future Days
+  const handleOpenFutureDays = async () => {
     if (date) {
-      openDaysApi
+      openFutureDaysApi
         .post('/open-day', { date })
         .then(() => {
-          showNotification(`Future day ${date} opened successfully`);
+          showNotification(`Successfully set dates to open`);
           setDate('');
           setCurrentForm(null);
         })
         .catch((error) => {
-          console.error('Error opening future day:', error);
-          showNotification('Failed to set future day open', {}, 'error');
+          console.error('Error opening future days:', error);
+          showNotification('Failed to set future days to open', {}, 'error');
         });
     } else {
       showNotification('Date is required.', {}, 'error');
     }
   };
 
-  // API: Close Future Day
-  const handleCloseFutureDay = async () => {
+  // API: Close Future Days
+  const handleCloseFutureDays = async () => {
     if (date) {
-      closeDayApi
+      closeFutureDaysApi
         .post('/close-day', { date })
         .then(() => {
-          showNotification(`Future day ${date} closed successfully`);
+          showNotification(`Successfully set dates to close`);
           setDate('');
           setCurrentForm(null);
         })
         .catch((error) => {
-          console.error('Error closing future day:', error);
-          showNotification('Failed to set future day close', {}, 'error');
+          console.error('Error closing future days:', error);
+          showNotification('Failed to set future days to close', {}, 'error');
         });
     } else {
       setError('Date is required.');
@@ -350,7 +578,7 @@ const showNotification = (
     console.log('Sending request to delete restaurant:', { restaurantId });
 
     try {
-      const response = await deleteRestaurantApi.post('/deleteRestaurant', { restaurantId });
+      const response = await deleteRestaurantApi.post('', { restaurantId });
       console.log('API response:', response.data);
 
       if (response.status === 200) {
@@ -389,14 +617,15 @@ const showNotification = (
       const payload = { restaurantId: activateRestaurantId };
       console.log('Sending request to activate restaurant:', payload);
 
-      const response = await activateRestaurantApi.post('/activateRestaurant', payload);
+      const response = await activateRestaurantApi.post('', payload);
 
       if (response.status === 200) {
         console.log("test");
-        showNotification(`Successfully activated restaurant with ID ${activateRestaurantId}`);
+        showNotification(`Successfully activated restaurant with ID: ${activateRestaurantId}`);
         setShowActivatePopup(false);
         setActivateRestaurantId('');
         setIsActivated(true);
+        setCurrentForm(null);
       } else {
         console.error('Failed to activate restaurant:', response.data);
         showNotification('Failed to activate restaurant', {}, 'error');
@@ -409,6 +638,33 @@ const showNotification = (
 
   return (
     <div className="page-container">
+      {/* Initial Popup asking if the Manager has a restaurant already or not */}
+      {showInitialPopup && (
+        <div className="modal-overlay">
+          <div className="existing-restaurant-popup">
+            <h2>Do you an existing restaurant?</h2>
+            <input
+              type="text"
+              placeholder="Restaurant ID"
+              value={restaurantId}
+              onChange={(e) => setRestaurantId(e.target.value)}
+              className="popup-input"
+            />
+            {error && <p className="form-error-message">{error}</p>}
+            <div className="popup-buttons">
+              <button className="id-submit-button"
+                onClick={handleManagerLogin} >
+                Find Existing Restaurant
+              </button>
+              <button className="cancel-button"
+                onClick={handleNoRestaurant}>
+                I Don't Have One
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Left Panel: Contains Logo, Subheading, and Action Buttons */}
       <div className="left-panel">
         <div className="left-panel-header">
@@ -426,10 +682,10 @@ const showNotification = (
             </button>
           )}
 
-          {/* Show other buttons only if the user has a restaurant */}
+          {/* Show buttons dynamically based on restaurant status */}
           {hasRestaurant && (
             <>
-              {/* Show the "Activate Restaurant" button only if the user hasn't activated the restaurant yet */}
+              {/* Show the "Activate Restaurant" button only if the restaurant is not yet activated */}
               {!isActivated && (
                 <button
                   className="action-button"
@@ -439,31 +695,33 @@ const showNotification = (
                 </button>
               )}
 
-              {/* Edit Restaurant Button */}
-              <button
-                className={`action-button ${currentForm === 'edit' ? 'active' : ''}`}
-                onClick={() => handleToggleForm('edit')}
-              >
-                {currentForm === 'edit' ? 'Exit' : 'Edit Restaurant'}
-              </button>
+              {/* Show the "Edit Restaurant" button only if the restaurant is not yet activated */}
+              {!isActivated && (
+                <button
+                  className={`action-button ${currentForm === 'edit' ? 'active' : ''}`}
+                  onClick={() => handleToggleForm('edit')}
+                >
+                  {currentForm === 'edit' ? 'Exit' : 'Edit Restaurant'}
+                </button>
+              )}
 
-              {/* Open Future Day Button */}
+              {/* Button to open future days */}
               <button
                 className={`action-button ${currentForm === 'open' ? 'active' : ''}`}
                 onClick={() => handleToggleForm('open')}
               >
-                {currentForm === 'open' ? 'Exit' : 'Open Future Day'}
+                {currentForm === 'open' ? 'Exit' : 'Open Future Days'}
               </button>
 
-              {/* Close Future Day Button */}
+              {/* Button to close future days */}
               <button
                 className={`action-button ${currentForm === 'close' ? 'active' : ''}`}
                 onClick={() => handleToggleForm('close')}
               >
-                {currentForm === 'close' ? 'Exit' : 'Close Future Day'}
+                {currentForm === 'close' ? 'Exit' : 'Close Future Days'}
               </button>
 
-              {/* Review Availability Button */}
+              {/* Button to review availability */}
               <button
                 className={`action-button ${currentForm === 'review' ? 'active' : ''}`}
                 onClick={() => handleToggleForm('review')}
@@ -471,7 +729,7 @@ const showNotification = (
                 {currentForm === 'review' ? 'Exit' : 'Review Availability'}
               </button>
 
-              {/* Delete Restaurant Button */}
+              {/* Button to delete restaurant */}
               <button
                 className="delete-restaurant-button"
                 onClick={handleDeleteClick}
@@ -494,25 +752,28 @@ const showNotification = (
         {/* Check if the Create Form should be displayed */}
         {currentForm === 'create' && (
           <FormWrapper title="Create Restaurant">
-            {/* Restaurant name */}
+
+            {/* Restaurant Name */}
             <div className="form-group">
-              <label className="form-label" htmlFor="name">Name</label>
+              <label className="form-label" htmlFor="name">Name *</label>
               <input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="form-input"
+                required
               />
             </div>
 
             {/* Address */}
             <div className="form-group">
-              <label className="form-label" htmlFor="address">Address</label>
+              <label className="form-label" htmlFor="address">Address *</label>
               <input
                 id="address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className="form-input"
+                required
               />
             </div>
 
@@ -585,28 +846,6 @@ const showNotification = (
               ))}
             </div>
 
-            {/* Tables Section in Create Restaurant */}
-            <div className="form-group">
-              {/* Add Table Button */}
-              <button
-                type="button"
-                className="add-tables-button"
-                onClick={addTable}
-              >
-                Add Tables
-              </button>
-
-              {/* Table List */}
-              {tables.map((table) => (
-                <TableEntry
-                  key={table.tableNumber}
-                  table={table}
-                  updateSeats={updateSeats}
-                  removeTable={removeTable}
-                />
-              ))}
-            </div>
-
             {/* Error message (if any) */}
             {error && <p className="form-error-message">{error}</p>}
 
@@ -617,24 +856,12 @@ const showNotification = (
           </FormWrapper>
         )}
 
-        {/* Check if the Edit Restaurant Form should be displayed */}
         {currentForm === 'edit' && (
-          <FormWrapper title="Edit Restaurant">
-            {/* ID Field */}
-            <div className="form-group inline-fields">
-              <div className="id-field">
-                <label className="form-label" htmlFor="restaurantId">ID</label>
-                <input
-                  id="restaurantId"
-                  value={restaurantId}
-                  onChange={(e) => setRestaurantId(e.target.value)}
-                  className="form-input"
-                  placeholder="Enter ID"
-                />
-              </div>
-
+          <div>
+            {/* Section 1: Edit Restaurant Info */}
+            <FormWrapper title="Edit Restaurant Info">
               {/* Name Field */}
-              <div className="name-field">
+              <div className="form-group">
                 <label className="form-label" htmlFor="name">Name</label>
                 <input
                   id="name"
@@ -644,89 +871,91 @@ const showNotification = (
                   placeholder="Enter restaurant name"
                 />
               </div>
-            </div>
 
-            {/* Address Field */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="address">Address</label>
-              <input
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="form-input"
-                placeholder="Enter restaurant address"
-              />
-            </div>
+              {/* Address Field */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="address">Address</label>
+                <input
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="form-input"
+                  placeholder="Enter restaurant address"
+                />
+              </div>
 
-            {/* Open Time */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="startTime">Open Time</label>
-              <select
-                id="startTime"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="form-input"
+              {/* Open Time */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="startTime">Open Time</label>
+                <select
+                  id="startTime"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="form-input"
+                >
+                  <option value="" disabled>Select Open Time</option>
+                  {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
+                    <option key={hour} value={hour}>{`${hour}:00`}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Close Time */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="endTime">Close Time</label>
+                <select
+                  id="endTime"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="form-input"
+                >
+                  <option value="" disabled>Select Close Time</option>
+                  {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
+                    <option key={hour} value={hour}>{`${hour}:00`}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Save Changes Button */}
+              <button
+                type="button"
+                className="form-submit-button"
+                onClick={handleEditRestaurantInfo}
               >
-                <option value="" disabled>Select Open Time</option>
-                {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
-                  <option key={hour} value={hour}>{`${hour}:00`}</option>
-                ))}
-              </select>
-            </div>
+                Save Changes
+              </button>
+            </FormWrapper>
 
-            {/* Close Time */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="endTime">Close Time</label>
-              <select
-                id="endTime"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="form-input"
-              >
-                <option value="" disabled>Select Close Time</option>
-                {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
-                  <option key={hour} value={hour}>{`${hour}:00`}</option>
+            {/* Section 2: Edit Restaurant Tables */}
+            <FormWrapper title="Edit Restaurant Tables">
+              <div className="form-group">
+                {/* Display the list of tables */}
+                {tables.map((table) => (
+                  <TableEntry
+                    key={table.tableId || table.tableNumber}
+                    table={table}
+                    updateSeats={updateSeats}
+                    removeTable={removeTable}
+                    saveTable={saveTable}
+                  />
                 ))}
-              </select>
-            </div>
+              </div>
 
-            {/* Tables Section */}
-            <div className="form-group">
+              {/* Add Table Button */}
               <button
                 type="button"
                 className="add-tables-button"
                 onClick={addTable}
               >
-                Add Tables
+                Add Table
               </button>
-
-              {/* Table List */}
-              {tables.map((table) => (
-                <TableEntry
-                  key={table.tableNumber}
-                  table={table}
-                  updateSeats={updateSeats}
-                  removeTable={removeTable}
-                />
-              ))}
-            </div>
-
-            {/* Error message */}
-            {error && <p className="form-error-message">{error}</p>}
-
-            {/* Save Changes Button */}
-            <button
-              className="form-submit-button"
-              onClick={handleEditRestaurant}
-            >
-              Save Changes
-            </button>
-          </FormWrapper>
+            </FormWrapper>
+          </div>
         )}
 
-        {/* Check if the Open Future Day Form should be displayed */}
+        {/* Check if the Open Future Days Form should be displayed */}
         {currentForm === 'open' && (
-          <FormWrapper title="Open Future Day">
+          <FormWrapper title="Open Future Days">
             <div className="form-group">
               <label className="form-label" htmlFor="date">Date</label>
               <input
@@ -739,15 +968,15 @@ const showNotification = (
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
-            <button onClick={handleOpenFutureDay} className="form-submit-button">
+            <button onClick={handleOpenFutureDays} className="form-submit-button">
               Open Day
             </button>
           </FormWrapper>
         )}
 
-        {/* Check if the Close Future Day Form should be displayed */}
+        {/* Check if the Close Future Days Form should be displayed */}
         {currentForm === 'close' && (
-          <FormWrapper title="Open Future Day">
+          <FormWrapper title="Open Future Days">
             <div className="form-group">
               <label className="form-label" htmlFor="date">Date</label>
               <input
@@ -760,7 +989,7 @@ const showNotification = (
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
-            <button onClick={handleOpenFutureDay} className="form-submit-button">
+            <button onClick={handleOpenFutureDays} className="form-submit-button">
               Open Day
             </button>
           </FormWrapper>
