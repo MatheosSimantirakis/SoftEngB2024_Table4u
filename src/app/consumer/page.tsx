@@ -1,237 +1,131 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Consumer, Reservation, Restaurant } from '../../model';
-import axios from 'axios';
-
-// Function to create API instances with base URLs
-const createApiInstance = (baseURL: string) => {
-  return axios.create({
-    baseURL,
-  });
-};
-
-// Placeholder API instances for backend endpoints
-const listActiveRestaurantsApi = createApiInstance('https://m0ppkn17qc.execute-api.us-east-2.amazonaws.com/listActiveRestaurants');
-const searchAvailableRestaurantsApi = createApiInstance('https://example.com');
-const searchSpecificRestaurantApi = createApiInstance('https://example.com');
-const makeReservationApi = createApiInstance('https://example.com');
-const findExistingReservationApi = createApiInstance('https://example.com');
-const cancelExistingReservationApi = createApiInstance('https://example.com');
-const loginInfoApi = createApiInstance('https://example.com'); 
-
-// Reusable component for account creation modal
-const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
-  <div className="modal-overlay">
-    <div className="login-modal">
-      <button className="close-button" onClick={onClose}>
-        ✕
-      </button>
-      <h2 className="login-title">{title}</h2>
-      <div className="login-inputs">
-        <input type="text" placeholder="Username" className="login-input" />
-        <input type="password" placeholder="Password" className="login-input" />
-      </div>
-      <div className="login-buttons">
-        <button className="create-account-button">Create Account</button>
-      </div>
-    </div>
-  </div>
-);
-
-// Notification component
-const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
-  if (!visible) return null;
-  return <div className={`notification ${type}`}>{message}</div>;
-};
 
 const ConsumerView: React.FC = () => {
-  const [isLoginVisible, setLoginVisible] = useState(false); // Login modal visibility
-  const [isCreateManVisible, setCreateManVisible] = useState(false); // Manager account modal visibility
-  const [isCreateAdmVisible, setCreateAdmVisible] = useState(false); // Admin account modal visibility
-  const [isLoading, setIsLoading] = useState(false); // Loading state for transitions
-  const [username, setUsername] = useState(''); // Username input state
-  const [password, setPassword] = useState(''); // Password input state
-  const [selectedDate, setSelectedDate] = useState(''); // Date filter state
-  const [restaurants, setRestaurants] = useState([]); // State to hold restaurant data
+  // State for toggling the login modal visibility
+  const [isLoginVisible, setLoginVisible] = useState(false);
 
-  const router = useRouter(); // Router instance for navigation
+  // State for storing login credentials
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
-  // Function for on-screen notifications
-  const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
-    message: '',
-    visible: false,
-    type: '',
-  });
+  // State for storing the selected date from the calendar
+  const [selectedDate, setSelectedDate] = useState('');
 
-  // Helper function to show notifications
-  const showNotification = (
-    message: string,
-    params: Record<string, string> = {},
-    type: string = 'success',
-    duration: number = 10000 // Default duration: 10 seconds
-  ) => {
-    const formattedMessage = Object.keys(params).reduce(
-      (msg, key) => msg.replace(`{${key}}`, params[key]),
-      message
-    );
+  const router = useRouter();
 
-    setNotification({ message: formattedMessage, visible: true, type });
-
-    // Clear notification after specified duration
-    setTimeout(() => {
-      setNotification({ message: '', visible: false, type: '' });
-    }, duration);
+  // Handlers for showing and hiding the login modal
+  const handleOpenLogin = () => {
+    setLoginVisible(true);
   };
 
-
-  // Show/hide the login modal
-  const handleOpenLogin = () => setLoginVisible(true);
-  const handleCloseLogin = () => setLoginVisible(false);
-
-  // Functions to toggle manager account creation modal visibility
-  const openCreateManager = () => {
+  const handleCloseLogin = () => {
     setLoginVisible(false);
-    setCreateManVisible(true);
   };
 
-  const closeCreateManager = () => setCreateManVisible(false);
-
-  const openCreateAdmin = () => {
-    setLoginVisible(false);
-    setCreateAdmVisible(true);
-  };
-
-  // const openCreateMananger = () => {
-  //   setCreateManVisible(true);
-  // }
-
-  // const closeCreateManager = () => {
-  //   setCreateManVisible(false); 
-  // }
-
-  // const openCreateAdmin = () => {
-  //   setCreateAdmVisible(true);
-  // }
-
-  // const closeCreateAdmin = () => {
-  //   setCreateAdmVisible(false); 
-  // }
-  
-  const closeCreateAdmin = () => setCreateAdmVisible(false);
-
-  // Handle login based on role and redirect
-  const handleLogin = async (role: string) => {
-    setIsLoading(true); // Set loading state
+  // Handler for login action based on role (manager or admin)
+  const handleLogin = (role: string) => {
     if (role === 'manager') {
-      await router.push('/manager'); 
+      console.log(`Logging in as Manager with username: ${username}`);
+      router.push('/manager'); // Redirect to manager page
     } else if (role === 'admin') {
-      await router.push('/admin'); 
+      console.log(`Logging in as Admin with username: ${username}`);
+      router.push('/admin'); // Redirect to admin page
     }
-    setIsLoading(false); 
-    setLoginVisible(false);
+    setLoginVisible(false); // Close the modal after login
   };
 
-  const handleManager = () => {
-    router.push('/manager');
-  };
-
-  const handleCreateAccount = (role: String) => {
-    if (role === 'manager') {
-      router.push('/createAdmin');
-    } else if (role === 'admin') {
-      // Admin-specific logic
-    }
-  };
-
-  // Update the selected date for filtering
+  // Handler for date selection from the calendar input
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(event.target.value);
     console.log(`Selected date: ${event.target.value}`);
   };
 
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const response = await listActiveRestaurantsApi.get('');
-        if (response.status === 200) {
-          const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
-            restaurantId: restaurant.restaurantId,
-            name: restaurant.name,
-            address: restaurant.address,
-            startTime: restaurant.startTime, 
-            endTime: restaurant.endTime, 
-          }));
-  
-          setRestaurants(fetchedRestaurants); 
-        }
-      } catch (error) {
-        console.error('Error fetching restaurants:', error);
-        showNotification('Failed to load restaurants. Please try again', {}, 'error');
-      }
-    };
-  
-    fetchRestaurants();
-  }, []);  
-
   return (
     <div className="consumer-view">
-    <div className="consumer-view">
-      {/* Header with logo, login button, and search bar */}
+      {/* Header Section: Contains the logo, login button, and search bar */}
       <header className="consumer-header">
         <img src="/logo.svg" alt="Tables4U Logo" className="logo-consumer" />
         <button className="login-button-consumer" onClick={handleOpenLogin}>
           Log in
         </button>
         <div className="search-container-consumer">
-          <input type="text" placeholder="Search for a restaurant..." className="search-input-consumer" />
+          <input
+            type="text"
+            placeholder="Search for a restaurant..."
+            className="search-input-consumer"
+          />
           <button className="search-button-consumer">Search</button>
         </div>
       </header>
 
-      {/* Filters for reservations (date and time) */}
+      {/* Filters Section: Buttons and dropdowns for filtering reservations */}
       <section className="filters-section-consumer">
         <button className="my-reservations-button-consumer">My Reservations</button>
-        <input type="date" className="date-input-consumer" value={selectedDate} onChange={handleDateChange} />
+        <input
+          type="date" // Calendar input for selecting a date
+          className="date-input-consumer"
+          value={selectedDate}
+          onChange={handleDateChange}
+        />
         <select className="dropdown-consumer">
           <option value="All times">Time</option>
-          {Array.from({ length: 16 }, (_, i) => i + 8).map((hour) => (
-            <option key={hour} value={`${hour}:00`}>
-              {`${hour}:00`}
-            </option>
-          ))}
+          <option value="08:00">08:00</option>
+          <option value="09:00">09:00</option>
+          <option value="10:00">10:00</option>
+          <option value="11:00">11:00</option>
+          <option value="12:00">12:00</option>
+          <option value="13:00">13:00</option>
+          <option value="14:00">14:00</option>
+          <option value="15:00">15:00</option>
+          <option value="16:00">16:00</option>
+          <option value="17:00">17:00</option>
+          <option value="18:00">18:00</option>
+          <option value="19:00">19:00</option>
+          <option value="20:00">20:00</option>
+          <option value="21:00">21:00</option>
+          <option value="22:00">22:00</option>
+          <option value="23:00">23:00</option>
         </select>
       </section>
 
-      {/* Display list of available restaurants */}
+      {/* Results Section: List of available restaurants */}
       <section className="results-section-consumer">
         <h3 className="results-title-consumer">Available Restaurants</h3>
-        <div className="results-content-consumer">
-          {restaurants.length > 0 ? (
-            <ul className="results-list-consumer">
-              {restaurants.map((restaurant: Restaurant) => (
-                <li key={restaurant.restaurantId} className="result-item-consumer">
-                  <h4 className="restaurant-name-consumer">{restaurant.name}</h4>
-                  <p className="restaurant-info-consumer">
-                    <strong>Address:</strong> {restaurant.address}
-                  </p>
-                  <p className="restaurant-info-consumer">
-                    <strong>Open:</strong> {restaurant.startTime.slice(0, 5)}
-                  </p>
-                  <p className="restaurant-info-consumer">
-                    <strong>Close:</strong> {restaurant.endTime.slice(0, 5)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="placeholder-consumer">No restaurants available</div>
-          )}
-        </div>
+        <ul className="results-list-consumer">
+          {/* Example of a restaurant card */}
+          <li className="result-item-consumer">
+            <h4 className="restaurant-name-consumer">Tech Pizza</h4>
+            <p className="restaurant-info-consumer">
+              <strong>Address:</strong> 123 Main St
+            </p>
+            <p className="restaurant-info-consumer">
+              <strong>Open:</strong> 9:00 AM
+            </p>
+            <p className="restaurant-info-consumer">
+              <strong>Close:</strong> 10:00 PM
+            </p>
+            <button className="action-button-consumer">Reserve</button>
+          </li>
+          <li className="result-item-consumer">
+            <h4 className="restaurant-name-consumer">Boomers</h4>
+            <p className="restaurant-info-consumer">
+              <strong>Address:</strong> 123 Main St
+            </p>
+            <p className="restaurant-info-consumer">
+              <strong>Open:</strong> 11:00 AM
+            </p>
+            <p className="restaurant-info-consumer">
+              <strong>Close:</strong> 11:00 PM
+            </p>
+            <button className="action-button-consumer">Reserve</button>
+          </li>
+        </ul>
       </section>
 
-      {/* Login Modal */}
+      {/* Login Modal: Displayed when the login button is clicked */}
       {isLoginVisible && (
         <div className="modal-overlay">
           <div className="login-modal">
@@ -239,6 +133,7 @@ const ConsumerView: React.FC = () => {
               ✕
             </button>
             <h2 className="login-title">Log in</h2>
+            <p className="login-subtitle">Enter your credentials</p>
             <div className="login-inputs">
               <input
                 type="text"
@@ -256,75 +151,22 @@ const ConsumerView: React.FC = () => {
               />
             </div>
             <div className="login-buttons">
-              <button className="login-button" onClick={handleManager}>
-                Login Manager/ Create Restaurant
-              </button>
-              {/* <button
-               className='create-account-button'
-               onClick={() =>openCreateManager()}
-
-               >
-                Create Manager?
-                </button>
- */}
-
               <button
                 className="login-button"
-                onClick={async () => {
-                  try {
-                    const response = await loginInfoApi.post('/', {
-                      action: 'register',
-                      username,
-                      password, 
-                      role: 'Admin',
-                    });
-
-                    if (response.status === 201) {
-                      alert('Administrator created successfully');
-                      closeCreateAdmin();
-                    } else {
-                      alert('Error creating : ' + response.data.message); 
-                    }
-                  } catch (err) {
-                    console.error('Error creating administrator:', err);
-                    alert('An error occurred. Please try again.');
-                  }
-                  closeCreateAdmin
-                } }
+                onClick={() => handleLogin('manager')}
+              >
+                Login as Manager
+              </button>
+              <button
+                className="login-button"
+                onClick={() => handleLogin('admin')}
               >
                 Login as Administrator
               </button>
-              
-              
-                {/* <button
-               className='create-account-button'
-               onClick={() =>openCreateAdmin()}
-               >
-                Create Administrator?
-                </button> */}
-            </div>
-            <div className="create-account-link-container">
-              {/* <span className="create-account-link" onClick={openCreateManager}>
-                Create Manager Account
-              </span> */}
-              <span className="create-account-link" onClick={openCreateAdmin}>
-                Create Administrator Account
-              </span>
             </div>
           </div>
         </div>
       )}
-      {notification.visible && (
-          <Notification
-            message={notification.message}
-            visible={notification.visible}
-            type={notification.type}
-          />
-        )}
-
-      {/* Account Creation Modals */}
-      {/* {isCreateManVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}
-      {isCreateAdmVisible && <AccountCreationModal title="Create Administrator Account" onClose={closeCreateAdmin} />} */}
     </div>
   );
 };
