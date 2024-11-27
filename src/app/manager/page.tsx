@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {Manager, Reservation, Restaurant} from '../../model'
 import axios from 'axios';
+import { Manager, Reservation, Restaurant } from '../../model'
 import {
   Table,
   TableEntryProps,
@@ -19,13 +19,15 @@ const createApiInstance = (baseURL: string) => {
 };
 
 // baseURLs for APIs
-const createRestaurantApi = createApiInstance('https://kwd94qobx2.execute-api.us-east-2.amazonaws.com');
-const editRestaurantApi = createApiInstance('https://doo8y94tle.execute-api.us-east-2.amazonaws.com');
-const openDaysApi = createApiInstance('https://example.com'); // Replace with actual URL
-const closeDayApi = createApiInstance('https://example.com'); // Replace with actual URL
+const managerLoginApi = createApiInstance('https://y4c1d1bns8.execute-api.us-east-2.amazonaws.com/managerLogin/');
+const createRestaurantApi = createApiInstance('https://kwd94qobx2.execute-api.us-east-2.amazonaws.com/create-restaurant/');
+const editRestaurantInfoApi = createApiInstance('https://doo8y94tle.execute-api.us-east-2.amazonaws.com/editRestaurant/');
+const editRestaurantTablesApi = createApiInstance('https://2ss0b3tpbj.execute-api.us-east-2.amazonaws.com');
+const openFutureDaysApi = createApiInstance('https://cxj6su3ix7.execute-api.us-east-2.amazonaws.com/openFutureDay/');
+const closeFutureDaysApi = createApiInstance('https://example.com'); // Replace with actual URL
 const reviewAvailabilityApi = createApiInstance('https://example.com'); // Replace with actual URL
-const deleteRestaurantApi = createApiInstance('https://ub4vssj8g4.execute-api.us-east-2.amazonaws.com');
-const activateRestaurantApi = createApiInstance('https://ys2gzedx59.execute-api.us-east-2.amazonaws.com');
+const deleteRestaurantApi = createApiInstance('https://ub4vssj8g4.execute-api.us-east-2.amazonaws.com/deleteRestaurant');
+const activateRestaurantApi = createApiInstance('https://ys2gzedx59.execute-api.us-east-2.amazonaws.com/activateRestaurant/');
 
 // Reusable component for wrapping forms with a consistent layout
 const FormWrapper: React.FC<FormWrapperProps> = ({ title, children }) => (
@@ -40,8 +42,8 @@ const TableEntry: React.FC<TableEntryProps> = ({ table, updateSeats, removeTable
   <div className="table-entry">
     <label>Table {table.tableNumber}</label>
     <select
-      value={table.num_seats === 1 ? '' : table.num_seats}
-      onChange={(e) => updateSeats(table.tableNumber, parseInt(e.target.value) || 1)}
+      value={table.seats || 1}
+      onChange={(e) => updateSeats(table, parseInt(e.target.value) || 1)}
     >
       <option value="" disabled>Seats</option>
       {Array.from({ length: 20 }, (_, i) => i + 1).map((seatCount) => (
@@ -72,12 +74,6 @@ const DateEntry: React.FC<DateEntryProps> = ({ date, index, removeDate }) => (
   </div>
 );
 
-// Notification component
-const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
-  if (!visible) return null;
-  return <div className={`notification ${type}`}>{message}</div>;
-};
-
 const ManagerView = (): JSX.Element => {
   const [currentForm, setCurrentForm] = useState<string | null>(null); // Tracks the currently open form (create, edit...)
   const [isActivated, setIsActivated] = useState(false); // Whether the restaurant is activated
@@ -93,18 +89,11 @@ const ManagerView = (): JSX.Element => {
   const [nextTableNumber, setNextTableNumber] = useState(1); // Next available number for adding a new table
   const [date, setDate] = useState(''); // Selected date for opening or closing the restaurant
   const [error, setError] = useState(''); // Error messages for the form or actions
-  const router = useRouter(); // Router instance for navigation
   const [showActivatePopup, setShowActivatePopup] = useState(false); // To show/hide the activate popup
   const [activateRestaurantId, setActivateRestaurantId] = useState(''); // To store the entered restaurant ID
   const [showInitialPopup, setShowInitialPopup] = useState(true); // For the initial popup
   const [restaurantId, setRestaurantId] = useState(''); // For the restaurant ID entered in the popup
-
-  // Function for on-screen notifications
-  const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
-    message: '',
-    visible: false,
-    type: '',
-  });
+  const router = useRouter(); // Router instance for navigation
 
   // Function to remove a table by its ID
   const removeTable = (id: number) => {
@@ -124,16 +113,22 @@ const ManagerView = (): JSX.Element => {
   const addTable = () => {
     setTables((prev) => [
       ...prev,
-      { tableNumber: nextTableNumber, num_seats: 1, available: true },
+      {
+        tableId: nextTableNumber,
+        restaurantId: parseInt(restaurantId),
+        tableNumber: nextTableNumber,
+        seats: 1,
+        available: true,
+      },
     ]);
-    setNextTableNumber((previousNumber) => previousNumber + 1); // Increment the number for the next table
+    setNextTableNumber((previousNumber) => previousNumber + 1);
   };
 
   // Function to update the number of seats for a specific table
-  const updateSeats = (tableNumber: number, num_seats: number) => {
+  const updateSeats = (table: Table, seats: number) => {
     setTables((prev) =>
-      prev.map((table) =>
-        table.tableNumber === tableNumber ? { ...table, num_seats } : table
+      prev.map((t) =>
+        t.tableNumber === table.tableNumber ? { ...t, seats } : t
       )
     );
   };
@@ -171,7 +166,7 @@ const ManagerView = (): JSX.Element => {
 
     if (!isActivated) {
       try {
-        const payload = { id: activateRestaurantId }; // Replace `activateRestaurantId` with the correct ID source
+        const payload = { id: activateRestaurantId };
         const response = await activateRestaurantApi.post('/activateRestaurant', payload);
 
         if (response.status === 200) {
@@ -186,6 +181,19 @@ const ManagerView = (): JSX.Element => {
         setError('Failed to activate restaurant.');
       }
     }
+  };
+
+  // Function for on-screen notifications
+  const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
+    message: '',
+    visible: false,
+    type: '',
+  });
+
+  // Notification component
+  const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
+    if (!visible) return null;
+    return <div className={`notification ${type}`}>{message}</div>;
   };
 
   // Helper function to show notifications
@@ -229,35 +237,114 @@ const ManagerView = (): JSX.Element => {
     setError(''); // Clear any errors
   };
 
+  // API: Manager Login
+  const handleManagerLogin = async () => {
+    if (!restaurantId.trim()) {
+      showNotification("Restaurant ID is required.", {}, "error");
+      console.error("Error: Restaurant ID is empty.");
+      return;
+    }
+  
+    // Prepare payload with restaurantId
+    const payload = {
+      restaurantId: restaurantId.toString(),
+    };
+  
+    console.log("Sending payload to manager login API:", payload);
+  
+    try {
+      // Send POST request to manager login API
+      const response = await managerLoginApi.post('', payload);
+      console.log("Raw Response received from API:", response);
+  
+      // Parse the response body if it is a string
+      const parsedBody =
+        typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+      console.log("Parsed Response Body:", parsedBody);
+  
+      // Check if the API response contains success message
+      if (parsedBody.message === "Data retrieved successfully") {
+        const { restaurant, openDays, tables } = parsedBody.data;
+  
+        if (restaurant) {
+          console.log("Restaurant data retrieved:", restaurant);
+  
+          const { name, address, startTime, endTime, activated } = restaurant;
+  
+          // Update state with restaurant details
+          setName(name);
+          setAddress(address);
+          setStartTime(startTime.slice(0, 5)); // Extract HH:mm from the time string
+          setEndTime(endTime.slice(0, 5));
+          setIsActivated(activated === 1); // Update activation status
+          setHasRestaurant(true);
+          setShowInitialPopup(false); // Close the popup after successful login
+  
+          // Handle openDays
+          const formattedOpenDays = openDays.map((day: { openDate: string }) => day.openDate);
+          console.log("Open days retrieved:", formattedOpenDays);
+          setDatesOpen(formattedOpenDays);
+  
+          // Handle tables
+          const formattedTables = tables.map((table: { tableNumber: number; seats: number }) => ({
+            tableNumber: table.tableNumber,
+            seats: table.seats,
+          }));
+          console.log("Tables retrieved:", formattedTables);
+          setTables(formattedTables);
+  
+          showNotification("Restaurant details retrieved successfully.", {}, "success");
+          console.log("Successfully updated state with restaurant details.");
+        } else {
+          showNotification("Failed to retrieve restaurant details.", {}, "error");
+          console.error("No restaurant data found in API response.");
+        }
+      } else {
+        showNotification(
+          parsedBody.message || "Failed to retrieve restaurant details.",
+          {},
+          "error"
+        );
+        console.error("API responded with an error:", parsedBody);
+      }
+    } catch (error) {
+      // Handle errors during API request
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        showNotification(`API Error: ${errorMessage}`, {}, "error");
+        console.error("Axios error:", errorMessage);
+      } else {
+        showNotification("An unexpected error occurred while logging in.", {}, "error");
+        console.error("Unexpected error:", error);
+      }
+    }
+  };  
+
   // API: Create Restaurant
   const handleCreateRestaurant = async () => {
     if (!name || !address) {
       setError('Name and Address are required.');
       return;
     }
-
-    // Get the current date in YYYY-MM-DD format
     const today = new Date().toISOString().split('T')[0];
-
-    // Default values for optional fields
     const payload = {
       name,
       address,
-      startTime: startTime || '08:00', // Default to 8:00 if not provided
-      endTime: endTime || '23:00', // Default to 23:00 if not provided
-      openDays: datesOpen.length > 0 ? datesOpen : [today], // Default to current day if not provided
+      startTime: `${startTime}:00`,
+      endTime: `${endTime}:00`,
+      openDays: datesOpen.length > 0 ? datesOpen : [today],
       tables: tables.length > 0
         ? tables.map((table) => ({
           tableNumber: table.tableNumber,
-          seats: table.num_seats,
+          seats: table.seats,
         }))
-        : [{ tableNumber: 1, seats: 1 }], // Default to one table with one seat
+        : [{ tableNumber: 1, seats: 1 }],
     };
 
     console.log('Sending payload to create restaurant API:', payload);
 
     try {
-      const response = await createRestaurantApi.post('/create-restaurant', payload);
+      const response = await createRestaurantApi.post('', payload);
 
       if (response.data.statusCode === 200) {
         setHasRestaurant(true);
@@ -288,9 +375,9 @@ const ManagerView = (): JSX.Element => {
   };
 
   // API: Edit Restaurant
-  const handleEditRestaurant = async () => {
-    if (!restaurantId || !name || !address || !startTime || !endTime || tables.length === 0) {
-      setError('All fields are required, including ID, name, address, opening/closing times, and tables.');
+  const handleEditRestaurantInfo = async () => {
+    if (!restaurantId || !name || !address || !startTime || !endTime) {
+      setError('All fields are required, including ID, name, address, and opening/closing times.');
       return;
     }
 
@@ -301,15 +388,11 @@ const ManagerView = (): JSX.Element => {
         address,
         startTime: `${startTime}:00`,
         endTime: `${endTime}:00`,
-        tables: tables.map((table) => ({
-          tableNumber: table.tableNumber,
-          seats: table.num_seats,
-        })),
       };
 
       console.log('Sending API request to edit restaurant with payload:', payload);
 
-      const response = await editRestaurantApi.post('/editRestaurant', payload);
+      const response = await editRestaurantInfoApi.post('', payload);
 
       if (response.data.statusCode === 200) {
         showNotification(`Successfully updated ${name}`);
@@ -325,38 +408,38 @@ const ManagerView = (): JSX.Element => {
     }
   };
 
-  // API: Open Future Day
-  const handleOpenFutureDay = async () => {
+  // API: Open Future Days
+  const handleOpenFutureDays = async () => {
     if (date) {
-      openDaysApi
+      openFutureDaysApi
         .post('/open-day', { date })
         .then(() => {
-          showNotification(`Future day ${date} opened successfully`);
+          showNotification(`Successfully set dates to open`);
           setDate('');
           setCurrentForm(null);
         })
         .catch((error) => {
-          console.error('Error opening future day:', error);
-          showNotification('Failed to set future day open', {}, 'error');
+          console.error('Error opening future days:', error);
+          showNotification('Failed to set future days to open', {}, 'error');
         });
     } else {
       showNotification('Date is required.', {}, 'error');
     }
   };
 
-  // API: Close Future Day
-  const handleCloseFutureDay = async () => {
+  // API: Close Future Days
+  const handleCloseFutureDays = async () => {
     if (date) {
-      closeDayApi
+      closeFutureDaysApi
         .post('/close-day', { date })
         .then(() => {
-          showNotification(`Future day ${date} closed successfully`);
+          showNotification(`Successfully set dates to close`);
           setDate('');
           setCurrentForm(null);
         })
         .catch((error) => {
-          console.error('Error closing future day:', error);
-          showNotification('Failed to set future day close', {}, 'error');
+          console.error('Error closing future days:', error);
+          showNotification('Failed to set future days to close', {}, 'error');
         });
     } else {
       setError('Date is required.');
@@ -389,7 +472,7 @@ const ManagerView = (): JSX.Element => {
     console.log('Sending request to delete restaurant:', { restaurantId });
 
     try {
-      const response = await deleteRestaurantApi.post('/deleteRestaurant', { restaurantId });
+      const response = await deleteRestaurantApi.post('', { restaurantId });
       console.log('API response:', response.data);
 
       if (response.status === 200) {
@@ -432,7 +515,7 @@ const ManagerView = (): JSX.Element => {
 
       if (response.status === 200) {
         console.log("test");
-        showNotification(`Successfully activated restaurant with ID ${activateRestaurantId}`);
+        showNotification(`Successfully activated restaurant with ID: ${activateRestaurantId}`);
         setShowActivatePopup(false);
         setActivateRestaurantId('');
         setIsActivated(true);
@@ -462,10 +545,12 @@ const ManagerView = (): JSX.Element => {
             />
             {error && <p className="form-error-message">{error}</p>}
             <div className="popup-buttons">
-              <button className="id-submit-button" onClick={handleSubmitRestaurantId}>
+              <button className="id-submit-button"
+                onClick={handleManagerLogin} >
                 Find Existing Restaurant
               </button>
-              <button className="cancel-button" onClick={handleNoRestaurant}>
+              <button className="cancel-button"
+                onClick={handleNoRestaurant}>
                 I Don't Have One
               </button>
             </div>
@@ -490,10 +575,10 @@ const ManagerView = (): JSX.Element => {
             </button>
           )}
 
-          {/* Show other buttons only if the user has a restaurant */}
+          {/* Show buttons dynamically based on restaurant status */}
           {hasRestaurant && (
             <>
-              {/* Show the "Activate Restaurant" button only if the user hasn't activated the restaurant yet */}
+              {/* Show the "Activate Restaurant" button only if the restaurant is not yet activated */}
               {!isActivated && (
                 <button
                   className="action-button"
@@ -503,7 +588,7 @@ const ManagerView = (): JSX.Element => {
                 </button>
               )}
 
-              {/* Show the "Edit Restaurant" button only if the restaurant is not activated */}
+              {/* Show the "Edit Restaurant" button only if the restaurant is not yet activated */}
               {!isActivated && (
                 <button
                   className={`action-button ${currentForm === 'edit' ? 'active' : ''}`}
@@ -513,23 +598,23 @@ const ManagerView = (): JSX.Element => {
                 </button>
               )}
 
-              {/* Open Future Day Button */}
+              {/* Button to open future days */}
               <button
                 className={`action-button ${currentForm === 'open' ? 'active' : ''}`}
                 onClick={() => handleToggleForm('open')}
               >
-                {currentForm === 'open' ? 'Exit' : 'Open Future Day'}
+                {currentForm === 'open' ? 'Exit' : 'Open Future Days'}
               </button>
 
-              {/* Close Future Day Button */}
+              {/* Button to close future days */}
               <button
                 className={`action-button ${currentForm === 'close' ? 'active' : ''}`}
                 onClick={() => handleToggleForm('close')}
               >
-                {currentForm === 'close' ? 'Exit' : 'Close Future Day'}
+                {currentForm === 'close' ? 'Exit' : 'Close Future Days'}
               </button>
 
-              {/* Review Availability Button */}
+              {/* Button to review availability */}
               <button
                 className={`action-button ${currentForm === 'review' ? 'active' : ''}`}
                 onClick={() => handleToggleForm('review')}
@@ -537,7 +622,7 @@ const ManagerView = (): JSX.Element => {
                 {currentForm === 'review' ? 'Exit' : 'Review Availability'}
               </button>
 
-              {/* Delete Restaurant Button */}
+              {/* Button to delete restaurant */}
               <button
                 className="delete-restaurant-button"
                 onClick={handleDeleteClick}
@@ -654,28 +739,6 @@ const ManagerView = (): JSX.Element => {
               ))}
             </div>
 
-            {/* Tables Section in Create Restaurant */}
-            <div className="form-group">
-              {/* Add Table Button */}
-              <button
-                type="button"
-                className="add-tables-button"
-                onClick={addTable}
-              >
-                Add Tables
-              </button>
-
-              {/* Table List */}
-              {tables.map((table) => (
-                <TableEntry
-                  key={table.tableNumber}
-                  table={table}
-                  updateSeats={updateSeats}
-                  removeTable={removeTable}
-                />
-              ))}
-            </div>
-
             {/* Error message (if any) */}
             {error && <p className="form-error-message">{error}</p>}
 
@@ -686,116 +749,128 @@ const ManagerView = (): JSX.Element => {
           </FormWrapper>
         )}
 
-        {/* Check if the Edit Restaurant Form should be displayed */}
         {currentForm === 'edit' && (
-          <FormWrapper title="Edit Restaurant">
-            {/* ID Field */}
-            <div className="form-group inline-fields">
-              <div className="id-field">
-                <label className="form-label" htmlFor="restaurantId">ID</label>
+          <div>
+            {/* Section 1: Edit Restaurant Info */}
+            <FormWrapper title="Edit Restaurant Info">
+              {/* ID Field */}
+              <div className="form-group inline-fields">
+                <div className="id-field">
+                  <label className="form-label" htmlFor="restaurantId">ID</label>
+                  <input
+                    id="restaurantId"
+                    value={restaurantId}
+                    onChange={(e) => setRestaurantId(e.target.value)}
+                    className="form-input"
+                    placeholder="Enter ID"
+                  />
+                </div>
+
+                {/* Name Field */}
+                <div className="name-field">
+                  <label className="form-label" htmlFor="name">Name</label>
+                  <input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="form-input"
+                    placeholder="Enter restaurant name"
+                  />
+                </div>
+              </div>
+
+              {/* Address Field */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="address">Address</label>
                 <input
-                  id="restaurantId"
-                  value={restaurantId}
-                  onChange={(e) => setRestaurantId(e.target.value)}
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                   className="form-input"
-                  placeholder="Enter ID"
+                  placeholder="Enter restaurant address"
                 />
               </div>
 
-              {/* Name Field */}
-              <div className="name-field">
-                <label className="form-label" htmlFor="name">Name</label>
-                <input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+              {/* Open Time */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="startTime">Open Time</label>
+                <select
+                  id="startTime"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
                   className="form-input"
-                  placeholder="Enter restaurant name"
-                />
+                >
+                  <option value="" disabled>Select Open Time</option>
+                  {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
+                    <option key={hour} value={hour}>{`${hour}:00`}</option>
+                  ))}
+                </select>
               </div>
-            </div>
 
-            {/* Address Field */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="address">Address</label>
-              <input
-                id="address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="form-input"
-                placeholder="Enter restaurant address"
-              />
-            </div>
+              {/* Close Time */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="endTime">Close Time</label>
+                <select
+                  id="endTime"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="form-input"
+                >
+                  <option value="" disabled>Select Close Time</option>
+                  {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
+                    <option key={hour} value={hour}>{`${hour}:00`}</option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Open Time */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="startTime">Open Time</label>
-              <select
-                id="startTime"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="form-input"
+              {/* Save Changes Button */}
+              <button
+                type="button"
+                className="form-submit-button"
+                onClick={handleEditRestaurantInfo}
               >
-                <option value="" disabled>Select Open Time</option>
-                {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
-                  <option key={hour} value={hour}>{`${hour}:00`}</option>
-                ))}
-              </select>
-            </div>
+                Save Changes
+              </button>
+            </FormWrapper>
 
-            {/* Close Time */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="endTime">Close Time</label>
-              <select
-                id="endTime"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="form-input"
-              >
-                <option value="" disabled>Select Close Time</option>
-                {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
-                  <option key={hour} value={hour}>{`${hour}:00`}</option>
+            {/* Section 2: Edit Restaurant Tables */}
+            <FormWrapper title="Edit Restaurant Tables">
+              <div className="form-group">
+                {/* Table List */}
+                {tables.map((table) => (
+                  <TableEntry
+                    key={table.tableNumber}
+                    table={table}
+                    updateSeats={updateSeats}
+                    removeTable={removeTable}
+                  />
                 ))}
-              </select>
-            </div>
+              </div>
 
-            {/* Tables Section */}
-            <div className="form-group">
+              {/* Add Table Button */}
               <button
                 type="button"
                 className="add-tables-button"
                 onClick={addTable}
               >
-                Add Tables
+                Add Table
               </button>
 
-              {/* Table List */}
-              {tables.map((table) => (
-                <TableEntry
-                  key={table.tableNumber}
-                  table={table}
-                  updateSeats={updateSeats}
-                  removeTable={removeTable}
-                />
-              ))}
-            </div>
-
-            {/* Error message */}
-            {error && <p className="form-error-message">{error}</p>}
-
-            {/* Save Changes Button */}
-            <button
-              className="form-submit-button"
-              onClick={handleEditRestaurant}
-            >
-              Save Changes
-            </button>
-          </FormWrapper>
+              {/* Save Changes Button */}
+              <button
+                type="button"
+                className="form-submit-button"
+              // onClick={handleEditRestaurantTables}
+              >
+                Save Changes
+              </button>
+            </FormWrapper>
+          </div>
         )}
 
-        {/* Check if the Open Future Day Form should be displayed */}
+        {/* Check if the Open Future Days Form should be displayed */}
         {currentForm === 'open' && (
-          <FormWrapper title="Open Future Day">
+          <FormWrapper title="Open Future Days">
             <div className="form-group">
               <label className="form-label" htmlFor="date">Date</label>
               <input
@@ -808,15 +883,15 @@ const ManagerView = (): JSX.Element => {
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
-            <button onClick={handleOpenFutureDay} className="form-submit-button">
+            <button onClick={handleOpenFutureDays} className="form-submit-button">
               Open Day
             </button>
           </FormWrapper>
         )}
 
-        {/* Check if the Close Future Day Form should be displayed */}
+        {/* Check if the Close Future Days Form should be displayed */}
         {currentForm === 'close' && (
-          <FormWrapper title="Open Future Day">
+          <FormWrapper title="Open Future Days">
             <div className="form-group">
               <label className="form-label" htmlFor="date">Date</label>
               <input
@@ -829,7 +904,7 @@ const ManagerView = (): JSX.Element => {
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
-            <button onClick={handleOpenFutureDay} className="form-submit-button">
+            <button onClick={handleOpenFutureDays} className="form-submit-button">
               Open Day
             </button>
           </FormWrapper>

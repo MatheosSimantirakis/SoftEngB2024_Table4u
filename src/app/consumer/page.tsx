@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {Consumer, Reservation, Restaurant} from '../../model'
-
+import { Consumer, Reservation, Restaurant } from '../../model';
 import axios from 'axios';
 
 // Function to create API instances with base URLs
@@ -14,51 +13,84 @@ const createApiInstance = (baseURL: string) => {
 };
 
 // Placeholder API instances for backend endpoints
-const listActiveRestaurants = createApiInstance('https://example.com');
-const searchAvailableRestaurants = createApiInstance('https://example.com');
-const searchSpecificRestaurant = createApiInstance('https://example.com');
-const makeReservation = createApiInstance('https://example.com');
-const findExistingReservation = createApiInstance('https://example.com');
-const cancelExistingReservation = createApiInstance('https://example.com');
-const loginInfo = createApiInstance('https://tcg8mewv25.execute-api.us-east-2.amazonaws.com/login'); // need to find URL
+const listActiveRestaurantsApi = createApiInstance('https://m0ppkn17qc.execute-api.us-east-2.amazonaws.com/listActiveRestaurants');
+const searchAvailableRestaurantsApi = createApiInstance('https://example.com');
+const searchSpecificRestaurantApi = createApiInstance('https://example.com');
+const makeReservationApi = createApiInstance('https://example.com');
+const findExistingReservationApi = createApiInstance('https://example.com');
+const cancelExistingReservationApi = createApiInstance('https://example.com');
+const loginInfoApi = createApiInstance('https://example.com'); 
 
+// Reusable component for account creation modal
+const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
+  <div className="modal-overlay">
+    <div className="login-modal">
+      <button className="close-button" onClick={onClose}>
+        ✕
+      </button>
+      <h2 className="login-title">{title}</h2>
+      <div className="login-inputs">
+        <input type="text" placeholder="Username" className="login-input" />
+        <input type="password" placeholder="Password" className="login-input" />
+      </div>
+      <div className="login-buttons">
+        <button className="create-account-button">Create Account</button>
+      </div>
+    </div>
+  </div>
+);
 
-//Reusable component for account creation modal
-// const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
-//   <div className="modal-overlay">
-//     <div className="login-modal">
-//       <button className="close-button" onClick={onClose}>
-//         ✕
-//       </button>
-//       <h2 className="login-title">{title}</h2>
-//       <div className="login-inputs">
-//         <input type="text" placeholder="Username" className="login-input" />
-//         <input type="password" placeholder="Password" className="login-input" />
-//       </div>
-//       <div className="login-buttons">
-//         <button className="create-account-button">Create Account</button>
-//       </div>
-//     </div>
-//   </div>
-// );
+// Notification component
+const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
+  if (!visible) return null;
+  return <div className={`notification ${type}`}>{message}</div>;
+};
 
 const ConsumerView: React.FC = () => {
   const [isLoginVisible, setLoginVisible] = useState(false); // Login modal visibility
   const [isCreateManVisible, setCreateManVisible] = useState(false); // Manager account modal visibility
   const [isCreateAdmVisible, setCreateAdmVisible] = useState(false); // Admin account modal visibility
   const [isLoading, setIsLoading] = useState(false); // Loading state for transitions
-
   const [username, setUsername] = useState(''); // Username input state
   const [password, setPassword] = useState(''); // Password input state
-
   const [selectedDate, setSelectedDate] = useState(''); // Date filter state
+  const [restaurants, setRestaurants] = useState([]); // State to hold restaurant data
+
   const router = useRouter(); // Router instance for navigation
+
+  // Function for on-screen notifications
+  const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
+    message: '',
+    visible: false,
+    type: '',
+  });
+
+  // Helper function to show notifications
+  const showNotification = (
+    message: string,
+    params: Record<string, string> = {},
+    type: string = 'success',
+    duration: number = 10000 // Default duration: 10 seconds
+  ) => {
+    const formattedMessage = Object.keys(params).reduce(
+      (msg, key) => msg.replace(`{${key}}`, params[key]),
+      message
+    );
+
+    setNotification({ message: formattedMessage, visible: true, type });
+
+    // Clear notification after specified duration
+    setTimeout(() => {
+      setNotification({ message: '', visible: false, type: '' });
+    }, duration);
+  };
+
 
   // Show/hide the login modal
   const handleOpenLogin = () => setLoginVisible(true);
   const handleCloseLogin = () => setLoginVisible(false);
 
-  // Show/hide the account creation modals, ensuring only one modal is visible
+  // Functions to toggle manager account creation modal visibility
   const openCreateManager = () => {
     setLoginVisible(false);
     setCreateManVisible(true);
@@ -93,31 +125,55 @@ const ConsumerView: React.FC = () => {
   const handleLogin = async (role: string) => {
     setIsLoading(true); // Set loading state
     if (role === 'manager') {
-      await router.push('/manager'); // Redirect to manager dashboard
+      await router.push('/manager'); 
     } else if (role === 'admin') {
-      await router.push('/admin'); // Redirect to admin dashboard
+      await router.push('/admin'); 
     }
-    setIsLoading(false); // Clear loading state
-    setLoginVisible(false); // Close login modal
+    setIsLoading(false); 
+    setLoginVisible(false);
   };
 
   const handleManager = () => {
-    router.push('/manager'); 
-  }
+    router.push('/manager');
+  };
 
-  const handleCreateAccount = (role: String) =>{
-    if(role === 'manager'){
-      router.push('/createAdmin')
-    } else if (role ==='admin'){
-      
+  const handleCreateAccount = (role: String) => {
+    if (role === 'manager') {
+      router.push('/createAdmin');
+    } else if (role === 'admin') {
+      // Admin-specific logic
     }
-  }
+  };
 
   // Update the selected date for filtering
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(event.target.value);
     console.log(`Selected date: ${event.target.value}`);
   };
+
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await listActiveRestaurantsApi.get('');
+        if (response.status === 200) {
+          const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
+            restaurantId: restaurant.restaurantId,
+            name: restaurant.name,
+            address: restaurant.address,
+            startTime: restaurant.startTime, 
+            endTime: restaurant.endTime, 
+          }));
+  
+          setRestaurants(fetchedRestaurants); 
+        }
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+        showNotification('Failed to load restaurants. Please try again', {}, 'error');
+      }
+    };
+  
+    fetchRestaurants();
+  }, []);  
 
   return (
     <div className="consumer-view">
@@ -150,35 +206,28 @@ const ConsumerView: React.FC = () => {
       {/* Display list of available restaurants */}
       <section className="results-section-consumer">
         <h3 className="results-title-consumer">Available Restaurants</h3>
-        <ul className="results-list-consumer">
-          {/* Example of a restaurant card */}
-          <li className="result-item-consumer">
-            <h4 className="restaurant-name-consumer">Tech Pizza</h4>
-            <p className="restaurant-info-consumer">
-              <strong>Address:</strong> 123 Main St
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Open:</strong> 9:00 AM
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Close:</strong> 10:00 PM
-            </p>
-            <button className="action-button-consumer">Reserve</button>
-          </li>
-          <li className="result-item-consumer">
-            <h4 className="restaurant-name-consumer">Boomers</h4>
-            <p className="restaurant-info-consumer">
-              <strong>Address:</strong> 123 Main St
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Open:</strong> 11:00 AM
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Close:</strong> 11:00 PM
-            </p>
-            <button className="action-button-consumer">Reserve</button>
-          </li>
-        </ul>
+        <div className="results-content-consumer">
+          {restaurants.length > 0 ? (
+            <ul className="results-list-consumer">
+              {restaurants.map((restaurant: Restaurant) => (
+                <li key={restaurant.restaurantId} className="result-item-consumer">
+                  <h4 className="restaurant-name-consumer">{restaurant.name}</h4>
+                  <p className="restaurant-info-consumer">
+                    <strong>Address:</strong> {restaurant.address}
+                  </p>
+                  <p className="restaurant-info-consumer">
+                    <strong>Open:</strong> {restaurant.startTime.slice(0, 5)}
+                  </p>
+                  <p className="restaurant-info-consumer">
+                    <strong>Close:</strong> {restaurant.endTime.slice(0, 5)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="placeholder-consumer">No restaurants available</div>
+          )}
+        </div>
       </section>
 
       {/* Login Modal */}
@@ -206,11 +255,8 @@ const ConsumerView: React.FC = () => {
               />
             </div>
             <div className="login-buttons">
-              <button
-                className="login-button"
-                onClick={handleManager}
-              >
-                Login Manager/Create Restaurant
+              <button className="login-button" onClick={handleManager}>
+                Login Manager/ Create Restaurant
               </button>
               {/* <button
                className='create-account-button'
@@ -223,24 +269,24 @@ const ConsumerView: React.FC = () => {
 
               <button
                 className="login-button"
-                onClick={async () =>{
-                  try{
-                    const response = await loginInfo.post('',{
+                onClick={async () => {
+                  try {
+                    const response = await loginInfoApi.post('/', {
                       action: 'register',
                       username,
                       password, 
                       role: 'Admin',
                     });
 
-                    if(response.status === 201){
-                      alert('Administrator created successfully'); 
-                      closeCreateAdmin
+                    if (response.status === 201) {
+                      alert('Administrator created successfully');
+                      closeCreateAdmin();
                     } else {
                       alert('Error creating : ' + response.data.message); 
                     }
                   } catch (err) {
                     console.error('Error creating administrator:', err);
-                    alert("An error occurred. Please try again."); 
+                    alert('An error occurred. Please try again.');
                   }
                   closeCreateAdmin
                 } }
@@ -267,61 +313,13 @@ const ConsumerView: React.FC = () => {
           </div>
         </div>
       )}
-
-{isCreateAdmVisible &&(
-        <div className="modal-overlay">
-        <div className="login-modal">
-          <button className="close-button" onClick={closeCreateAdmin}>
-            ✕
-          </button>
-          <h2 className="login-title">Create Aministrator</h2>
-          <div className="login-inputs">
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="login-input"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="login-input"
-            />
-          </div>
-          <div className="login-buttons">
-            <button className='login-button' 
-                onClick={async () =>{
-                  try{
-                    const response = await loginInfo.post('',{
-                      action: 'register',
-                      username,
-                      password, 
-                      role: 'Admin',
-                    });
-
-                    if(response.status === 201){
-                      alert('Administrator created successfully'); 
-                      closeCreateAdmin
-                    } else {
-                      alert('Erroring : ' + (response.data?.message || 'Unknown error occurred'));
-
-                    }
-                  } catch (err) {
-                    console.error('Error creating administrator:', err);
-                    alert("An error occurred. Please try again."); 
-                  }
-                } }
-              >
-                Create Aministrator
-
-              </button>
-          </div>
-        </div>
-      </div>
-      )}
+      {notification.visible && (
+          <Notification
+            message={notification.message}
+            visible={notification.visible}
+            type={notification.type}
+          />
+        )}
 
       {/* Account Creation Modals */}
       {/* {isCreateManVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}

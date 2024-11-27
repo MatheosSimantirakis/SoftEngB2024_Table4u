@@ -357,37 +357,50 @@ body {
 }
 
 .results-section-consumer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  max-width: 1200px;
-  padding: 20px;
-}
-
-.results-title-consumer {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 15px;
-  text-align: center;
-  color: #000000;
+  margin-top: 20px;
 }
 
 .results-list-consumer {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+  gap: 15px; 
+  width: 100%;
+  margin-top: 10px;
+  padding: 0 10px; 
 }
 
 .result-item-consumer {
-  flex: 1 1 calc(50% - 20px);
   border: 1px solid #ced4da;
   border-radius: 8px;
   background-color: #ffffff;
   padding: 15px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: column; 
+  height: 150px; 
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.results-title-consumer {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #000000;
+}
+
+.results-content-consumer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
+  width: 100%;
+  min-height: 200px; 
 }
 
 .restaurant-name-consumer {
@@ -402,6 +415,7 @@ body {
 .restaurant-info-consumer {
   font-size: 14px;
   color: #000000;
+  margin-bottom: 5px;
 }
 
 .action-button-consumer {
@@ -534,14 +548,7 @@ body {
 
 /* ---------------- Manager View Styles ---------------- */
 
-.placeholder-manager {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  font-size: 18px;
-  color: var(--gray-color);
-}
+
 
 /* ---------------- Forms Styles ---------------- */
 
@@ -551,6 +558,7 @@ body {
   background-color: #ffffff;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px; 
 }
 
 .form-title {
@@ -851,6 +859,23 @@ input:checked+.slider:before {
 .login-input:focus {
   border-color: var(--primary-color);
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
+/* ---------------- Placeholder Styles ---------------- */
+
+.placeholder-manager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 18px;
+  color: var(--gray-color);
+}
+
+.placeholder-consumer {
+  font-size: 14px;
+  color: var(--gray-color);
+  text-align: center;
 }
 
 /* ---------------- On-Screen Popups Styles ---------------- */
