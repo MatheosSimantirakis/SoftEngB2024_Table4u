@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Consumer, Reservation, Restaurant } from '../../model'
-
+import { Consumer, Reservation, Restaurant } from '../../model';
 import axios from 'axios';
 
 // Function to create API instances with base URLs
@@ -14,12 +13,13 @@ const createApiInstance = (baseURL: string) => {
 };
 
 // Placeholder API instances for backend endpoints
-const listActiveRestaurants = createApiInstance('https://example.com');
-const searchAvailableRestaurants = createApiInstance('https://example.com');
-const searchSpecificRestaurant = createApiInstance('https://example.com');
-const makeReservation = createApiInstance('https://example.com');
-const findExistingReservation = createApiInstance('https://example.com');
-const cancelExistingReservation = createApiInstance('https://example.com');
+const listActiveRestaurantsApi = createApiInstance('https://m0ppkn17qc.execute-api.us-east-2.amazonaws.com/listActiveRestaurants');
+const searchAvailableRestaurantsApi = createApiInstance('https://example.com');
+const searchSpecificRestaurantApi = createApiInstance('https://example.com');
+const makeReservationApi = createApiInstance('https://example.com');
+const findExistingReservationApi = createApiInstance('https://example.com');
+const cancelExistingReservationApi = createApiInstance('https://example.com');
+const loginInfoApi = createApiInstance('https://example.com'); 
 
 // Reusable component for account creation modal
 const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
@@ -40,26 +40,58 @@ const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = (
   </div>
 );
 
-const loginInfo = createApiInstance('https://example.com'); // need to find URL
+// Notification component
+const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
+  if (!visible) return null;
+  return <div className={`notification ${type}`}>{message}</div>;
+};
 
 const ConsumerView: React.FC = () => {
   const [isLoginVisible, setLoginVisible] = useState(false); // Login modal visibility
   const [isCreateManagerVisible, setCreateManagerVisible] = useState(false); // Manager account modal visibility
   const [isCreateAdminVisible, setCreateAdminVisible] = useState(false); // Admin account modal visibility
   const [isLoading, setIsLoading] = useState(false); // Loading state for transitions
-
   const [username, setUsername] = useState(''); // Username input state
   const [password, setPassword] = useState(''); // Password input state
-
   const [selectedDate, setSelectedDate] = useState(''); // Date filter state
+  const [restaurants, setRestaurants] = useState([]); // State to hold restaurant data
+
   const router = useRouter(); // Router instance for navigation
+
+  // Function for on-screen notifications
+  const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
+    message: '',
+    visible: false,
+    type: '',
+  });
+
+  // Helper function to show notifications
+  const showNotification = (
+    message: string,
+    params: Record<string, string> = {},
+    type: string = 'success',
+    duration: number = 10000 // Default duration: 10 seconds
+  ) => {
+    const formattedMessage = Object.keys(params).reduce(
+      (msg, key) => msg.replace(`{${key}}`, params[key]),
+      message
+    );
+
+    setNotification({ message: formattedMessage, visible: true, type });
+
+    // Clear notification after specified duration
+    setTimeout(() => {
+      setNotification({ message: '', visible: false, type: '' });
+    }, duration);
+  };
+
 
   // Show/hide the login modal
   const handleOpenLogin = () => setLoginVisible(true);
   const handleCloseLogin = () => setLoginVisible(false);
 
-   // Functions to toggle manager account creation modal visibility
-   const openCreateManager = () => {
+  // Functions to toggle manager account creation modal visibility
+  const openCreateManager = () => {
     setLoginVisible(false);
     setCreateManagerVisible(true);
   };
@@ -76,25 +108,25 @@ const ConsumerView: React.FC = () => {
   const handleLogin = async (role: string) => {
     setIsLoading(true); // Set loading state
     if (role === 'manager') {
-      await router.push('/manager'); // Redirect to manager dashboard
+      await router.push('/manager'); 
     } else if (role === 'admin') {
-      await router.push('/admin'); // Redirect to admin dashboard
+      await router.push('/admin'); 
     }
-    setIsLoading(false); // Clear loading state
-    setLoginVisible(false); // Close login modal
+    setIsLoading(false); 
+    setLoginVisible(false);
   };
 
   const handleManager = () => {
     router.push('/manager');
-  }
+  };
 
   const handleCreateAccount = (role: String) => {
     if (role === 'manager') {
-      router.push('/createAdmin')
-    } else if (role = 'admin') {
-
+      router.push('/createAdmin');
+    } else if (role === 'admin') {
+      // Admin-specific logic
     }
-  }
+  };
 
   // Update the selected date for filtering
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,9 +134,32 @@ const ConsumerView: React.FC = () => {
     console.log(`Selected date: ${event.target.value}`);
   };
 
-  return (
-    <div className="consumer-view">\
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await listActiveRestaurantsApi.get('');
+        if (response.status === 200) {
+          const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
+            restaurantId: restaurant.restaurantId,
+            name: restaurant.name,
+            address: restaurant.address,
+            startTime: restaurant.startTime, 
+            endTime: restaurant.endTime, 
+          }));
+  
+          setRestaurants(fetchedRestaurants); 
+        }
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+        showNotification('Failed to load restaurants. Please try again', {}, 'error');
+      }
+    };
+  
+    fetchRestaurants();
+  }, []);  
 
+  return (
+    <div className="consumer-view">
       {/* Header with logo, login button, and search bar */}
       <header className="consumer-header">
         <img src="/logo.svg" alt="Tables4U Logo" className="logo-consumer" />
@@ -134,36 +189,28 @@ const ConsumerView: React.FC = () => {
       {/* Display list of available restaurants */}
       <section className="results-section-consumer">
         <h3 className="results-title-consumer">Available Restaurants</h3>
-        <ul className="results-list-consumer">
-
-          {/* Example of a restaurant card */}
-          <li className="result-item-consumer">
-            <h4 className="restaurant-name-consumer">Tech Pizza</h4>
-            <p className="restaurant-info-consumer">
-              <strong>Address:</strong> 123 Main St
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Open:</strong> 9:00 AM
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Close:</strong> 10:00 PM
-            </p>
-            <button className="action-button-consumer">Reserve</button>
-          </li>
-          <li className="result-item-consumer">
-            <h4 className="restaurant-name-consumer">Boomers</h4>
-            <p className="restaurant-info-consumer">
-              <strong>Address:</strong> 123 Main St
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Open:</strong> 11:00 AM
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Close:</strong> 11:00 PM
-            </p>
-            <button className="action-button-consumer">Reserve</button>
-          </li>
-        </ul>
+        <div className="results-content-consumer">
+          {restaurants.length > 0 ? (
+            <ul className="results-list-consumer">
+              {restaurants.map((restaurant: Restaurant) => (
+                <li key={restaurant.restaurantId} className="result-item-consumer">
+                  <h4 className="restaurant-name-consumer">{restaurant.name}</h4>
+                  <p className="restaurant-info-consumer">
+                    <strong>Address:</strong> {restaurant.address}
+                  </p>
+                  <p className="restaurant-info-consumer">
+                    <strong>Open:</strong> {restaurant.startTime.slice(0, 5)}
+                  </p>
+                  <p className="restaurant-info-consumer">
+                    <strong>Close:</strong> {restaurant.endTime.slice(0, 5)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="placeholder-consumer">No restaurants available</div>
+          )}
+        </div>
       </section>
 
       {/* Login Modal */}
@@ -191,17 +238,14 @@ const ConsumerView: React.FC = () => {
               />
             </div>
             <div className="login-buttons">
-              <button
-                className="login-button"
-                onClick={handleManager}
-              >
+              <button className="login-button" onClick={handleManager}>
                 Login Manager/ Create Restaurant
               </button>
               <button
                 className="login-button"
                 onClick={async () => {
                   try {
-                    const response = await loginInfo.post('/', {
+                    const response = await loginInfoApi.post('/', {
                       action: 'register',
                       username,
                       password,
@@ -210,13 +254,13 @@ const ConsumerView: React.FC = () => {
 
                     if (response.status === 201) {
                       alert('Administrator created successfully');
-                      closeCreateAdmin
+                      closeCreateAdmin();
                     } else {
                       alert('Error creating administrator: ' + response.data.message);
                     }
                   } catch (err) {
                     console.error('Error creating administrator:', err);
-                    alert("An error occurred. Please try again.");
+                    alert('An error occurred. Please try again.');
                   }
                 }}
               >
@@ -231,6 +275,13 @@ const ConsumerView: React.FC = () => {
           </div>
         </div>
       )}
+      {notification.visible && (
+          <Notification
+            message={notification.message}
+            visible={notification.visible}
+            type={notification.type}
+          />
+        )}
 
       {/* Account Creation Modals */}
       {isCreateManagerVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}

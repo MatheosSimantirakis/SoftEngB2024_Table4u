@@ -50,20 +50,22 @@ export class Reservation{
     }    
 }
 
-export class Tables{
-
-    tableId : number 
-    restaurantId : number 
-    tableNumber : number 
-    seats : number
-
-    constructor(tableId : number, restaurantId: number, tableNumber: number, seats: number){
-        this.tableId = tableId
-        this.restaurantId = restaurantId
-        this.tableNumber = tableNumber
-        this.seats = seats
+export class Table {
+    tableId: number;
+    restaurantId: number;
+    tableNumber: number;
+    seats: number;
+    available: boolean;
+  
+    constructor(tableId: number, restaurantId: number, tableNumber: number, seats: number, available: boolean = true) {
+      this.tableId = tableId;
+      this.restaurantId = restaurantId;
+      this.tableNumber = tableNumber;
+      this.seats = seats;
+      this.available = available;
     }
-}
+  }
+
 
 export class Restaurant {
     restaurantId : number
