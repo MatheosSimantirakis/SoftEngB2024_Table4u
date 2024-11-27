@@ -244,28 +244,33 @@ const ManagerView = (): JSX.Element => {
       console.error("Error: Restaurant ID is empty.");
       return;
     }
-
+  
     // Prepare payload with restaurantId
     const payload = {
       restaurantId: restaurantId.toString(),
     };
-
+  
     console.log("Sending payload to manager login API:", payload);
-
+  
     try {
       // Send POST request to manager login API
       const response = await managerLoginApi.post('', payload);
-      console.log("Response received from API:", response.data);
-
-      // Check if the API response is successful
-      if (response.data.message === "Data retrieved successfully") {
-        const { restaurant, openDays, tables } = response.data.data;
-
+      console.log("Raw Response received from API:", response);
+  
+      // Parse the response body if it is a string
+      const parsedBody =
+        typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+      console.log("Parsed Response Body:", parsedBody);
+  
+      // Check if the API response contains success message
+      if (parsedBody.message === "Data retrieved successfully") {
+        const { restaurant, openDays, tables } = parsedBody.data;
+  
         if (restaurant) {
           console.log("Restaurant data retrieved:", restaurant);
-
+  
           const { name, address, startTime, endTime, activated } = restaurant;
-
+  
           // Update state with restaurant details
           setName(name);
           setAddress(address);
@@ -274,24 +279,20 @@ const ManagerView = (): JSX.Element => {
           setIsActivated(activated === 1); // Update activation status
           setHasRestaurant(true);
           setShowInitialPopup(false); // Close the popup after successful login
-
+  
           // Handle openDays
           const formattedOpenDays = openDays.map((day: { openDate: string }) => day.openDate);
           console.log("Open days retrieved:", formattedOpenDays);
-
-          // Update openDays state if applicable
           setDatesOpen(formattedOpenDays);
-
+  
           // Handle tables
           const formattedTables = tables.map((table: { tableNumber: number; seats: number }) => ({
             tableNumber: table.tableNumber,
             seats: table.seats,
           }));
           console.log("Tables retrieved:", formattedTables);
-
-          // Update tables state
           setTables(formattedTables);
-
+  
           showNotification("Restaurant details retrieved successfully.", {}, "success");
           console.log("Successfully updated state with restaurant details.");
         } else {
@@ -300,11 +301,11 @@ const ManagerView = (): JSX.Element => {
         }
       } else {
         showNotification(
-          response.data.message || "Failed to retrieve restaurant details.",
+          parsedBody.message || "Failed to retrieve restaurant details.",
           {},
           "error"
         );
-        console.error("API responded with an error:", response.data);
+        console.error("API responded with an error:", parsedBody);
       }
     } catch (error) {
       // Handle errors during API request
@@ -317,7 +318,7 @@ const ManagerView = (): JSX.Element => {
         console.error("Unexpected error:", error);
       }
     }
-  };
+  };  
 
   // API: Create Restaurant
   const handleCreateRestaurant = async () => {
