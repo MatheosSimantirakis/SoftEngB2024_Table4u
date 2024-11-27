@@ -56,16 +56,27 @@ export class Table {
     tableNumber: number;
     seats: number;
     available: boolean;
+    isNew?: boolean; 
+    saved?: boolean;
   
-    constructor(tableId: number, restaurantId: number, tableNumber: number, seats: number, available: boolean = true) {
+    constructor(
+      tableId: number,
+      restaurantId: number,
+      tableNumber: number,
+      seats: number,
+      available: boolean = true,
+      isNew?: boolean,
+      saved?: boolean
+    ) {
       this.tableId = tableId;
       this.restaurantId = restaurantId;
       this.tableNumber = tableNumber;
       this.seats = seats;
       this.available = available;
+      this.isNew = isNew;
+      this.saved = saved;
     }
   }
-
 
 export class Restaurant {
     restaurantId : number

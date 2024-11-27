@@ -1,11 +1,13 @@
 // Table Type
-export interface Table {
+export type Table = {
   tableId: number;
-  restaurantId: number;
   tableNumber: number;
   seats: number;
   available: boolean;
-}
+  restaurantId?: number; 
+  isNew?: boolean;
+  saved?: boolean;
+};
 
 // Reservation Type
 export interface Reservation {
@@ -46,9 +48,11 @@ export interface Admin {
 // Component-Specific Props
 export interface TableEntryProps {
   table: Table;
-  updateSeats: (table: Table, num_seats: number) => void;
+  updateSeats: (table: Table, seats: number) => void;
   removeTable: (id: number) => void;
+  saveTable: (table: Table) => Promise<void>;
 }
+
 
 export interface DateEntryProps {
   date: string;
