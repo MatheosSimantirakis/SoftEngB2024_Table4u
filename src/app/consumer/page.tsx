@@ -177,6 +177,7 @@ const ConsumerView: React.FC = () => {
 
   return (
     <div className="consumer-view">
+    <div className="consumer-view">
       {/* Header with logo, login button, and search bar */}
       <header className="consumer-header">
         <img src="/logo.svg" alt="Tables4U Logo" className="logo-consumer" />
