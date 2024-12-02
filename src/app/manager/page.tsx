@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { Manager, Reservation, Restaurant } from '../../model'
 import {
   Table,
   TableEntryProps,
   DateEntryProps,
   FormWrapperProps,
 } from '../types';
+import { Restaurant } from '@/model';
 
 // Dynamic baseURL for all APIs
 const createApiInstance = (baseURL: string) => {
@@ -22,7 +22,7 @@ const createApiInstance = (baseURL: string) => {
 const managerLoginApi = createApiInstance('https://y4c1d1bns8.execute-api.us-east-2.amazonaws.com/managerLogin/');
 const createRestaurantApi = createApiInstance('https://kwd94qobx2.execute-api.us-east-2.amazonaws.com/create-restaurant/');
 const editRestaurantInfoApi = createApiInstance('https://doo8y94tle.execute-api.us-east-2.amazonaws.com/editRestaurant/');
-const editRestaurantTablesApi = createApiInstance('https://2ss0b3tpbj.execute-api.us-east-2.amazonaws.com');
+const editRestaurantTablesApi = createApiInstance('https://2ss0b3tpbj.execute-api.us-east-2.amazonaws.com/editTables');
 const openFutureDaysApi = createApiInstance('https://cxj6su3ix7.execute-api.us-east-2.amazonaws.com/openFutureDay/');
 const closeFutureDaysApi = createApiInstance('https://example.com'); // Replace with actual URL
 const reviewAvailabilityApi = createApiInstance('https://example.com'); // Replace with actual URL
@@ -38,18 +38,47 @@ const FormWrapper: React.FC<FormWrapperProps> = ({ title, children }) => (
 );
 
 // Reusable component for managing a single table entry in the table list
-const TableEntry: React.FC<TableEntryProps> = ({ table, updateSeats, removeTable }) => (
+const TableEntry: React.FC<TableEntryProps> = ({
+  table,
+  updateSeats,
+  removeTable,
+  saveTable,
+}) => (
   <div className="table-entry">
-    <label>Table {table.tableNumber}</label>
-    <select
-      value={table.seats || 1}
-      onChange={(e) => updateSeats(table, parseInt(e.target.value) || 1)}
-    >
-      <option value="" disabled>Seats</option>
-      {Array.from({ length: 20 }, (_, i) => i + 1).map((seatCount) => (
-        <option key={seatCount} value={seatCount}>{seatCount}</option>
-      ))}
-    </select>
+    <div className="table-info">
+      <label className="table-id">Table {table.tableNumber}</label>
+      {/* Conditionally render based on table.isNew and table.saved */}
+      {table.isNew && !table.saved ? (
+        // Dropdown for new tables
+        <select
+          className="table-seats-dropdown"
+          value={table.seats || 1}
+          onChange={(e) => updateSeats(table, parseInt(e.target.value) || 1)}
+        >
+          <option value="" disabled>
+            Seats
+          </option>
+          {Array.from({ length: 20 }, (_, i) => i + 1).map((seatCount) => (
+            <option key={seatCount} value={seatCount}>
+              {seatCount}
+            </option>
+          ))}
+        </select>
+      ) : (
+        // Static display for tables that are saved or auto-populated
+        <span className="table-seats-static">{table.seats} Seat(s)</span>
+      )}
+    </div>
+    {/* Render the Save button only for new tables that are not saved */}
+    {table.isNew && !table.saved && (
+      <button
+        type="button"
+        className="save-table-button"
+        onClick={() => saveTable(table)}
+      >
+        Save
+      </button>
+    )}
     <button
       type="button"
       className="remove-table-button"
@@ -94,43 +123,84 @@ const ManagerView = (): JSX.Element => {
   const [showInitialPopup, setShowInitialPopup] = useState(true); // For the initial popup
   const [restaurantId, setRestaurantId] = useState(''); // For the restaurant ID entered in the popup
   const router = useRouter(); // Router instance for navigation
+  const [tablesReady, setTablesReady] = useState(false); // Track when the tables data is ready
 
   // Function to remove a table by its ID
-  const removeTable = (id: number) => {
-    setTables((prev) => {
-      const updatedTables = prev.filter((table) => table.tableNumber !== id);
+  const removeTable = async (tableNumber: number) => {
+    try {
+      // Call the handler to remove the table, automatically sending seats: 1
+      await editTableHandler("delete", restaurantId, tableNumber);
 
-      // Reset nextTableNumber to 1 if no tables remain
-      if (updatedTables.length === 0) {
-        setNextTableNumber(1);
-      }
+      // Update local state to remove the table
+      setTables((prevTables) => prevTables.filter((table) => table.tableNumber !== tableNumber));
 
-      return updatedTables;
-    });
+      showNotification(`Table ${tableNumber} removed successfully`, {}, "success");
+    } catch (error) {
+      console.error("Error removing table:", error);
+      showNotification("Failed to remove the table.", {}, "error");
+    }
   };
 
   // Function to add a new table
   const addTable = () => {
+    // Find the next available number that doesn’t conflict with existing numbers
+    const existingNumbers = tables.map((table) => table.tableNumber);
+    let nextAvailableNumber = nextTableNumber;
+    while (existingNumbers.includes(nextAvailableNumber)) {
+      nextAvailableNumber += 1;
+    }
+    // Add the new table
     setTables((prev) => [
       ...prev,
       {
-        tableId: nextTableNumber,
+        tableId: nextAvailableNumber,
         restaurantId: parseInt(restaurantId),
-        tableNumber: nextTableNumber,
+        tableNumber: nextAvailableNumber,
         seats: 1,
         available: true,
+        isNew: true,
+        saved: false,
       },
     ]);
-    setNextTableNumber((previousNumber) => previousNumber + 1);
+    // Update nextTableNumber
+    setNextTableNumber(nextAvailableNumber + 1);
   };
 
   // Function to update the number of seats for a specific table
-  const updateSeats = (table: Table, seats: number) => {
-    setTables((prev) =>
-      prev.map((t) =>
+  const updateSeats = (table: Table, seats: number): void => {
+    setTables((prev: Table[]) =>
+      prev.map((t: Table) =>
         t.tableNumber === table.tableNumber ? { ...t, seats } : t
       )
     );
+  };
+
+  // Function to save tables
+  const saveTable = async (table: Table) => {
+    try {
+      const isSuccess = await editTableHandler(
+        'save',
+        restaurantId,
+        table.tableNumber,
+        table.seats || 1
+      );
+
+      if (isSuccess) {
+        setTables((prevTables) =>
+          prevTables.map((t) =>
+            t.tableNumber === table.tableNumber ? { ...t, saved: true } : t
+          )
+        );
+        // Show success notification
+        showNotification(`Table ${table.tableNumber} saved successfully`, {}, "success");
+      } else {
+        // Show failure notification
+        showNotification(`Failed to save table ${table.tableNumber}`, {}, "error");
+      }
+    } catch (error) {
+      console.error('Error saving table:', error);
+      showNotification('An unexpected error occurred while saving the table.', {}, 'error');
+    }
   };
 
   // Handler for toggle forms
@@ -167,7 +237,7 @@ const ManagerView = (): JSX.Element => {
     if (!isActivated) {
       try {
         const payload = { id: activateRestaurantId };
-        const response = await activateRestaurantApi.post('/activateRestaurant', payload);
+        const response = await activateRestaurantApi.post('', payload);
 
         if (response.status === 200) {
           setIsActivated(true);
@@ -244,68 +314,69 @@ const ManagerView = (): JSX.Element => {
       console.error("Error: Restaurant ID is empty.");
       return;
     }
-  
+
     // Prepare payload with restaurantId
     const payload = {
       restaurantId: restaurantId.toString(),
     };
-  
+
     console.log("Sending payload to manager login API:", payload);
-  
+
     try {
       // Send POST request to manager login API
-      const response = await managerLoginApi.post('', payload);
+      const response = await managerLoginApi.post("", payload);
       console.log("Raw Response received from API:", response);
-  
-      // Parse the response body if it is a string
-      const parsedBody =
-        typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
-      console.log("Parsed Response Body:", parsedBody);
-  
-      // Check if the API response contains success message
-      if (parsedBody.message === "Data retrieved successfully") {
-        const { restaurant, openDays, tables } = parsedBody.data;
-  
-        if (restaurant) {
-          console.log("Restaurant data retrieved:", restaurant);
-  
-          const { name, address, startTime, endTime, activated } = restaurant;
-  
-          // Update state with restaurant details
-          setName(name);
-          setAddress(address);
-          setStartTime(startTime.slice(0, 5)); // Extract HH:mm from the time string
-          setEndTime(endTime.slice(0, 5));
-          setIsActivated(activated === 1); // Update activation status
-          setHasRestaurant(true);
-          setShowInitialPopup(false); // Close the popup after successful login
-  
-          // Handle openDays
-          const formattedOpenDays = openDays.map((day: { openDate: string }) => day.openDate);
-          console.log("Open days retrieved:", formattedOpenDays);
-          setDatesOpen(formattedOpenDays);
-  
-          // Handle tables
-          const formattedTables = tables.map((table: { tableNumber: number; seats: number }) => ({
-            tableNumber: table.tableNumber,
-            seats: table.seats,
-          }));
-          console.log("Tables retrieved:", formattedTables);
-          setTables(formattedTables);
-  
-          showNotification("Restaurant details retrieved successfully.", {}, "success");
-          console.log("Successfully updated state with restaurant details.");
-        } else {
-          showNotification("Failed to retrieve restaurant details.", {}, "error");
-          console.error("No restaurant data found in API response.");
-        }
-      } else {
-        showNotification(
-          parsedBody.message || "Failed to retrieve restaurant details.",
-          {},
-          "error"
+
+      // Parse the body if it's a string
+      let parsedBody = response.data;
+      if (typeof response.data.body === "string") {
+        parsedBody = JSON.parse(response.data.body);
+      }
+
+      console.log("Parsed Response Data:", parsedBody);
+
+      // Extract data from the parsed response
+      const { data } = parsedBody;
+
+      if (data && data.restaurant) {
+        const { restaurant, openDays, tables } = data;
+
+        // Update state with restaurant details
+        setName(restaurant.name);
+        setAddress(restaurant.address);
+        setStartTime(restaurant.startTime.slice(0, 5));
+        setEndTime(restaurant.endTime.slice(0, 5));
+        setIsActivated(restaurant.activated === 1);
+        setHasRestaurant(true);
+        setShowInitialPopup(false);
+
+        // Process openDays and tables
+        const formattedOpenDays = openDays.map((day: { openDate: string }) => day.openDate);
+        const formattedTables = tables.map((table: Table) => ({
+          tableNumber: table.tableNumber,
+          seats: table.seats,
+          available: true,
+          tableId: table.tableNumber,
+          isNew: false,
+        }));
+
+        setDatesOpen(formattedOpenDays);
+        setTables(formattedTables);
+        setNextTableNumber(
+          formattedTables.length > 0
+            ? Math.max(...formattedTables.map((t: Table) => t.tableNumber)) + 1
+            : 1
         );
-        console.error("API responded with an error:", parsedBody);
+        setTablesReady(true);
+
+        // Switch to edit form after all updates
+        setCurrentForm('edit');
+
+        console.log('Tables from API:', tables);
+        showNotification("Restaurant details retrieved successfully", {}, "success");
+      } else {
+        console.error("No restaurant data found in API response:", parsedBody);
+        showNotification("Failed to retrieve restaurant details", {}, "error");
       }
     } catch (error) {
       // Handle errors during API request
@@ -318,7 +389,7 @@ const ManagerView = (): JSX.Element => {
         console.error("Unexpected error:", error);
       }
     }
-  };  
+  };
 
   // API: Create Restaurant
   const handleCreateRestaurant = async () => {
@@ -376,35 +447,70 @@ const ManagerView = (): JSX.Element => {
 
   // API: Edit Restaurant
   const handleEditRestaurantInfo = async () => {
-    if (!restaurantId || !name || !address || !startTime || !endTime) {
-      setError('All fields are required, including ID, name, address, and opening/closing times.');
+    if (!restaurantId) {
+      setError('Restaurant ID is missing. Please log in again.');
+      showNotification('Restaurant ID is required.', {}, 'error');
       return;
     }
-
+  
+    const payload = {
+      restaurantId, 
+      name: name || '', 
+      address: address || '',
+      startTime: startTime ? `${startTime}:00` : '', 
+      endTime: endTime ? `${endTime}:00` : '', 
+    };
+  
+    console.log('Sending API request to edit restaurant with payload:', payload);
+  
     try {
-      const payload = {
-        id: restaurantId,
-        name,
-        address,
-        startTime: `${startTime}:00`,
-        endTime: `${endTime}:00`,
-      };
-
-      console.log('Sending API request to edit restaurant with payload:', payload);
-
       const response = await editRestaurantInfoApi.post('', payload);
-
+  
       if (response.data.statusCode === 200) {
-        showNotification(`Successfully updated ${name}`);
-        setCurrentForm(null);
-        resetState();
+        showNotification(`Successfully updated restaurant`, {}, 'success');
+        setCurrentForm(null); 
+        resetState(); 
       } else {
         console.error('API error:', response.data.body || response.data);
         showNotification('Failed to update restaurant', {}, 'error');
       }
     } catch (error) {
       console.error('Error editing restaurant:', error);
-      setError('An error occurred while editing the restaurant.');
+      showNotification('An error occurred while editing the restaurant.', {}, 'error');
+    }
+  };  
+
+  // API: Edit Tables
+  const editTableHandler = async (
+    type: string,
+    restaurantId: string,
+    tableNumber: number,
+    seats: number = 1
+  ): Promise<boolean> => {
+    try {
+      const payload = {
+        type,
+        restaurantId,
+        tableNumber,
+        seats,
+      };
+
+      console.log("Sending payload to edit table API:", payload);
+
+      const response = await editRestaurantTablesApi.post('', payload);
+
+      if (response.status === 200) {
+        console.log(
+          `Successfully ${type === "delete" ? "deleted" : "edited"} table.`
+        );
+        return true;
+      } else {
+        console.error("API responded with an error:", response.data);
+        return false;
+      }
+    } catch (error) {
+      console.error("Error editing table:", error);
+      return false;
     }
   };
 
@@ -511,7 +617,7 @@ const ManagerView = (): JSX.Element => {
       const payload = { restaurantId: activateRestaurantId };
       console.log('Sending request to activate restaurant:', payload);
 
-      const response = await activateRestaurantApi.post('/activateRestaurant', payload);
+      const response = await activateRestaurantApi.post('', payload);
 
       if (response.status === 200) {
         console.log("test");
@@ -519,6 +625,7 @@ const ManagerView = (): JSX.Element => {
         setShowActivatePopup(false);
         setActivateRestaurantId('');
         setIsActivated(true);
+        setCurrentForm(null);
       } else {
         console.error('Failed to activate restaurant:', response.data);
         showNotification('Failed to activate restaurant', {}, 'error');
@@ -753,30 +860,16 @@ const ManagerView = (): JSX.Element => {
           <div>
             {/* Section 1: Edit Restaurant Info */}
             <FormWrapper title="Edit Restaurant Info">
-              {/* ID Field */}
-              <div className="form-group inline-fields">
-                <div className="id-field">
-                  <label className="form-label" htmlFor="restaurantId">ID</label>
-                  <input
-                    id="restaurantId"
-                    value={restaurantId}
-                    onChange={(e) => setRestaurantId(e.target.value)}
-                    className="form-input"
-                    placeholder="Enter ID"
-                  />
-                </div>
-
-                {/* Name Field */}
-                <div className="name-field">
-                  <label className="form-label" htmlFor="name">Name</label>
-                  <input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="form-input"
-                    placeholder="Enter restaurant name"
-                  />
-                </div>
+              {/* Name Field */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="name">Name</label>
+                <input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="form-input"
+                  placeholder="Enter restaurant name"
+                />
               </div>
 
               {/* Address Field */}
@@ -836,13 +929,14 @@ const ManagerView = (): JSX.Element => {
             {/* Section 2: Edit Restaurant Tables */}
             <FormWrapper title="Edit Restaurant Tables">
               <div className="form-group">
-                {/* Table List */}
+                {/* Display the list of tables */}
                 {tables.map((table) => (
                   <TableEntry
-                    key={table.tableNumber}
+                    key={table.tableId || table.tableNumber}
                     table={table}
                     updateSeats={updateSeats}
                     removeTable={removeTable}
+                    saveTable={saveTable}
                   />
                 ))}
               </div>
@@ -854,15 +948,6 @@ const ManagerView = (): JSX.Element => {
                 onClick={addTable}
               >
                 Add Table
-              </button>
-
-              {/* Save Changes Button */}
-              <button
-                type="button"
-                className="form-submit-button"
-              // onClick={handleEditRestaurantTables}
-              >
-                Save Changes
               </button>
             </FormWrapper>
           </div>

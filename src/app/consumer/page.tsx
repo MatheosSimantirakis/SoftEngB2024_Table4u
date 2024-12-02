@@ -4,24 +4,72 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const ConsumerView: React.FC = () => {
-  // State for toggling the login modal visibility
-  const [isLoginVisible, setLoginVisible] = useState(false);
+  const [isLoginVisible, setLoginVisible] = useState(false); // Login modal visibility
+  const [isCreateManagerVisible, setCreateManagerVisible] = useState(false); // Manager account modal visibility
+  const [isCreateAdminVisible, setCreateAdminVisible] = useState(false); // Admin account modal visibility
+  const [isLoading, setIsLoading] = useState(false); // Loading state for transitions
+  const [username, setUsername] = useState(''); // Username input state
+  const [password, setPassword] = useState(''); // Password input state
+  const [selectedDate, setSelectedDate] = useState(''); // Date filter state
+  const [restaurants, setRestaurants] = useState([]); // State to hold restaurant data
 
-  // State for storing login credentials
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const router = useRouter(); // Router instance for navigation
 
-  // State for storing the selected date from the calendar
-  const [selectedDate, setSelectedDate] = useState('');
+  // Function for on-screen notifications
+  const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
+    message: '',
+    visible: false,
+    type: '',
+  });
 
-  const router = useRouter();
+  // Helper function to show notifications
+  const showNotification = (
+    message: string,
+    params: Record<string, string> = {},
+    type: string = 'success',
+    duration: number = 10000 // Default duration: 10 seconds
+  ) => {
+    const formattedMessage = Object.keys(params).reduce(
+      (msg, key) => msg.replace(`{${key}}`, params[key]),
+      message
+    );
 
-  // Handlers for showing and hiding the login modal
-  const handleOpenLogin = () => {
-    setLoginVisible(true);
+    setNotification({ message: formattedMessage, visible: true, type });
+
+    // Clear notification after specified duration
+    setTimeout(() => {
+      setNotification({ message: '', visible: false, type: '' });
+    }, duration);
   };
 
-  const handleCloseLogin = () => {
+
+  // Show/hide the login modal
+  const handleOpenLogin = () => setLoginVisible(true);
+  const handleCloseLogin = () => setLoginVisible(false);
+
+  // Functions to toggle manager account creation modal visibility
+  const openCreateManager = () => {
+    setLoginVisible(false);
+    setCreateManagerVisible(true);
+  };
+  const closeCreateManager = () => setCreateManagerVisible(false);
+
+  // Functions to toggle admin account creation modal visibility
+  const openCreateAdmin = () => {
+    setLoginVisible(false);
+    setCreateAdminVisible(true);
+  };
+  const closeCreateAdmin = () => setCreateAdminVisible(false);
+
+  // Handle login based on role and redirect
+  const handleLogin = async (role: string) => {
+    setIsLoading(true); // Set loading state
+    if (role === 'manager') {
+      await router.push('/manager'); 
+    } else if (role === 'admin') {
+      await router.push('/admin'); 
+    }
+    setIsLoading(false); 
     setLoginVisible(false);
   };
 
@@ -45,7 +93,7 @@ const ConsumerView: React.FC = () => {
 
   return (
     <div className="consumer-view">
-      {/* Header Section: Contains the logo, login button, and search bar */}
+      {/* Header with logo, login button, and search bar */}
       <header className="consumer-header">
         <img src="/logo.svg" alt="Tables4U Logo" className="logo-consumer" />
         <button className="login-button-consumer" onClick={handleOpenLogin}>
@@ -159,14 +207,49 @@ const ConsumerView: React.FC = () => {
               </button>
               <button
                 className="login-button"
-                onClick={() => handleLogin('admin')}
+                onClick={async () => {
+                  try {
+                    const response = await loginInfoApi.post('/', {
+                      action: 'register',
+                      username,
+                      password,
+                      role: 'Admin',
+                    });
+
+                    if (response.status === 201) {
+                      alert('Administrator created successfully');
+                      closeCreateAdmin();
+                    } else {
+                      alert('Error creating administrator: ' + response.data.message);
+                    }
+                  } catch (err) {
+                    console.error('Error creating administrator:', err);
+                    alert('An error occurred. Please try again.');
+                  }
+                }}
               >
                 Login as Administrator
               </button>
             </div>
+            <div className="create-account-link-container">
+              <span className="create-account-link" onClick={openCreateAdmin}>
+                Create Administrator Account
+              </span>
+            </div>
           </div>
         </div>
       )}
+      {notification.visible && (
+          <Notification
+            message={notification.message}
+            visible={notification.visible}
+            type={notification.type}
+          />
+        )}
+
+      {/* Account Creation Modals */}
+      {isCreateManagerVisible && <AccountCreationModal title="Create Manager Account" onClose={closeCreateManager} />}
+      {isCreateAdminVisible && <AccountCreationModal title="Create Administrator Account" onClose={closeCreateAdmin} />}
     </div>
   );
 };
