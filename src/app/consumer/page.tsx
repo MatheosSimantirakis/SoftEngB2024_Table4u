@@ -1,7 +1,53 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Consumer, Reservation, Restaurant } from '../../model';
+import axios from 'axios';
+
+// Function to create API instances with base URLs
+const createApiInstance = (baseURL: string) => {
+  return axios.create({
+    baseURL,
+  });
+};
+
+// Placeholder API instances for backend endpoints
+const listActiveRestaurantsApi = createApiInstance('https://m0ppkn17qc.execute-api.us-east-2.amazonaws.com/listActiveRestaurants');
+const searchAvailableRestaurantsApi = createApiInstance('https://example.com');
+const searchSpecificRestaurantApi = createApiInstance('https://example.com');
+const makeReservationApi = createApiInstance('https://example.com');
+const findExistingReservationApi = createApiInstance('https://example.com');
+const cancelExistingReservationApi = createApiInstance('https://example.com');
+const loginInfoApi = createApiInstance('https://example.com'); 
+
+// Reusable component for account creation modal
+const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
+  <div className="modal-overlay">
+    <div className="login-modal">
+      <button className="close-button" onClick={onClose}>
+        ✕
+      </button>
+      <h2 className="login-title">{title}</h2>
+      <div className="login-inputs">
+        <input type="text" placeholder="Username" className="login-input" />
+        <input type="password" placeholder="Password" className="login-input" />
+      </div>
+      <div className="login-buttons">
+        <button className="create-account-button"
+         onClick={
+
+        }>Create Account</button>
+      </div>
+    </div>
+  </div>
+);
+
+// Notification component
+const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
+  if (!visible) return null;
+  return <div className={`notification ${type}`}>{message}</div>;
+};
 
 const ConsumerView: React.FC = () => {
   const [isLoginVisible, setLoginVisible] = useState(false); // Login modal visibility
@@ -73,23 +119,47 @@ const ConsumerView: React.FC = () => {
     setLoginVisible(false);
   };
 
-  // Handler for login action based on role (manager or admin)
-  const handleLogin = (role: string) => {
-    if (role === 'manager') {
-      console.log(`Logging in as Manager with username: ${username}`);
-      router.push('/manager'); // Redirect to manager page
-    } else if (role === 'admin') {
-      console.log(`Logging in as Admin with username: ${username}`);
-      router.push('/admin'); // Redirect to admin page
-    }
-    setLoginVisible(false); // Close the modal after login
+  const handleManager = () => {
+    router.push('/manager');
   };
 
-  // Handler for date selection from the calendar input
+  const handleCreateAccount = (role: String) => {
+    if (role === 'manager') {
+      router.push('/createAdmin');
+    } else if (role === 'admin') {
+      // Admin-specific logic
+    }
+  };
+
+  // Update the selected date for filtering
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(event.target.value);
     console.log(`Selected date: ${event.target.value}`);
   };
+
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await listActiveRestaurantsApi.get('');
+        if (response.status === 200) {
+          const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
+            restaurantId: restaurant.restaurantId,
+            name: restaurant.name,
+            address: restaurant.address,
+            startTime: restaurant.startTime, 
+            endTime: restaurant.endTime, 
+          }));
+  
+          setRestaurants(fetchedRestaurants); 
+        }
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+        showNotification('Failed to load restaurants. Please try again', {}, 'error');
+      }
+    };
+  
+    fetchRestaurants();
+  }, []);  
 
   return (
     <div className="consumer-view">
@@ -100,80 +170,53 @@ const ConsumerView: React.FC = () => {
           Log in
         </button>
         <div className="search-container-consumer">
-          <input
-            type="text"
-            placeholder="Search for a restaurant..."
-            className="search-input-consumer"
-          />
+          <input type="text" placeholder="Search for a restaurant..." className="search-input-consumer" />
           <button className="search-button-consumer">Search</button>
         </div>
       </header>
 
-      {/* Filters Section: Buttons and dropdowns for filtering reservations */}
+      {/* Filters for reservations (date and time) */}
       <section className="filters-section-consumer">
         <button className="my-reservations-button-consumer">My Reservations</button>
-        <input
-          type="date" // Calendar input for selecting a date
-          className="date-input-consumer"
-          value={selectedDate}
-          onChange={handleDateChange}
-        />
+        <input type="date" className="date-input-consumer" value={selectedDate} onChange={handleDateChange} />
         <select className="dropdown-consumer">
           <option value="All times">Time</option>
-          <option value="08:00">08:00</option>
-          <option value="09:00">09:00</option>
-          <option value="10:00">10:00</option>
-          <option value="11:00">11:00</option>
-          <option value="12:00">12:00</option>
-          <option value="13:00">13:00</option>
-          <option value="14:00">14:00</option>
-          <option value="15:00">15:00</option>
-          <option value="16:00">16:00</option>
-          <option value="17:00">17:00</option>
-          <option value="18:00">18:00</option>
-          <option value="19:00">19:00</option>
-          <option value="20:00">20:00</option>
-          <option value="21:00">21:00</option>
-          <option value="22:00">22:00</option>
-          <option value="23:00">23:00</option>
+          {Array.from({ length: 16 }, (_, i) => i + 8).map((hour) => (
+            <option key={hour} value={`${hour}:00`}>
+              {`${hour}:00`}
+            </option>
+          ))}
         </select>
       </section>
 
-      {/* Results Section: List of available restaurants */}
+      {/* Display list of available restaurants */}
       <section className="results-section-consumer">
         <h3 className="results-title-consumer">Available Restaurants</h3>
-        <ul className="results-list-consumer">
-          {/* Example of a restaurant card */}
-          <li className="result-item-consumer">
-            <h4 className="restaurant-name-consumer">Tech Pizza</h4>
-            <p className="restaurant-info-consumer">
-              <strong>Address:</strong> 123 Main St
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Open:</strong> 9:00 AM
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Close:</strong> 10:00 PM
-            </p>
-            <button className="action-button-consumer">Reserve</button>
-          </li>
-          <li className="result-item-consumer">
-            <h4 className="restaurant-name-consumer">Boomers</h4>
-            <p className="restaurant-info-consumer">
-              <strong>Address:</strong> 123 Main St
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Open:</strong> 11:00 AM
-            </p>
-            <p className="restaurant-info-consumer">
-              <strong>Close:</strong> 11:00 PM
-            </p>
-            <button className="action-button-consumer">Reserve</button>
-          </li>
-        </ul>
+        <div className="results-content-consumer">
+          {restaurants.length > 0 ? (
+            <ul className="results-list-consumer">
+              {restaurants.map((restaurant: Restaurant) => (
+                <li key={restaurant.restaurantId} className="result-item-consumer">
+                  <h4 className="restaurant-name-consumer">{restaurant.name}</h4>
+                  <p className="restaurant-info-consumer">
+                    <strong>Address:</strong> {restaurant.address}
+                  </p>
+                  <p className="restaurant-info-consumer">
+                    <strong>Open:</strong> {restaurant.startTime.slice(0, 5)}
+                  </p>
+                  <p className="restaurant-info-consumer">
+                    <strong>Close:</strong> {restaurant.endTime.slice(0, 5)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="placeholder-consumer">No restaurants available</div>
+          )}
+        </div>
       </section>
 
-      {/* Login Modal: Displayed when the login button is clicked */}
+      {/* Login Modal */}
       {isLoginVisible && (
         <div className="modal-overlay">
           <div className="login-modal">
@@ -181,7 +224,6 @@ const ConsumerView: React.FC = () => {
               ✕
             </button>
             <h2 className="login-title">Log in</h2>
-            <p className="login-subtitle">Enter your credentials</p>
             <div className="login-inputs">
               <input
                 type="text"
@@ -199,11 +241,8 @@ const ConsumerView: React.FC = () => {
               />
             </div>
             <div className="login-buttons">
-              <button
-                className="login-button"
-                onClick={() => handleLogin('manager')}
-              >
-                Login as Manager
+              <button className="login-button" onClick={handleManager}>
+                Login Manager/ Create Restaurant
               </button>
               <button
                 className="login-button"
