@@ -24,7 +24,7 @@ const createRestaurantApi = createApiInstance('https://kwd94qobx2.execute-api.us
 const editRestaurantInfoApi = createApiInstance('https://doo8y94tle.execute-api.us-east-2.amazonaws.com/editRestaurant/');
 const editRestaurantTablesApi = createApiInstance('https://2ss0b3tpbj.execute-api.us-east-2.amazonaws.com/editTables');
 const openFutureDaysApi = createApiInstance('https://cxj6su3ix7.execute-api.us-east-2.amazonaws.com/openFutureDay/');
-const closeFutureDaysApi = createApiInstance('https://example.com'); // Replace with actual URL
+const closeFutureDaysApi = createApiInstance('https://jklr3333ug.execute-api.us-east-2.amazonaws.com/closeFutureDay/');
 const reviewAvailabilityApi = createApiInstance('https://example.com'); // Replace with actual URL
 const deleteRestaurantApi = createApiInstance('https://ub4vssj8g4.execute-api.us-east-2.amazonaws.com/deleteRestaurant');
 const activateRestaurantApi = createApiInstance('https://ys2gzedx59.execute-api.us-east-2.amazonaws.com/activateRestaurant/');
@@ -69,6 +69,7 @@ const TableEntry: React.FC<TableEntryProps> = ({
         <span className="table-seats-static">{table.seats} Seat(s)</span>
       )}
     </div>
+
     {/* Render the Save button only for new tables that are not saved */}
     {table.isNew && !table.saved && (
       <button
@@ -452,24 +453,24 @@ const ManagerView = (): JSX.Element => {
       showNotification('Restaurant ID is required.', {}, 'error');
       return;
     }
-  
+
     const payload = {
-      restaurantId, 
-      name: name || '', 
+      restaurantId,
+      name: name || '',
       address: address || '',
-      startTime: startTime ? `${startTime}:00` : '', 
-      endTime: endTime ? `${endTime}:00` : '', 
+      startTime: startTime ? `${startTime}:00` : '',
+      endTime: endTime ? `${endTime}:00` : '',
     };
-  
+
     console.log('Sending API request to edit restaurant with payload:', payload);
-  
+
     try {
       const response = await editRestaurantInfoApi.post('', payload);
-  
+
       if (response.data.statusCode === 200) {
         showNotification(`Successfully updated restaurant`, {}, 'success');
-        setCurrentForm(null); 
-        resetState(); 
+        setCurrentForm(null);
+        resetState();
       } else {
         console.error('API error:', response.data.body || response.data);
         showNotification('Failed to update restaurant', {}, 'error');
@@ -478,7 +479,7 @@ const ManagerView = (): JSX.Element => {
       console.error('Error editing restaurant:', error);
       showNotification('An error occurred while editing the restaurant.', {}, 'error');
     }
-  };  
+  };
 
   // API: Edit Tables
   const editTableHandler = async (
@@ -516,39 +517,66 @@ const ManagerView = (): JSX.Element => {
 
   // API: Open Future Days
   const handleOpenFutureDays = async () => {
-    if (date) {
-      openFutureDaysApi
-        .post('/open-day', { date })
-        .then(() => {
-          showNotification(`Successfully set dates to open`);
+    if (date && restaurantId) {
+      console.log(`Date: ${date}, Restaurant ID: ${restaurantId}`);
+
+      try {
+        const payload = { restaurantId, openDays: [date] };
+        console.log("Payload to API:", payload);
+
+        const response = await openFutureDaysApi.post('', payload);
+
+        console.log("API Response:", response);
+
+        if (response.status === 200) {
+          console.log("API call successful, response data:", response.data);
+          showNotification(`Successfully opened date ${date} for restaurant ID: ${restaurantId}`);
           setDate('');
           setCurrentForm(null);
-        })
-        .catch((error) => {
-          console.error('Error opening future days:', error);
-          showNotification('Failed to set future days to open', {}, 'error');
-        });
+        } else {
+          console.error("API responded with a non-200 status:", response.status);
+          showNotification('Failed to open the future day.', {}, 'error');
+        }
+      } catch (error) {
+        console.error("Error during API call:", error);
+        showNotification('An error occurred while opening the future day.', {}, 'error');
+      }
     } else {
-      showNotification('Date is required.', {}, 'error');
+      console.warn("Date or Restaurant ID missing");
+      showNotification('Date and Restaurant ID are required.', {}, 'error');
     }
   };
 
   // API: Close Future Days
   const handleCloseFutureDays = async () => {
-    if (date) {
-      closeFutureDaysApi
-        .post('/close-day', { date })
-        .then(() => {
-          showNotification(`Successfully set dates to close`);
+    if (date && restaurantId) {
+      console.log("handleCloseFutureDays triggered");
+      console.log(`Date: ${date}, Restaurant ID: ${restaurantId}`);
+
+      try {
+        const payload = { restaurantId, openDays: [date] };
+        console.log("Payload to API:", payload);
+
+        const response = await closeFutureDaysApi.post('', payload);
+
+        console.log("API Response:", response);
+
+        if (response.status === 200) {
+          console.log("API call successful, response data:", response.data);
+          showNotification(`Successfully closed date ${date} for restaurant ID: ${restaurantId}`);
           setDate('');
           setCurrentForm(null);
-        })
-        .catch((error) => {
-          console.error('Error closing future days:', error);
-          showNotification('Failed to set future days to close', {}, 'error');
-        });
+        } else {
+          console.error("API responded with a non-200 status:", response.status);
+          showNotification('Failed to close the future day.', {}, 'error');
+        }
+      } catch (error) {
+        console.error("Error during API call:", error);
+        showNotification('An error occurred while closing the future day.', {}, 'error');
+      }
     } else {
-      setError('Date is required.');
+      console.warn("Date or Restaurant ID missing");
+      showNotification('Date and Restaurant ID are required.', {}, 'error');
     }
   };
 
@@ -749,6 +777,7 @@ const ManagerView = (): JSX.Element => {
 
       {/* Right Panel: Contains all Forms */}
       <div className="right-panel">
+
         {/* Check if the Create Form should be displayed */}
         {currentForm === 'create' && (
           <FormWrapper title="Create Restaurant">
@@ -964,7 +993,9 @@ const ManagerView = (): JSX.Element => {
                 onChange={(e) => setDate(e.target.value)}
                 className="form-input"
                 type="date"
-                min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
+                min={new Date(new Date().setDate(new Date().getDate() + 1))
+                  .toISOString()
+                  .split('T')[0]}
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
@@ -976,7 +1007,7 @@ const ManagerView = (): JSX.Element => {
 
         {/* Check if the Close Future Days Form should be displayed */}
         {currentForm === 'close' && (
-          <FormWrapper title="Open Future Days">
+          <FormWrapper title="Close Future Days">
             <div className="form-group">
               <label className="form-label" htmlFor="date">Date</label>
               <input
@@ -989,8 +1020,8 @@ const ManagerView = (): JSX.Element => {
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
-            <button onClick={handleOpenFutureDays} className="form-submit-button">
-              Open Day
+            <button onClick={handleCloseFutureDays} className="form-submit-button">
+              Close Day
             </button>
           </FormWrapper>
         )}
