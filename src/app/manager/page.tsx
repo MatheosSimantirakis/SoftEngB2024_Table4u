@@ -123,22 +123,36 @@ const ManagerView = (): JSX.Element => {
   const [activateRestaurantId, setActivateRestaurantId] = useState(''); // To store the entered restaurant ID
   const [showInitialPopup, setShowInitialPopup] = useState(true); // For the initial popup
   const [restaurantId, setRestaurantId] = useState(''); // For the restaurant ID entered in the popup
-  const router = useRouter(); // Router instance for navigation
   const [tablesReady, setTablesReady] = useState(false); // Track when the tables data is ready
+  const router = useRouter(); // Router instance for navigation
 
   // Function to remove a table by its ID
   const removeTable = async (tableNumber: number) => {
     try {
-      // Call the handler to remove the table, automatically sending seats: 1
-      await editTableHandler("delete", restaurantId, tableNumber);
+      if (!restaurantId) {
+        throw new Error("Restaurant ID is missing. Please try logging in again.");
+      }
 
-      // Update local state to remove the table
-      setTables((prevTables) => prevTables.filter((table) => table.tableNumber !== tableNumber));
+      // Call the handler to remove the table
+      const isSuccess = await editTableHandler("delete", restaurantId, tableNumber);
 
-      showNotification(`Table ${tableNumber} removed successfully`, {}, "success");
+      if (isSuccess) {
+        // Update local state to remove the table
+        setTables((prevTables) =>
+          prevTables.filter((table) => table.tableNumber !== tableNumber)
+        );
+        showNotification(`Table ${tableNumber} removed successfully`, {}, "success");
+      } else {
+        throw new Error("Failed to delete the table.");
+      }
     } catch (error) {
-      console.error("Error removing table:", error);
-      showNotification("Failed to remove the table.", {}, "error");
+      if (error instanceof Error) {
+        console.error("Error removing table:", error.message);
+        showNotification(error.message, {}, "error");
+      } else {
+        console.error("Unexpected error:", error);
+        showNotification("An unexpected error occurred.", {}, "error");
+      }
     }
   };
 
@@ -179,8 +193,13 @@ const ManagerView = (): JSX.Element => {
   // Function to save tables
   const saveTable = async (table: Table) => {
     try {
+      if (!restaurantId) {
+        throw new Error("Restaurant ID is missing. Please try logging in again.");
+      }
+
+      // Call the handler to save the table
       const isSuccess = await editTableHandler(
-        'save',
+        "save",
         restaurantId,
         table.tableNumber,
         table.seats || 1
@@ -192,22 +211,83 @@ const ManagerView = (): JSX.Element => {
             t.tableNumber === table.tableNumber ? { ...t, saved: true } : t
           )
         );
-        // Show success notification
         showNotification(`Table ${table.tableNumber} saved successfully`, {}, "success");
       } else {
-        // Show failure notification
-        showNotification(`Failed to save table ${table.tableNumber}`, {}, "error");
+        throw new Error(`Failed to save table ${table.tableNumber}`);
       }
     } catch (error) {
-      console.error('Error saving table:', error);
-      showNotification('An unexpected error occurred while saving the table.', {}, 'error');
+      if (error instanceof Error) {
+        console.error("Error saving table:", error.message);
+        showNotification(error.message, {}, "error");
+      } else {
+        console.error("Unexpected error:", error);
+        showNotification("An unexpected error occurred.", {}, "error");
+      }
     }
   };
 
-  // Handler for toggle forms
+  // Function to fetch restaurant and table details
+  const reloadRestaurantDetails = async () => {
+    if (!restaurantId) {
+      console.error("Restaurant ID is missing. Unable to reload restaurant details.");
+      return;
+    }
+
+    try {
+      const payload = { restaurantId };
+      const response = await managerLoginApi.post("", payload);
+
+      let parsedBody = response.data;
+      if (typeof response.data.body === "string") {
+        parsedBody = JSON.parse(response.data.body);
+      }
+
+      const { data } = parsedBody;
+      if (data && data.restaurant) {
+        const { tables } = data;
+
+        // Process and update the tables in the state
+        const formattedTables = tables.map((table: Table) => ({
+          tableNumber: table.tableNumber,
+          seats: table.seats,
+          available: true,
+          tableId: table.tableNumber,
+          isNew: false,
+          saved: true,
+        }));
+
+        setTables(formattedTables);
+        setNextTableNumber(
+          formattedTables.length > 0
+            ? Math.max(...formattedTables.map((t: Table) => t.tableNumber)) + 1
+            : 1
+        );
+
+        console.log("Tables reloaded successfully:", formattedTables);
+      } else {
+        console.error("No restaurant data found during reload.");
+      }
+    } catch (error) {
+      console.error("Error reloading restaurant details:", error);
+    }
+  };
+
+
+  // Handler for toggling forms
   const handleToggleForm = (form: string | null) => {
-    setCurrentForm(currentForm === form ? null : form);
-    resetState();
+    if (currentForm === form) {
+      // Close the form and reset the state
+      setCurrentForm(null);
+      resetState();
+    } else {
+      // Open the requested form
+      setCurrentForm(form);
+
+      // Reload tables when opening the "Edit Restaurant" form
+      if (form === "edit") {
+        reloadRestaurantDetails();
+      }
+    }
   };
 
   // Reset form after closing out
@@ -380,14 +460,16 @@ const ManagerView = (): JSX.Element => {
         showNotification("Failed to retrieve restaurant details", {}, "error");
       }
     } catch (error) {
-      // Handle errors during API request
       if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || error.message;
-        showNotification(`API Error: ${errorMessage}`, {}, "error");
+        const errorMessage = error.response?.data?.message || error.message || "An unexpected API error occurred.";
+        showNotification(errorMessage, {}, "error");
         console.error("Axios error:", errorMessage);
+      } else if (error instanceof Error) {
+        console.error("Error:", error.message);
+        showNotification(error.message, {}, "error");
       } else {
-        showNotification("An unexpected error occurred while logging in.", {}, "error");
-        console.error("Unexpected error:", error);
+        console.error("Unknown error occurred:", error);
+        showNotification("An unexpected error occurred.", {}, "error");
       }
     }
   };
@@ -398,19 +480,15 @@ const ManagerView = (): JSX.Element => {
       setError('Name and Address are required.');
       return;
     }
-    const today = new Date().toISOString().split('T')[0];
+
+    const today = new Date().toISOString().split('T')[0]; // Default to today's date if no open days are provided
     const payload = {
       name,
       address,
-      startTime: `${startTime}:00`,
-      endTime: `${endTime}:00`,
-      openDays: datesOpen.length > 0 ? datesOpen : [today],
-      tables: tables.length > 0
-        ? tables.map((table) => ({
-          tableNumber: table.tableNumber,
-          seats: table.seats,
-        }))
-        : [{ tableNumber: 1, seats: 1 }],
+      startTime: `${startTime}:00`, // Format start time
+      endTime: `${endTime}:00`, // Format end time
+      openDays: datesOpen.length > 0 ? datesOpen : [today], // Use selected dates or default to today
+      tables: [{ tableNumber: 1, seats: 1 }], // Initialize with one default table
     };
 
     console.log('Sending payload to create restaurant API:', payload);
@@ -418,30 +496,49 @@ const ManagerView = (): JSX.Element => {
     try {
       const response = await createRestaurantApi.post('', payload);
 
-      if (response.data.statusCode === 200) {
-        setHasRestaurant(true);
-        setCurrentForm(null);
-        setName('');
-        setAddress('');
-        setStartTime('');
-        setEndTime('');
-        setDatesOpen([]);
-        setTables([]);
+      if (response.status === 200) {
+        const responseData = JSON.parse(response.data.body); // Parse the API response body
+        const restaurantId = responseData.restaurantId; // Extract restaurantId from response
 
-        const message =
-          JSON.parse(response.data.body)?.message || 'Restaurant created successfully';
-        showNotification(`${message}`);
+        console.log('Created Restaurant ID:', restaurantId);
+
+        if (restaurantId) {
+          setRestaurantId(restaurantId.toString());
+          setHasRestaurant(true);
+
+          // Update state with the initial table
+          setTables([
+            {
+              tableId: 1,
+              tableNumber: 1,
+              restaurantId: parseInt(restaurantId, 10),
+              seats: 1,
+              available: true,
+              isNew: false,
+              saved: true,
+            },
+          ]);
+
+          setCurrentForm('edit'); // Switch to edit form after creation
+          showNotification(
+            `Restaurant created successfully! ID: ${restaurantId}`,
+            {},
+            'success'
+          );
+        } else {
+          showNotification('Failed to retrieve Restaurant ID.', {}, 'error'); // Handle missing restaurantId
+        }
       } else {
-        console.error('API responded with an error:', response.data);
-        showNotification('Could not create Restaurant', {}, 'error');
+        console.error('API error:', response.data);
+        showNotification('Failed to create restaurant.', {}, 'error');
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Axios error:', error.response?.data || error.message);
-        setError(`API Error: ${error.response?.data?.message || error.message}`);
+      if (error instanceof Error) {
+        console.error('Error creating restaurant:', error.message);
+        showNotification(error.message, {}, 'error');
       } else {
         console.error('Unexpected error:', error);
-        setError('An unexpected error occurred. Please try again.');
+        showNotification('An unexpected error occurred.', {}, 'error');
       }
     }
   };
@@ -476,8 +573,13 @@ const ManagerView = (): JSX.Element => {
         showNotification('Failed to update restaurant', {}, 'error');
       }
     } catch (error) {
-      console.error('Error editing restaurant:', error);
-      showNotification('An error occurred while editing the restaurant.', {}, 'error');
+      if (error instanceof Error) {
+        console.error("Error editing restaurant:", error.message);
+        showNotification(error.message, {}, "error");
+      } else {
+        console.error("Unexpected error:", error);
+        showNotification("An unexpected error occurred.", {}, "error");
+      }
     }
   };
 
@@ -489,6 +591,11 @@ const ManagerView = (): JSX.Element => {
     seats: number = 1
   ): Promise<boolean> => {
     try {
+      if (!restaurantId) {
+        console.error("Restaurant ID is missing. Aborting API call.");
+        return false;
+      }
+
       const payload = {
         type,
         restaurantId,
@@ -498,20 +605,23 @@ const ManagerView = (): JSX.Element => {
 
       console.log("Sending payload to edit table API:", payload);
 
-      const response = await editRestaurantTablesApi.post('', payload);
+      const response = await editRestaurantTablesApi.post("", payload);
 
       if (response.status === 200) {
-        console.log(
-          `Successfully ${type === "delete" ? "deleted" : "edited"} table.`
-        );
+        console.log(`Successfully ${type === "delete" ? "deleted" : "saved"} table.`);
         return true;
       } else {
         console.error("API responded with an error:", response.data);
         return false;
       }
     } catch (error) {
-      console.error("Error editing table:", error);
-      return false;
+      if (error instanceof Error) {
+        console.error("Error editing table:", error.message);
+        return false;
+      } else {
+        console.error("Unexpected error:", error);
+        return false;
+      }
     }
   };
 
@@ -538,8 +648,13 @@ const ManagerView = (): JSX.Element => {
           showNotification('Failed to open the future day.', {}, 'error');
         }
       } catch (error) {
-        console.error("Error during API call:", error);
-        showNotification('An error occurred while opening the future day.', {}, 'error');
+        if (error instanceof Error) {
+          console.error("Error during API call:", error.message);
+          showNotification(error.message, {}, "error");
+        } else {
+          console.error("Unexpected error:", error);
+          showNotification("An unexpected error occurred.", {}, "error");
+        }
       }
     } else {
       console.warn("Date or Restaurant ID missing");
@@ -571,8 +686,13 @@ const ManagerView = (): JSX.Element => {
           showNotification('Failed to close the future day.', {}, 'error');
         }
       } catch (error) {
-        console.error("Error during API call:", error);
-        showNotification('An error occurred while closing the future day.', {}, 'error');
+        if (error instanceof Error) {
+          console.error("Error during API call:", error.message);
+          showNotification(error.message, {}, "error");
+        } else {
+          console.error("Unexpected error:", error);
+          showNotification("An unexpected error occurred.", {}, "error");
+        }
       }
     } else {
       console.warn("Date or Restaurant ID missing");
@@ -659,8 +779,15 @@ const ManagerView = (): JSX.Element => {
         showNotification('Failed to activate restaurant', {}, 'error');
       }
     } catch (error) {
-      console.error('Error activating restaurant:', error);
-      showNotification('An error occurred while activating the restaurant.', {}, 'error');
+      if (error instanceof Error) {
+        console.error("Delete Error:", error.message);
+        setError(error.message);
+        showNotification(error.message, {}, "error");
+      } else {
+        console.error("Unexpected error:", error);
+        setError("An unexpected error occurred.");
+        showNotification("An unexpected error occurred.", {}, "error");
+      }
     }
   };
 
@@ -1051,7 +1178,6 @@ const ManagerView = (): JSX.Element => {
               <button onClick={cancelDelete} className="cancel-button">
                 Cancel
               </button>
-
             </div>
           </div>
         )}
