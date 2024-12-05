@@ -20,28 +20,67 @@ const makeReservationApi = createApiInstance('https://example.com');
 const findExistingReservationApi = createApiInstance('https://example.com');
 const cancelExistingReservationApi = createApiInstance('https://example.com');
 const loginInfoApi = createApiInstance('https://example.com'); 
+const createAdmin = createApiInstance('https://eurgllqs6f.execute-api.us-east-2.amazonaws.com/createUser');
+const loginAdmin = createApiInstance('https://r0phmfsst7.execute-api.us-east-2.amazonaws.com/loginUser');
+
+// const [username, setUsername] = useState(''); // Username input state
+// const [password, setPassword] = useState(''); // Password input state
+
+
 
 // Reusable component for account creation modal
-const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
-  <div className="modal-overlay">
+const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => {
+  const [username, setUsername] = useState(''); // Username input state
+  const [password, setPassword] = useState(''); // Password input state
+
+  return(<div className="modal-overlay">
     <div className="login-modal">
       <button className="close-button" onClick={onClose}>
         ✕
       </button>
       <h2 className="login-title">{title}</h2>
       <div className="login-inputs">
-        <input type="text" placeholder="Username" className="login-input" />
-        <input type="password" placeholder="Password" className="login-input" />
+        <input
+         type="text"
+         placeholder="Username"
+         className="login-input"
+         value={username}
+         onChange={(e) =>
+         setUsername(e.target.value)}/>
+
+       <input
+
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) =>
+        setPassword(e.target.value)}
+        className="login-input"/>
+
       </div>
       <div className="login-buttons">
-        <button className="create-account-button"
-         onClick={
-
-        }>Create Account</button>
+        <button
+         className="create-account-button"
+         onClick={async () => {
+          try {
+            const response = await createAdmin.post('/', {
+              username,
+              password,
+            });
+          } catch (error){
+            console.error('Error creating account:', error);
+          }
+        } 
+          }>Create Account</button>
+          
       </div>
     </div>
   </div>
-);
+  )
+};
+
+  
+
 
 // Notification component
 const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
@@ -131,35 +170,59 @@ const ConsumerView: React.FC = () => {
     }
   };
 
+  const loginAdinmistrator = async() => {
+      try {
+        const payload = { username: username, password: password }
+        const info = JSON.stringify(payload)
+        loginAdmin.post('/', info).then((response) => {
+          console.log(response.status)
+
+          if(response.data.statusCode === 200){
+            router.push('/admin')
+          } else {
+            console.error('Login Failed:' + response.status, response.data)
+            alert("Login Failed, Check Credentials")
+          }
+          console.log(response.status)
+        }).catch((e) => {
+          console.error('Failed logging in, try again later', e);
+        })
+
+      } catch (error){
+        console.error('Failed logging in, try again later', error);
+      }
+    }
+
   // Update the selected date for filtering
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(event.target.value);
     console.log(`Selected date: ${event.target.value}`);
   };
 
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const response = await listActiveRestaurantsApi.get('');
-        if (response.status === 200) {
-          const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
-            restaurantId: restaurant.restaurantId,
-            name: restaurant.name,
-            address: restaurant.address,
-            startTime: restaurant.startTime, 
-            endTime: restaurant.endTime, 
-          }));
+  //useEffect(() => {
+  //   const fetchRestaurants = async () => {
+  //     try {
+  //       const response = await listActiveRestaurantsApi.get('');
+  //       if (response.status === 200) {
+  //         const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
+  //           restaurantId: restaurant.restaurantId,
+  //           name: restaurant.name,
+  //           address: restaurant.address,
+  //           startTime: restaurant.startTime, 
+  //           endTime: restaurant.endTime, 
+  //         }));
   
-          setRestaurants(fetchedRestaurants); 
-        }
-      } catch (error) {
-        console.error('Error fetching restaurants:', error);
-        showNotification('Failed to load restaurants. Please try again', {}, 'error');
-      }
-    };
+  //         setRestaurants(fetchedRestaurants); 
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching restaurants:', error);
+  //       showNotification('Failed to load restaurants. Please try again', {}, 'error');
+  //     }
+  //   };
   
-    fetchRestaurants();
-  }, []);  
+  //   fetchRestaurants();
+  // },
+  // []);  
 
   return (
     <div className="consumer-view">
@@ -246,26 +309,7 @@ const ConsumerView: React.FC = () => {
               </button>
               <button
                 className="login-button"
-                onClick={async () => {
-                  try {
-                    const response = await loginInfoApi.post('/', {
-                      action: 'register',
-                      username,
-                      password,
-                      role: 'Admin',
-                    });
-
-                    if (response.status === 201) {
-                      alert('Administrator created successfully');
-                      closeCreateAdmin();
-                    } else {
-                      alert('Error creating administrator: ' + response.data.message);
-                    }
-                  } catch (err) {
-                    console.error('Error creating administrator:', err);
-                    alert('An error occurred. Please try again.');
-                  }
-                }}
+                onClick={loginAdinmistrator}
               >
                 Login as Administrator
               </button>
