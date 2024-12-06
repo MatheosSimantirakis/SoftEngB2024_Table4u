@@ -13,15 +13,19 @@ export type Table = {
 export interface Reservation {
   seats: number;
   table: Table;
-  time: number;
+  time: number; 
   id: number;
-  confirmationCode: number;
+  confirmationCode: string; 
 }
 
 // Restaurant Type
 export interface Restaurant {
+  restaurantId : number
   name: string;
   address: string;
+  activated : boolean
+  startTime : string
+  endTime : string
   numTables: number;
   tables: Table[];
 }
