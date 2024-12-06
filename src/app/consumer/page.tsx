@@ -2,8 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Consumer, Reservation, Restaurant } from '../../model';
 import axios from 'axios';
+import { AxiosError } from 'axios';
+import {
+  Reservation,
+  Restaurant
+} from '../types';
 
 // Function to create API instances with base URLs
 const createApiInstance = (baseURL: string) => {
@@ -17,7 +21,7 @@ const listActiveRestaurantsApi = createApiInstance('https://m0ppkn17qc.execute-a
 const searchAvailableRestaurantsApi = createApiInstance('https://example.com');
 const searchSpecificRestaurantApi = createApiInstance('https://example.com');
 const makeReservationApi = createApiInstance('https://cogjtdgnmh.execute-api.us-east-2.amazonaws.com/makeReservation');
-const findExistingReservationApi = createApiInstance('https://example.com');
+const findReservationApi = createApiInstance('https://0lfhd5uy74.execute-api.us-east-2.amazonaws.com/findReservation/');
 const cancelExistingReservationApi = createApiInstance('https://vqo7mqf378.execute-api.us-east-2.amazonaws.com/cancelReservation');
 const loginInfoApi = createApiInstance('https://example.com');
 
@@ -63,7 +67,12 @@ const ConsumerView: React.FC = () => {
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(null); // Restaurant ID as a string or null
   const [selectedRestaurantName, setSelectedRestaurantName] = useState<string>(''); // Restaurant name as a string
   const [validationMessage, setValidationMessage] = useState<string>(''); // Stores form validation message
-  const router = useRouter(); // Router instance for navigation
+  const [isFindReservationModalVisible, setIsFindReservationModalVisible] = useState(false); // Tracks visibility of the Find Reservation modal
+  const [findEmail, setFindEmail] = useState(''); // Stores the email input for the Find Reservation modal
+  const [confirmationId, setConfirmationId] = useState(''); // Stores the confirmation ID input for the Find Reservation modal
+  const [reservationDetails, setReservationDetails] = useState<Reservation | null>(null); // Store retrieved reservation details
+  const [isViewingReservation, setIsViewingReservation] = useState(false); // Toggle to show reservation details
+  const router = useRouter(); // Router instance for navigation'
 
   // Function for on-screen notifications
   const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
@@ -137,10 +146,32 @@ const ConsumerView: React.FC = () => {
   };
 
   // Opens the reservation modal for a specific restaurant ID
-  const handleFindReservation = (restaurantId: string, restaurantName: string) => {
+  const handleMakeReservationModal = (restaurantId: string, restaurantName: string) => {
     setSelectedRestaurantId(restaurantId);
     setSelectedRestaurantName(restaurantName);
     setReservationModalVisible(true);
+  };
+
+  // Opens the Find Reservation modal by setting its visibility to true
+  const handleOpenFindReservationModal = () => setIsFindReservationModalVisible(true);
+
+  // Closes the Find Reservation modal by setting its visibility to false and resetting fields
+  const handleCloseFindReservationModal = () => {
+    setIsFindReservationModalVisible(false);
+    setFindEmail(''); // Clear the email input
+    setConfirmationId(''); // Clear the confirmation ID input
+    setIsViewingReservation(false); // Reset viewing state if needed
+  };
+
+  // Handles the action for finding a reservation
+  const handleFindReservationModalAction = () => {
+    if (!findEmail || !confirmationId) {
+      alert('Please fill in both Email and Confirmation ID');
+      return;
+    }
+    // Placeholder action to simulate finding a reservation
+    alert(`Finding reservation for Email: ${findEmail} and Confirmation ID: ${confirmationId}`);
+    setIsFindReservationModalVisible(false);
   };
 
   // Update the selected date for filtering
@@ -150,83 +181,156 @@ const ConsumerView: React.FC = () => {
   };
 
   // API: Make Reservation
-  const handleMakeReservation = async () => {
+  async function handleMakeReservation() {
     console.log("handleMakeReservation called");
 
-    // Input validation
+    // Validate input
     if (!reservationTime || !reservationDate || !reservationSeats || !email) {
-      console.warn("Validation failed: missing required fields");
-      setValidationMessage('All fields are required.');
+      console.warn("Validation failed: Missing required fields");
+      setValidationMessage("All fields are required");
       return;
     }
 
-    console.log("Input validation passed. Proceeding with API call.");
-    console.log("Reservation Details:", {
+    const requestData = {
       restaurantId: selectedRestaurantId,
       date: reservationDate,
       time: reservationTime,
-      seats: reservationSeats,
+      seats: parseInt(reservationSeats, 10),
       email,
-    });
+    };
 
-    setValidationMessage('');
+    console.log("Request Data:", requestData);
+
+    setIsLoading(true);
 
     try {
-      setIsLoading(true);
-      console.log("Sending API request...");
+      const response = await makeReservationApi.post("/", requestData);
 
-      // Call the API
-      const response = await makeReservationApi.post('/', {
-        restaurantId: selectedRestaurantId,
-        date: reservationDate,
-        time: reservationTime,
-        seats: parseInt(reservationSeats),
-        email,
-      });
-
-      console.log("API response received:", response);
-
-      if (response.status === 200 && response.data.statusCode === 200) {
-        const responseBody = JSON.parse(response.data.body);
-        const reservationId = responseBody.reservationId; // Extract reservationId from the parsed body
-
-        if (reservationId) {
-          console.log("Reservation created successfully with ID:", reservationId);
-
-          // Show success notification with the reservation ID
-          showNotification(
-            `Reservation created successfully! ID: ${reservationId}`,
-            {},
-            'success'
-          );
-          setReservationModalVisible(false);
-        } else {
-          console.error("Reservation ID not found in the response.");
-          showNotification("Reservation created, but ID could not be retrieved.", {}, "error");
-        }
-      } else if (response.data.statusCode === 400) {
-        const errorMessage = response.data?.message || "An error occurred.";
-        console.warn("Backend validation failed:", errorMessage);
-        showNotification(errorMessage, {}, 'error');
+      if (response.status === 200) {
+        const parsedBody = JSON.parse(response.data.body);
+        console.log(`Reservation ID: ${parsedBody.reservationId}`);
+        showNotification(`Reservation created successfully! ID: ${parsedBody.reservationId}`, {}, "success");
+        setReservationModalVisible(false);
+      } else if (response.status === 400) {
+        const parsedBody = JSON.parse(response.data.body);
+        console.warn(`Bad request: ${parsedBody.message}`);
+        showNotification(parsedBody.message || "Error creating reservation.", {}, "error");
       } else {
-        console.warn("Unknown API response:", response);
-        showNotification('Failed to create reservation. Try again.', {}, 'error');
+        console.error(`Unexpected status code: ${response.status}`);
+        showNotification("An unexpected error occurred. Please try again.", {}, "error");
       }
     } catch (error: any) {
-      console.error("Error occurred during reservation creation:", error);
-
-      // Parse the error message from the response
-      const backendMessage =
-        error.response?.data?.message ||
-        (typeof error.response?.data === 'string'
-          ? JSON.parse(error.response.data)?.message
-          : 'An unexpected error occurred. Please try again.');
-
-      console.warn("Error message:", backendMessage);
-      showNotification(backendMessage, {}, 'error');
+      console.error("Error during reservation creation:", error);
+      const errorMessage = error?.response?.data?.message || "Unexpected error occurred.";
+      showNotification(errorMessage, {}, "error");
     } finally {
       setIsLoading(false);
       console.log("handleMakeReservation process completed");
+    }
+  }
+
+  // API: Find Reservation
+  const handleFindReservation = async () => {
+    console.log("Starting find reservation process...");
+
+    // Validate input fields
+    if (!findEmail || !confirmationId) {
+      console.log("Validation failed: Missing Email or Confirmation ID");
+      showNotification("Please fill in both Email and Confirmation ID", {}, "error");
+      return;
+    }
+
+    try {
+      console.log("Sending API request with:", { email: findEmail, reservationId: confirmationId });
+
+      // API request to find reservation
+      const response = await findReservationApi.post("/", { email: findEmail, reservationId: confirmationId });
+      console.log("API response received:", response.data);
+
+      const { statusCode, body } = response.data;
+
+      if (statusCode === 200) {
+        const reservation = JSON.parse(body)?.message[0];
+
+        if (reservation) {
+          console.log("Reservation found:", reservation);
+
+          // Save the reservation details, including the ID
+          setReservationDetails({
+            ...reservation,
+            id: confirmationId, // Ensure the reservation ID is stored correctly
+          });
+
+          setIsViewingReservation(true);
+          showNotification("Reservation found successfully!", {}, "success");
+        } else {
+          console.error("Reservation details are missing in the response.");
+          showNotification("Unable to retrieve reservation details.", {}, "error");
+        }
+      } else if (statusCode === 400) {
+        const parsedBody = JSON.parse(body); // Parse the body to extract the error message
+        console.warn("API returned error with status 400:", parsedBody.message);
+        showNotification(parsedBody.message || "Could not find reservation.", {}, "error");
+      } else {
+        console.error("Unexpected status code:", statusCode);
+        showNotification("An unexpected error occurred. Please try again.", {}, "error");
+      }
+    } catch (error: any) {
+      console.error("Error occurred during find reservation:", error);
+      const errorMessage = error?.response?.data?.message || "An unexpected error occurred.";
+      showNotification(errorMessage, {}, "error");
+    } finally {
+      setIsLoading(false);
+      console.log("Find reservation process completed.");
+    }
+  };
+
+  // API: Cancel Reservation
+  const handleCancelReservation = async () => {
+    console.log("Starting cancel reservation process...");
+
+    // Validate if reservationDetails contains an id
+    if (!reservationDetails?.id) {
+      console.error("Reservation ID not available for cancellation.");
+      showNotification("Reservation ID is missing. Cannot cancel the reservation.", {}, "error");
+      return;
+    }
+
+    const requestData = {
+      reservationId: reservationDetails.id, // Use the saved ID
+      date: new Date().toISOString().split("T")[0], // Current date in YYYY-MM-DD format
+    };
+
+    try {
+      console.log("Sending cancellation request with:", requestData);
+
+      // Send API request to cancel the reservation
+      const response = await cancelExistingReservationApi.post("/", requestData);
+
+      if (response.status === 200) {
+        const { message } = response.data;
+        console.log("Cancellation successful:", message);
+        showNotification("Reservation canceled successfully", {}, "success");
+
+        // Clear the reservation details and input fields after successful cancellation
+        setReservationDetails(null);
+        setIsViewingReservation(false);
+        setFindEmail(""); // Clear the email input
+        setConfirmationId(""); // Clear the confirmation ID input
+      } else if (response.status === 400) {
+        const { message } = response.data;
+        console.warn("Cancellation failed:", message);
+        showNotification(message || "Unable to cancel the reservation.", {}, "error");
+      } else {
+        console.error("Unexpected status code:", response.status);
+        showNotification("An unexpected error occurred. Please try again.", {}, "error");
+      }
+    } catch (error: any) {
+      console.error("Error during cancellation:", error);
+      const errorMessage = error?.response?.data?.message || "An unexpected error occurred.";
+      showNotification(errorMessage, {}, "error");
+    } finally {
+      console.log("Cancel reservation process completed.");
     }
   };
 
@@ -243,7 +347,6 @@ const ConsumerView: React.FC = () => {
             startTime: restaurant.startTime,
             endTime: restaurant.endTime,
           }));
-
           setRestaurants(fetchedRestaurants);
         }
       } catch (error) {
@@ -269,9 +372,14 @@ const ConsumerView: React.FC = () => {
         </div>
       </header>
 
-      {/* Filters for reservations (date and time) */}
+      {/* Sub menu for finding reservation, filtering by time and date */}
       <section className="filters-section-consumer">
-        <button className="my-reservations-button-consumer">My Reservations</button>
+        <button
+          className="find-reservations-button-consumer"
+          onClick={handleOpenFindReservationModal}
+        >
+          Find Reservations
+        </button>
         <input type="date" className="date-input-consumer" value={selectedDate} onChange={handleDateChange} />
         <select className="dropdown-consumer">
           <option value="All times">Time</option>
@@ -301,12 +409,13 @@ const ConsumerView: React.FC = () => {
                   <p className="restaurant-info-consumer">
                     <strong>Close:</strong> {restaurant.endTime.slice(0, 5)}
                   </p>
-                  {/* New "Find Reservation" button */}
+
+                  {/* Find Reservation button */}
                   <button
-                    className="find-reservation-button-consumer"
-                    onClick={() => handleFindReservation(restaurant.restaurantId.toString(), restaurant.name)}
+                    className="make-reservation-button-consumer"
+                    onClick={() => handleMakeReservationModal(restaurant.restaurantId.toString(), restaurant.name)}
                   >
-                    Find Reservation
+                    Make Reservation
                   </button>
                 </li>
               ))}
@@ -324,7 +433,7 @@ const ConsumerView: React.FC = () => {
             <button className="close-button" onClick={() => setReservationModalVisible(false)}>
               ✕
             </button>
-            <h2 className="reservation-title">Make a Reservation for {selectedRestaurantName}</h2>
+            <h2 className="reservation-title-consumer">Make a Reservation for {selectedRestaurantName}</h2>
             <div className="reservation-inputs-container">
               {/* Time Dropdown */}
               <div className="form-group">
@@ -367,7 +476,7 @@ const ConsumerView: React.FC = () => {
                   className="reservation-input"
                 >
                   <option value="" disabled>Select Seats</option>
-                  {Array.from({ length: 20 }, (_, i) => i + 1).map((seat) => (
+                  {Array.from({ length: 8 }, (_, i) => i + 1).map((seat) => (
                     <option key={seat} value={seat}>
                       {seat}
                     </option>
@@ -382,14 +491,23 @@ const ConsumerView: React.FC = () => {
                   type="email"
                   id="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    // Validate email as the user types
+                    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    if (!emailPattern.test(e.target.value)) {
+                      setValidationMessage("Invalid email address");
+                    } else {
+                      setValidationMessage(""); // Clear the message if the email is valid
+                    }
+                  }}
                   className="reservation-input"
                 />
               </div>
 
               {/* Validation Message */}
               {validationMessage && (
-                <p className="form-error-message">{validationMessage}</p>
+                <p className="reservation-popup-error-message">{validationMessage}</p>
               )}
 
               {/* Submit Button */}
@@ -401,6 +519,78 @@ const ConsumerView: React.FC = () => {
                 {isLoading ? 'Making Reservation...' : 'Make Reservation'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Find Reservation Modal */}
+      {isFindReservationModalVisible && (
+        <div className="modal-overlay" onClick={handleCloseFindReservationModal}>
+          <div className="reservation-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="close-button" onClick={handleCloseFindReservationModal}>
+              ✕
+            </button>
+            {isViewingReservation ? (
+              // Display reservation details when the user is viewing their reservation
+              <div>
+                <h2 className="reservation-title-consumer">Reservation Details</h2>
+                <div className="reservation-detail-consumer"><strong>Email:</strong> {reservationDetails?.email ?? 'N/A'}</div>
+                <div className="reservation-detail-consumer">
+                  <strong>Date:</strong> {reservationDetails?.date
+                    ? new Date(reservationDetails.date).toLocaleDateString()
+                    : 'N/A'}
+                </div>
+                <div className="reservation-detail-consumer">
+                  <strong>Time:</strong> {reservationDetails?.time ? reservationDetails.time.slice(0, 5) : 'N/A'}
+                </div>
+                <div className="reservation-detail-consumer"><strong>Seats:</strong> {reservationDetails?.seats ?? 'N/A'}</div>
+                <button
+                  className="cancel-reservation-button-consumer"
+                  onClick={handleCancelReservation}
+                >
+                  Cancel Reservation
+                </button>
+                <p className="cancel-policy-text">*Cancellations must be 24 hours in advance</p>
+              </div>
+            ) : (
+              // Show find reservation form
+              <div>
+                <h2 className="reservation-title-consumer">Find Reservation</h2>
+                <div className="find-reservation-inputs-container">
+                  {/* Email Input */}
+                  <div className="form-group">
+                    <label htmlFor="findEmail" className="label-find-reservation">Email:</label>
+                    <input
+                      type="email"
+                      id="findEmail"
+                      value={findEmail}
+                      onChange={(e) => setFindEmail(e.target.value)}
+                      className="reservation-input"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  {/* Confirmation ID Input */}
+                  <div className="form-group">
+                    <label htmlFor="confirmationId" className="label-find-reservation">Confirmation ID:</label>
+                    <input
+                      type="text"
+                      id="confirmationId"
+                      value={confirmationId}
+                      onChange={(e) => setConfirmationId(e.target.value)}
+                      className="reservation-input"
+                      placeholder="Enter your confirmation ID"
+                    />
+                  </div>
+                  {/* Find Reservation Button */}
+                  <button
+                    className="find-my-reservation-button"
+                    onClick={handleFindReservation}
+                  >
+                    Find my reservation
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
