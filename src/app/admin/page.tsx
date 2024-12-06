@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, {useState, useEffect} from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 
@@ -11,7 +11,7 @@ const createApiInstance = (baseURL: string) => {
   });
 };
 
-const listRestaurantsApi = createApiInstance("https://example.com"); // Replace with actual URL
+const listRestaurantsApi = createApiInstance("https://vnfjz2cb5e.execute-api.us-east-2.amazonaws.com/listRestaurants"); // Replace with actual URL
 
 export default function Home() {
   const router = useRouter();
@@ -21,6 +21,36 @@ export default function Home() {
     router.push("/consumer");
   };
 
+  const [restaurant, setRestaurants] = useState([])
+  
+  const fetchRestaurants = async () => {
+    try {
+      const response = await listRestaurantsApi.get('');
+      if (response.status === 200) {
+        const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
+          restaurantId: restaurant.restaurantId,
+          name: restaurant.name,
+          address: restaurant.address,
+          startTime: restaurant.startTime, 
+          endTime: restaurant.endTime, 
+        }));
+
+        <div className="right-panel"> 
+
+        </div>
+
+        setRestaurants(fetchedRestaurants); 
+      }
+    } catch (error) {
+      console.error('Error fetching restaurants:', error);
+    }
+  };
+
+  fetchRestaurants();
+[];  
+
+ 
+
   return (
     <div className="page-container">
       {/* Left Panel: Contains Logo, Subheading, and Back Button */}
@@ -28,6 +58,13 @@ export default function Home() {
         <div className="left-panel-header">
           <img src="/logo.svg" alt="Tables4U Logo" className="left-panel-logo" />
           <h2 className="left-panel-subtitle">Administrator View</h2>
+        </div>
+        <div>
+          <div className="left-admin-container">
+            <button className="left-panel-back-button" onClick={fetchRestaurants}> List Restaurants</button>
+            <button className="left-panel-back-button"> Generate Availability Report</button>
+        
+          </div>
         </div>
         <div className="back-button-container">
           <button className="left-panel-back-button" onClick={handleGoBack}>

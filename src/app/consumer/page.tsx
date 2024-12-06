@@ -79,9 +79,6 @@ const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = (
   )
 };
 
-  
-
-
 // Notification component
 const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
   if (!visible) return null;
@@ -176,11 +173,12 @@ const ConsumerView: React.FC = () => {
         const info = JSON.stringify(payload)
         loginAdmin.post('/', info).then((response) => {
           console.log(response.status)
+          
 
           if(response.data.statusCode === 200){
             router.push('/admin')
           } else {
-            console.error('Login Failed:' + response.status, response.data)
+            //console.error('Login Failed:' + response.status, response.data)
             alert("Login Failed, Check Credentials")
           }
           console.log(response.status)
@@ -199,30 +197,30 @@ const ConsumerView: React.FC = () => {
     console.log(`Selected date: ${event.target.value}`);
   };
 
-  //useEffect(() => {
-  //   const fetchRestaurants = async () => {
-  //     try {
-  //       const response = await listActiveRestaurantsApi.get('');
-  //       if (response.status === 200) {
-  //         const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
-  //           restaurantId: restaurant.restaurantId,
-  //           name: restaurant.name,
-  //           address: restaurant.address,
-  //           startTime: restaurant.startTime, 
-  //           endTime: restaurant.endTime, 
-  //         }));
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await listActiveRestaurantsApi.get('');
+        if (response.status === 200) {
+          const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
+            restaurantId: restaurant.restaurantId,
+            name: restaurant.name,
+            address: restaurant.address,
+            startTime: restaurant.startTime, 
+            endTime: restaurant.endTime, 
+          }));
   
-  //         setRestaurants(fetchedRestaurants); 
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching restaurants:', error);
-  //       showNotification('Failed to load restaurants. Please try again', {}, 'error');
-  //     }
-  //   };
+          setRestaurants(fetchedRestaurants); 
+        }
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+        showNotification('Failed to load restaurants. Please try again', {}, 'error');
+      }
+    };
   
-  //   fetchRestaurants();
-  // },
-  // []);  
+    fetchRestaurants();
+  },
+  []);  
 
   return (
     <div className="consumer-view">
