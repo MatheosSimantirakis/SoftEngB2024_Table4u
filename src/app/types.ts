@@ -11,9 +11,11 @@ export type Table = {
 
 // Reservation Type
 export interface Reservation {
+  email: string; 
+  date: string; 
+  time: string;  
   seats: number;
   table: Table;
-  time: number; 
   id: number;
   confirmationCode: string; 
 }

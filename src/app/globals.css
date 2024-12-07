@@ -533,7 +533,23 @@ body {
 
 /* ---------------- Manager View Styles ---------------- */
 
+.availability-table {
+  color: #000;
+  width: 100%;
+  border-collapse: collapse;
+}
 
+.availability-table th,
+.availability-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.availability-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
 
 /* ---------------- Forms Styles ---------------- */
 
