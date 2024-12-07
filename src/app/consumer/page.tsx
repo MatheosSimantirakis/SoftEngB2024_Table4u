@@ -121,7 +121,7 @@ const ConsumerView: React.FC = () => {
 
   // Handle login based on role and redirect
   const handleLogin = async (role: string) => {
-    setIsLoading(true); // Set loading state
+    setIsLoading(true); 
     if (role === 'manager') {
       await router.push('/manager');
     } else if (role === 'admin') {
@@ -182,8 +182,6 @@ const ConsumerView: React.FC = () => {
 
   // API: Make Reservation
   async function handleMakeReservation() {
-    console.log("handleMakeReservation called");
-
     // Validate input
     if (!reservationTime || !reservationDate || !reservationSeats || !email) {
       console.warn("Validation failed: Missing required fields");
@@ -206,12 +204,12 @@ const ConsumerView: React.FC = () => {
     try {
       const response = await makeReservationApi.post("/", requestData);
 
-      if (response.status === 200) {
+      if (response.data.statusCode === 200) {
         const parsedBody = JSON.parse(response.data.body);
         console.log(`Reservation ID: ${parsedBody.reservationId}`);
         showNotification(`Reservation created successfully! ID: ${parsedBody.reservationId}`, {}, "success");
         setReservationModalVisible(false);
-      } else if (response.status === 400) {
+      } else if (response.data.statusCode === 400) {
         const parsedBody = JSON.parse(response.data.body);
         console.warn(`Bad request: ${parsedBody.message}`);
         showNotification(parsedBody.message || "Error creating reservation.", {}, "error");
@@ -223,56 +221,52 @@ const ConsumerView: React.FC = () => {
       console.error("Error during reservation creation:", error);
       const errorMessage = error?.response?.data?.message || "Unexpected error occurred.";
       showNotification(errorMessage, {}, "error");
-    } finally {
-      setIsLoading(false);
-      console.log("handleMakeReservation process completed");
     }
+    setIsLoading(false);
   }
 
   // API: Find Reservation
   const handleFindReservation = async () => {
     console.log("Starting find reservation process...");
-
+  
     // Validate input fields
     if (!findEmail || !confirmationId) {
       console.log("Validation failed: Missing Email or Confirmation ID");
       showNotification("Please fill in both Email and Confirmation ID", {}, "error");
       return;
     }
-
+  
     try {
       console.log("Sending API request with:", { email: findEmail, reservationId: confirmationId });
-
+  
       // API request to find reservation
       const response = await findReservationApi.post("/", { email: findEmail, reservationId: confirmationId });
       console.log("API response received:", response.data);
-
-      const { statusCode, body } = response.data;
-
-      if (statusCode === 200) {
-        const reservation = JSON.parse(body)?.message[0];
-
+  
+      if (response.data.statusCode === 200) {
+        const reservation = JSON.parse(response.data.body)?.message[0];
+  
         if (reservation) {
           console.log("Reservation found:", reservation);
-
+  
           // Save the reservation details, including the ID
           setReservationDetails({
             ...reservation,
             id: confirmationId, // Ensure the reservation ID is stored correctly
           });
-
+  
           setIsViewingReservation(true);
           showNotification("Reservation found successfully!", {}, "success");
         } else {
           console.error("Reservation details are missing in the response.");
           showNotification("Unable to retrieve reservation details.", {}, "error");
         }
-      } else if (statusCode === 400) {
-        const parsedBody = JSON.parse(body); // Parse the body to extract the error message
+      } else if (response.data.statusCode === 400) {
+        const parsedBody = JSON.parse(response.data.body); // Parse the body to extract the error message
         console.warn("API returned error with status 400:", parsedBody.message);
         showNotification(parsedBody.message || "Could not find reservation.", {}, "error");
       } else {
-        console.error("Unexpected status code:", statusCode);
+        console.error("Unexpected status code:", response.data.statusCode);
         showNotification("An unexpected error occurred. Please try again.", {}, "error");
       }
     } catch (error: any) {
@@ -283,7 +277,7 @@ const ConsumerView: React.FC = () => {
       setIsLoading(false);
       console.log("Find reservation process completed.");
     }
-  };
+  };  
 
   // API: Cancel Reservation
   const handleCancelReservation = async () => {
