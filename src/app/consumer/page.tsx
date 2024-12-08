@@ -19,7 +19,7 @@ const createApiInstance = (baseURL: string) => {
 // Placeholder API instances for backend endpoints
 const listActiveRestaurantsApi = createApiInstance('https://m0ppkn17qc.execute-api.us-east-2.amazonaws.com/listActiveRestaurants');
 const searchAvailableRestaurantsApi = createApiInstance('https://example.com');
-const searchSpecificRestaurantApi = createApiInstance('https://example.com');
+const searchActiveRestaurantsApi = createApiInstance('https://isfqvx6a4g.execute-api.us-east-2.amazonaws.com/searchActiveRestaurants/');
 const makeReservationApi = createApiInstance('https://cogjtdgnmh.execute-api.us-east-2.amazonaws.com/makeReservation');
 const findReservationApi = createApiInstance('https://0lfhd5uy74.execute-api.us-east-2.amazonaws.com/findReservation/');
 const cancelExistingReservationApi = createApiInstance('https://vqo7mqf378.execute-api.us-east-2.amazonaws.com/cancelReservation');
@@ -72,6 +72,8 @@ const ConsumerView: React.FC = () => {
   const [confirmationId, setConfirmationId] = useState(''); // Stores the confirmation ID input for the Find Reservation modal
   const [reservationDetails, setReservationDetails] = useState<Reservation | null>(null); // Store retrieved reservation details
   const [isViewingReservation, setIsViewingReservation] = useState(false); // Toggle to show reservation details
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Search query state
+  const [isSearchActive, setIsSearchActive] = useState<boolean>(false); // Toggle Search Functionality
   const router = useRouter(); // Router instance for navigation'
 
   // Function for on-screen notifications
@@ -121,7 +123,7 @@ const ConsumerView: React.FC = () => {
 
   // Handle login based on role and redirect
   const handleLogin = async (role: string) => {
-    setIsLoading(true); 
+    setIsLoading(true);
     if (role === 'manager') {
       await router.push('/manager');
     } else if (role === 'admin') {
@@ -228,33 +230,33 @@ const ConsumerView: React.FC = () => {
   // API: Find Reservation
   const handleFindReservation = async () => {
     console.log("Starting find reservation process...");
-  
+
     // Validate input fields
     if (!findEmail || !confirmationId) {
       console.log("Validation failed: Missing Email or Confirmation ID");
       showNotification("Please fill in both Email and Confirmation ID", {}, "error");
       return;
     }
-  
+
     try {
       console.log("Sending API request with:", { email: findEmail, reservationId: confirmationId });
-  
+
       // API request to find reservation
       const response = await findReservationApi.post("/", { email: findEmail, reservationId: confirmationId });
       console.log("API response received:", response.data);
-  
+
       if (response.data.statusCode === 200) {
         const reservation = JSON.parse(response.data.body)?.message[0];
-  
+
         if (reservation) {
           console.log("Reservation found:", reservation);
-  
+
           // Save the reservation details, including the ID
           setReservationDetails({
             ...reservation,
             id: confirmationId, // Ensure the reservation ID is stored correctly
           });
-  
+
           setIsViewingReservation(true);
           showNotification("Reservation found successfully!", {}, "success");
         } else {
@@ -277,7 +279,7 @@ const ConsumerView: React.FC = () => {
       setIsLoading(false);
       console.log("Find reservation process completed.");
     }
-  };  
+  };
 
   // API: Cancel Reservation
   const handleCancelReservation = async () => {
@@ -301,7 +303,7 @@ const ConsumerView: React.FC = () => {
       // Send API request to cancel the reservation
       const response = await cancelExistingReservationApi.post("/", requestData);
 
-      if (response.status === 200) {
+      if (response.data.StatusCode === 200) {
         const { message } = response.data;
         console.log("Cancellation successful:", message);
         showNotification("Reservation canceled successfully", {}, "success");
@@ -311,12 +313,12 @@ const ConsumerView: React.FC = () => {
         setIsViewingReservation(false);
         setFindEmail(""); // Clear the email input
         setConfirmationId(""); // Clear the confirmation ID input
-      } else if (response.status === 400) {
+      } else if (response.data.StatusCode === 400) {
         const { message } = response.data;
         console.warn("Cancellation failed:", message);
         showNotification(message || "Unable to cancel the reservation.", {}, "error");
       } else {
-        console.error("Unexpected status code:", response.status);
+        console.error("Unexpected status code:", response.data.StatusCode);
         showNotification("An unexpected error occurred. Please try again.", {}, "error");
       }
     } catch (error: any) {
@@ -328,29 +330,67 @@ const ConsumerView: React.FC = () => {
     }
   };
 
-  // API: List Active Restaurants
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const response = await listActiveRestaurantsApi.get('');
-        if (response.status === 200) {
-          const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
-            restaurantId: restaurant.restaurantId,
-            name: restaurant.name,
-            address: restaurant.address,
-            startTime: restaurant.startTime,
-            endTime: restaurant.endTime,
-          }));
-          setRestaurants(fetchedRestaurants);
-        }
-      } catch (error) {
-        console.error('Error fetching restaurants:', error);
-        showNotification('Failed to load restaurants. Please try again', {}, 'error');
-      }
-    };
+  // API: Search Active Restaurants
+  const handleSearchActiveRestaurants = async () => {
+    // Check if the search query is empty or only contains spaces
+    if (!searchQuery.trim()) {
+      showNotification("Please enter a search query.", {}, "error");
+      return; // Exit the function if the search query is invalid
+    }
 
+    setIsLoading(true);
+
+    try {
+      const response = await searchActiveRestaurantsApi.post('', { name: searchQuery.trim() });
+
+      if (response.data.statusCode === 200) {
+        // If the response is successful, update the restaurants state with the search results
+        const restaurants = response.data.restaurants;
+        setRestaurants(restaurants);
+
+        // Mark the search as active to show the "Go Back" button
+        setIsSearchActive(true);
+      } else if (response.data.statusCode === 400) {
+        // Handle the case where no matching restaurants are found
+        showNotification("No matching restaurants found.", {}, "error");
+      } else {
+        // Handle unexpected status codes
+        console.error("Unexpected status code:", response.data.statusCode);
+        showNotification("An unexpected error occurred. Please try again.", {}, "error");
+      }
+    } catch (error) {
+      // Handle errors that occur during the API request
+      console.error("Error searching for active restaurants:", error);
+      showNotification("An error occurred while searching. Please try again.", {}, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // API: List Active Restaurants
+  const fetchRestaurants = async () => {
+    try {
+      const response = await listActiveRestaurantsApi.get('');
+      if (response.status === 200) {
+        const fetchedRestaurants = response.data.restaurants.map((restaurant: any) => ({
+          restaurantId: restaurant.restaurantId,
+          name: restaurant.name,
+          address: restaurant.address,
+          startTime: restaurant.startTime,
+          endTime: restaurant.endTime,
+        }));
+        setRestaurants(fetchedRestaurants);
+      }
+    } catch (error) {
+      console.error('Error fetching restaurants:', error);
+      showNotification('Failed to load restaurants. Please try again', {}, 'error');
+    }
+  };
+
+  useEffect(() => {
     fetchRestaurants();
   }, []);
+
 
   return (
     <div className="consumer-view">
@@ -361,25 +401,67 @@ const ConsumerView: React.FC = () => {
           Log in
         </button>
         <div className="search-container-consumer">
-          <input type="text" placeholder="Search for a restaurant..." className="search-input-consumer" />
-          <button className="search-button-consumer">Search</button>
+          <input
+            type="text"
+            placeholder="Search for a restaurant..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input-consumer"
+          />
+          <button
+            className="search-button-consumer"
+            onClick={handleSearchActiveRestaurants}
+            disabled={isLoading || !searchQuery.trim()}
+          >
+            Search
+          </button>
         </div>
       </header>
 
-      {/* Sub menu for finding reservation, filtering by time and date */}
+      {/* Sub menu for finding reservation, filtering by time, date and number of seats */}
       <section className="filters-section-consumer">
+
+        {/* Find Reservations Button */}
         <button
           className="find-reservations-button-consumer"
           onClick={handleOpenFindReservationModal}
         >
           Find Reservations
         </button>
-        <input type="date" className="date-input-consumer" value={selectedDate} onChange={handleDateChange} />
-        <select className="dropdown-consumer">
-          <option value="All times">Time</option>
+
+        {/* Date Picker */}
+        <input
+          type="date"
+          className="date-input-consumer"
+          value={selectedDate}
+          onChange={handleDateChange}
+          min={new Date().toISOString().split('T')[0]}
+        />
+
+        {/* Time Dropdown */}
+        <select
+          className="dropdown-consumer"
+          onChange={(e) => setReservationTime(e.target.value)}
+          value={reservationTime}
+        >
+          <option value="">Time</option>
           {Array.from({ length: 16 }, (_, i) => i + 8).map((hour) => (
             <option key={hour} value={`${hour}:00`}>
               {`${hour}:00`}
+            </option>
+          ))}
+        </select>
+
+        {/* Seats Dropdown */}
+        <select
+          className="dropdown-consumer"
+          onChange={(e) => setReservationSeats(e.target.value)}
+          value={reservationSeats}
+        >
+          <option value="">Seats</option>
+          {Array.from({ length: 8 }, (_, i) => i + 1).map((seat) => (
+            <option key={seat} value={seat}>
+              {seat}
             </option>
           ))}
         </select>
@@ -403,11 +485,14 @@ const ConsumerView: React.FC = () => {
                   <p className="restaurant-info-consumer">
                     <strong>Close:</strong> {restaurant.endTime.slice(0, 5)}
                   </p>
-
-                  {/* Find Reservation button */}
                   <button
                     className="make-reservation-button-consumer"
-                    onClick={() => handleMakeReservationModal(restaurant.restaurantId.toString(), restaurant.name)}
+                    onClick={() =>
+                      handleMakeReservationModal(
+                        restaurant.restaurantId.toString(),
+                        restaurant.name
+                      )
+                    }
                   >
                     Make Reservation
                   </button>
@@ -418,6 +503,20 @@ const ConsumerView: React.FC = () => {
             <div className="placeholder-consumer">No restaurants available</div>
           )}
         </div>
+
+        {/* Go Back button */}
+        {isSearchActive && (
+          <button
+            className="go-back-button-consumer"
+            onClick={() => {
+              fetchRestaurants();
+              setIsSearchActive(false);
+            }}
+            disabled={isLoading}
+          >
+            Go Back
+          </button>
+        )}
       </section>
 
       {/* Reservation Modal */}
