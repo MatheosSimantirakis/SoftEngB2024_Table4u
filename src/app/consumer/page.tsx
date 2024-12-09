@@ -18,10 +18,10 @@ const createApiInstance = (baseURL: string) => {
 
 // Placeholder API instances for backend endpoints
 const listActiveRestaurantsApi = createApiInstance('https://m0ppkn17qc.execute-api.us-east-2.amazonaws.com/listActiveRestaurants');
-const searchAvailableRestaurantsApi = createApiInstance('https://example.com');
-const searchActiveRestaurantsApi = createApiInstance('https://isfqvx6a4g.execute-api.us-east-2.amazonaws.com/searchActiveRestaurants/');
+const searchSpecificRestaurantsApi = createApiInstance('https://qdvwwcho2c.execute-api.us-east-2.amazonaws.com/searchSpecificRestaurants');
+const searchActiveRestaurantsApi = createApiInstance('https://isfqvx6a4g.execute-api.us-east-2.amazonaws.com/searchActiveRestaurants');
 const makeReservationApi = createApiInstance('https://cogjtdgnmh.execute-api.us-east-2.amazonaws.com/makeReservation');
-const findReservationApi = createApiInstance('https://0lfhd5uy74.execute-api.us-east-2.amazonaws.com/findReservation/');
+const findReservationApi = createApiInstance('https://0lfhd5uy74.execute-api.us-east-2.amazonaws.com/findReservation');
 const cancelExistingReservationApi = createApiInstance('https://vqo7mqf378.execute-api.us-east-2.amazonaws.com/cancelReservation');
 const loginInfoApi = createApiInstance('https://example.com');
 
@@ -367,6 +367,60 @@ const ConsumerView: React.FC = () => {
     }
   };
 
+  // API: Search Specific Restaurants
+const handleSearchSpecificRestaurants = async () => {
+  // Validate that at least one filter option (date, time, or seats) is selected
+  if (!selectedDate && !reservationTime && !reservationSeats) {
+    console.log("No filters selected. Prompting user to select a filter."); // Debugging log
+    showNotification("Please select at least one filter option (date, time, or seats).", {}, "error");
+    return; // Exit if no filters are selected
+  }
+
+  const requestData = {
+    date: selectedDate || null,
+    time: reservationTime || null,
+    seats: reservationSeats ? parseInt(reservationSeats, 10) : null,
+  };
+
+  console.log("Filter Search Request Data:", requestData); 
+
+  setIsLoading(true);
+  try {
+    console.log("Sending API request for filtered search..."); 
+
+    // Send the API request with the selected filters
+    const response = await searchSpecificRestaurantsApi.post('/', requestData);
+
+    console.log("API Response:", response.data); 
+
+    if (response.data.statusCode === 200) {
+      const fetchedRestaurants = response.data.availableRestaurants.map((restaurant: any) => ({
+        restaurantId: restaurant.restaurantId,
+        name: restaurant.name,
+        address: restaurant.address,
+        startTime: restaurant.startTime,
+        endTime: restaurant.endTime,
+      }));
+
+      console.log("Fetched Restaurants:", fetchedRestaurants); 
+
+      setRestaurants(fetchedRestaurants);
+      setIsSearchActive(true);
+    } else if (response.data.statusCode === 404) {
+      console.warn("No restaurants matching the selected criteria", requestData); 
+      showNotification("No restaurants matching the selected criteria", {}, "error");
+    } else {
+      console.error("Unexpected status code:", response.data.statusCode);
+      showNotification("An unexpected error occurred. Please try again.", {}, "error");
+    }
+  } catch (error) {
+    console.error("Error during filtered search:", error); 
+    showNotification("An error occurred while performing the search. Please try again.", {}, "error");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   // API: List Active Restaurants
   const fetchRestaurants = async () => {
     try {
@@ -391,15 +445,32 @@ const ConsumerView: React.FC = () => {
     fetchRestaurants();
   }, []);
 
-
   return (
     <div className="consumer-view">
       {/* Header with logo, login button, and search bar */}
       <header className="consumer-header">
+
+        {/* Logo */}
         <img src="/logo.svg" alt="Tables4U Logo" className="logo-consumer" />
-        <button className="login-button-consumer" onClick={handleOpenLogin}>
-          Log in
-        </button>
+
+        <div className="header-buttons-container">
+
+          {/* Find Reservation Button */}
+          <button
+            className="find-reservations-button-consumer"
+            onClick={handleOpenFindReservationModal}
+          >
+            Find Reservations
+          </button>
+
+          {/* Log In Button */}
+          <button className="login-button-consumer" onClick={handleOpenLogin}>
+            Log in
+          </button>
+
+        </div>
+
+        {/* Search Bar */}
         <div className="search-container-consumer">
           <input
             type="text"
@@ -420,14 +491,6 @@ const ConsumerView: React.FC = () => {
 
       {/* Sub menu for finding reservation, filtering by time, date and number of seats */}
       <section className="filters-section-consumer">
-
-        {/* Find Reservations Button */}
-        <button
-          className="find-reservations-button-consumer"
-          onClick={handleOpenFindReservationModal}
-        >
-          Find Reservations
-        </button>
 
         {/* Date Picker */}
         <input
@@ -465,6 +528,15 @@ const ConsumerView: React.FC = () => {
             </option>
           ))}
         </select>
+
+        {/* Filtered Search Button */}
+        <button
+          className="filter-search-button-consumer"
+          onClick={handleSearchSpecificRestaurants}
+          disabled={isLoading}
+        >
+          Filtered Search
+        </button>
       </section>
 
       {/* Display list of available restaurants */}
@@ -528,6 +600,7 @@ const ConsumerView: React.FC = () => {
             </button>
             <h2 className="reservation-title-consumer">Make a Reservation for {selectedRestaurantName}</h2>
             <div className="reservation-inputs-container">
+              
               {/* Time Dropdown */}
               <div className="form-group">
                 <label htmlFor="reservationTime" className="label-make-reservation">Time:</label>
@@ -646,7 +719,6 @@ const ConsumerView: React.FC = () => {
                 <p className="cancel-policy-text">*Cancellations must be 24 hours in advance</p>
               </div>
             ) : (
-              // Show find reservation form
               <div>
                 <h2 className="reservation-title-consumer">Find Reservation</h2>
                 <div className="find-reservation-inputs-container">
