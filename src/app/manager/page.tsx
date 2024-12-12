@@ -103,6 +103,14 @@ const DateEntry: React.FC<DateEntryProps> = ({ date, index, removeDate }) => (
   </div>
 );
 
+// Function to adjust for timezone 
+const getESTDateString = (date = new Date()) => {
+  const estOffset = -5; // EST is UTC-5
+  const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000); // Convert to UTC
+  const estDate = new Date(utcDate.getTime() + estOffset * 60 * 60 * 1000); // Apply EST offset
+  return estDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+};
+
 const ManagerView = (): JSX.Element => {
   const [currentForm, setCurrentForm] = useState<string | null>(null); // Tracks the currently open form (create, edit...)
   const [isActivated, setIsActivated] = useState(false); // Whether the restaurant is activated
@@ -115,8 +123,8 @@ const ManagerView = (): JSX.Element => {
   const [endTime, setEndTime] = useState(''); // Closing time of the restaurant
   const [openFutureDayDate, setOpenFutureDayDate] = useState(''); // Initialize date 
   const [closeFutureDayDate, setCloseFutureDayDate] = useState(''); // Initialize date 
-  const [reviewAvailabilityDate, setReviewAvailabilityDate] = useState(new Date().toISOString().split('T')[0]); // Initialize date, default to today's date
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Default to today's date
+  const [reviewAvailabilityDate, setReviewAvailabilityDate] = useState(getESTDateString()); // Initialize date, default to today's date
+  const [date, setDate] = useState(getESTDateString()); // Default to today's date
   const [datesOpen, setDatesOpen] = useState<string[]>([]); // List of dates the restaurant is open
   const [tables, setTables] = useState<Table[]>([]); // Array of tables and their details
   const [nextTableNumber, setNextTableNumber] = useState(1); // Next available number for adding a new table
@@ -413,11 +421,13 @@ const ManagerView = (): JSX.Element => {
   // Integrates a dynamic availability table in the "Review Availability" form
   const renderAvailabilityTable = () => {
     if (!availabilityData || availabilityData.length === 0) {
-      <div className="placeholder-manager">
-        <p>No availability data to display</p>
-      </div>
+      return (
+        <div className="placeholder-manager">
+          <p>No availability data to display</p>
+        </div>
+      );
     }
-
+    
     // Extract all time slots (from opening to closing)
     const times = Array.from(
       { length: parseInt(endTime) - parseInt(startTime) },
@@ -428,7 +438,7 @@ const ManagerView = (): JSX.Element => {
       <table className="availability-table">
         <thead>
           <tr>
-            <th>Date: {reviewAvailabilityDate}</th>
+          <th>Date: {getESTDateString(new Date(reviewAvailabilityDate))}</th>
             {availabilityData.map(([tableNumber]: [number]) => (
               <th key={tableNumber}>T{tableNumber}</th>
             ))}
@@ -564,33 +574,36 @@ const ManagerView = (): JSX.Element => {
       console.error("Validation error: Name and Address are required.");
       return;
     }
-
+  
+    // Adjust dates to EST timezone
+    const today = getESTDateString(); 
+    const adjustedDatesOpen = datesOpen.map((date) => getESTDateString(new Date(date)));
+  
     // Prepare the payload for the API request
-    const today = new Date().toISOString().split("T")[0]; // Default to today's date if no open days are provided
     const payload = {
       name,
       address,
       startTime: `${startTime}:00`, // Format start time with seconds
       endTime: `${endTime}:00`, // Format end time with seconds
-      openDays: datesOpen.length > 0 ? datesOpen : [today],
+      openDays: adjustedDatesOpen.length > 0 ? adjustedDatesOpen : [today],
       tables: [{ tableNumber: 1, seats: 1 }], // Initialize with one default table
     };
-
+  
     console.log("Sending payload to create restaurant API:", payload);
-
+  
     try {
       // Send API request to create the restaurant
       const response = await createRestaurantApi.post("", payload);
       console.log("API Response received:", response);
-
+  
       // Extract statusCode and body from the API response
       const responseBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data.body;
-
+  
       // Handle response based on statusCode
       if (response.data.statusCode === 200) {
         const { restaurantId } = responseBody; // Extract restaurantId from response body
         console.log("Created Restaurant ID:", restaurantId);
-
+  
         if (restaurantId) {
           // Update state with the new restaurant ID and default table
           setRestaurantId(restaurantId.toString());
@@ -644,7 +657,7 @@ const ManagerView = (): JSX.Element => {
         showNotification("An unexpected error occurred", {}, "error");
       }
     }
-  };
+  };  
 
   // API: Edit Restaurant
   const handleEditRestaurantInfo = async () => {
@@ -789,6 +802,12 @@ const ManagerView = (): JSX.Element => {
       return;
     }
 
+    // Handle Invalid Date Inputs 
+    if (new Date(openFutureDayDate) < new Date(getESTDateString())) {
+      setError("Selected date must be today or later.");
+      return;
+    }
+    
     console.log(`Date: ${openFutureDayDate}, Restaurant ID: ${restaurantId}`);
     const payload = { restaurantId, openDays: [openFutureDayDate] }; // Prepare payload for API
     console.log("Payload to API:", payload);
@@ -847,6 +866,12 @@ const ManagerView = (): JSX.Element => {
       showNotification("Date and Restaurant ID are required", {}, "error");
       return;
     }
+
+    // Handle Invalid Date Inputs
+    if (new Date(closeFutureDayDate) < new Date(getESTDateString())) {
+      setError("Selected date must be today or later.");
+      return;
+    }    
 
     console.log(`Date: ${closeFutureDayDate}, Restaurant ID: ${restaurantId}`);
     const payload = { restaurantId, openDays: [closeFutureDayDate] }; // Prepare payload for API
@@ -1267,12 +1292,12 @@ const ManagerView = (): JSX.Element => {
               <input
                 id="datesOpen"
                 type="date"
-                min={new Date().toISOString().split('T')[0]}
+                min={getESTDateString()}
                 onFocus={(e) => (e.target.dataset.isSelecting = 'true')}
                 onBlur={(e) => (e.target.dataset.isSelecting = 'false')}
                 onChange={(e) => {
                   const inputElement = e.target as HTMLInputElement;
-                  const selectedDate = inputElement.value;
+                  const selectedDate = getESTDateString(new Date(inputElement.value));
                   const isSelecting = inputElement.dataset.isSelecting === 'true';
                   if (selectedDate && isSelecting && !datesOpen.includes(selectedDate)) {
                     setDatesOpen((prev) => [...prev, selectedDate]);
@@ -1413,12 +1438,12 @@ const ManagerView = (): JSX.Element => {
               <input
                 id="open-future-day-date"
                 value={openFutureDayDate}
-                onChange={(e) => setOpenFutureDayDate(e.target.value)}
+                onChange={(e) => {setOpenFutureDayDate(e.target.value);
+                  if (error) setError(""); // Clear error on valid input
+                }}                
                 className="form-input"
                 type="date"
-                min={new Date(new Date().setDate(new Date().getDate() + 1))
-                  .toISOString()
-                  .split('T')[0]}
+                min={getESTDateString(new Date(new Date().setDate(new Date().getDate() + 1)))}
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
@@ -1439,7 +1464,7 @@ const ManagerView = (): JSX.Element => {
                 onChange={(e) => setCloseFutureDayDate(e.target.value)}
                 className="form-input"
                 type="date"
-                min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
+                min={getESTDateString(new Date(new Date().setDate(new Date().getDate() + 1)))}
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}

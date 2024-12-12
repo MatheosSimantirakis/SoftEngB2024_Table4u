@@ -103,6 +103,14 @@ const ConsumerView: React.FC = () => {
     }, duration);
   };
 
+  // Function to adjust for timezone 
+  const getESTDateString = (date = new Date()) => {
+    const estOffset = -5; // EST is UTC-5
+    const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000); // Convert to UTC
+    const estDate = new Date(utcDate.getTime() + estOffset * 60 * 60 * 1000); // Apply EST offset
+    return estDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+  };
+
   // Show/hide the login modal
   const handleOpenLogin = () => setLoginVisible(true);
   const handleCloseLogin = () => setLoginVisible(false);
@@ -179,7 +187,7 @@ const ConsumerView: React.FC = () => {
   // Update the selected date for filtering
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(event.target.value);
-    console.log(`Selected date: ${event.target.value}`);
+    console.log(`Selected date (EST): ${getESTDateString(new Date(event.target.value))}`);
   };
 
   // API: Make Reservation
@@ -302,8 +310,9 @@ const ConsumerView: React.FC = () => {
 
       // Send API request to cancel the reservation
       const response = await cancelExistingReservationApi.post("/", requestData);
-
-      if (response.data.StatusCode === 200) {
+      console.log("API  response:", response);
+      
+      if (response.status === 200) {
         const { message } = response.data;
         console.log("Cancellation successful:", message);
         showNotification("Reservation canceled successfully", {}, "success");
@@ -313,7 +322,7 @@ const ConsumerView: React.FC = () => {
         setIsViewingReservation(false);
         setFindEmail(""); // Clear the email input
         setConfirmationId(""); // Clear the confirmation ID input
-      } else if (response.data.StatusCode === 400) {
+      } else if (response.status === 400) {
         const { message } = response.data;
         console.warn("Cancellation failed:", message);
         showNotification(message || "Unable to cancel the reservation.", {}, "error");
@@ -368,58 +377,58 @@ const ConsumerView: React.FC = () => {
   };
 
   // API: Search Specific Restaurants
-const handleSearchSpecificRestaurants = async () => {
-  // Validate that at least one filter option (date, time, or seats) is selected
-  if (!selectedDate && !reservationTime && !reservationSeats) {
-    console.log("No filters selected. Prompting user to select a filter."); // Debugging log
-    showNotification("Please select at least one filter option (date, time, or seats).", {}, "error");
-    return; // Exit if no filters are selected
-  }
-
-  const requestData = {
-    date: selectedDate || null,
-    time: reservationTime || null,
-    seats: reservationSeats ? parseInt(reservationSeats, 10) : null,
-  };
-
-  console.log("Filter Search Request Data:", requestData); 
-
-  setIsLoading(true);
-  try {
-    console.log("Sending API request for filtered search..."); 
-
-    // Send the API request with the selected filters
-    const response = await searchSpecificRestaurantsApi.post('/', requestData);
-
-    console.log("API Response:", response.data); 
-
-    if (response.data.statusCode === 200) {
-      const fetchedRestaurants = response.data.availableRestaurants.map((restaurant: any) => ({
-        restaurantId: restaurant.restaurantId,
-        name: restaurant.name,
-        address: restaurant.address,
-        startTime: restaurant.startTime,
-        endTime: restaurant.endTime,
-      }));
-
-      console.log("Fetched Restaurants:", fetchedRestaurants); 
-
-      setRestaurants(fetchedRestaurants);
-      setIsSearchActive(true);
-    } else if (response.data.statusCode === 404) {
-      console.warn("No restaurants matching the selected criteria", requestData); 
-      showNotification("No restaurants matching the selected criteria", {}, "error");
-    } else {
-      console.error("Unexpected status code:", response.data.statusCode);
-      showNotification("An unexpected error occurred. Please try again.", {}, "error");
+  const handleSearchSpecificRestaurants = async () => {
+    // Validate that at least one filter option (date, time, or seats) is selected
+    if (!selectedDate && !reservationTime && !reservationSeats) {
+      console.log("No filters selected. Prompting user to select a filter."); // Debugging log
+      showNotification("Please select at least one filter option (date, time, or seats).", {}, "error");
+      return; // Exit if no filters are selected
     }
-  } catch (error) {
-    console.error("Error during filtered search:", error); 
-    showNotification("An error occurred while performing the search. Please try again.", {}, "error");
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    const requestData = {
+      date: selectedDate || null,
+      time: reservationTime || null,
+      seats: reservationSeats ? parseInt(reservationSeats, 10) : null,
+    };
+
+    console.log("Filter Search Request Data:", requestData);
+
+    setIsLoading(true);
+    try {
+      console.log("Sending API request for filtered search...");
+
+      // Send the API request with the selected filters
+      const response = await searchSpecificRestaurantsApi.post('/', requestData);
+
+      console.log("API Response:", response.data);
+
+      if (response.data.statusCode === 200) {
+        const fetchedRestaurants = response.data.availableRestaurants.map((restaurant: any) => ({
+          restaurantId: restaurant.restaurantId,
+          name: restaurant.name,
+          address: restaurant.address,
+          startTime: restaurant.startTime,
+          endTime: restaurant.endTime,
+        }));
+
+        console.log("Fetched Restaurants:", fetchedRestaurants);
+
+        setRestaurants(fetchedRestaurants);
+        setIsSearchActive(true);
+      } else if (response.data.statusCode === 404) {
+        console.warn("No restaurants matching the selected criteria", requestData);
+        showNotification("No restaurants matching the selected criteria", {}, "error");
+      } else {
+        console.error("Unexpected status code:", response.data.statusCode);
+        showNotification("An unexpected error occurred. Please try again.", {}, "error");
+      }
+    } catch (error) {
+      console.error("Error during filtered search:", error);
+      showNotification("An error occurred while performing the search. Please try again.", {}, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // API: List Active Restaurants
   const fetchRestaurants = async () => {
@@ -498,14 +507,14 @@ const handleSearchSpecificRestaurants = async () => {
           className="date-input-consumer"
           value={selectedDate}
           onChange={handleDateChange}
-          min={new Date().toISOString().split('T')[0]}
+          min={getESTDateString()}
         />
 
         {/* Time Dropdown */}
         <select
           className="dropdown-consumer"
           onChange={(e) => setReservationTime(e.target.value)}
-          value={reservationTime}
+          value={reservationDate || getESTDateString()}
         >
           <option value="">Time</option>
           {Array.from({ length: 16 }, (_, i) => i + 8).map((hour) => (
@@ -600,7 +609,7 @@ const handleSearchSpecificRestaurants = async () => {
             </button>
             <h2 className="reservation-title-consumer">Make a Reservation for {selectedRestaurantName}</h2>
             <div className="reservation-inputs-container">
-              
+
               {/* Time Dropdown */}
               <div className="form-group">
                 <label htmlFor="reservationTime" className="label-make-reservation">Time:</label>
