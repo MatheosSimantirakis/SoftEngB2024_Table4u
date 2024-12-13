@@ -169,16 +169,16 @@ const ConsumerView: React.FC = () => {
 
   const loginAdinmistrator = async() => {
       try {
+
         const payload = { username: username, password: password }
         const info = JSON.stringify(payload)
+
         loginAdmin.post('/', info).then((response) => {
-          console.log(response.status)
-          
+          console.log(response.data.statusCode) 
 
           if(response.data.statusCode === 200){
             router.push('/admin')
           } else {
-            //console.error('Login Failed:' + response.status, response.data)
             alert("Login Failed, Check Credentials")
           }
           console.log(response.status)
