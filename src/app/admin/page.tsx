@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Restaurant } from "@/model";
@@ -14,7 +14,7 @@ const createApiInstance = (baseURL: string) => {
   });
 };
 
-const listRestaurantsApi = createApiInstance("https://vnfjz2cb5e.execute-api.us-east-2.amazonaws.com/listRestaurants"); // Replace with actual URL
+const listRestaurantsApi = createApiInstance("https://vnfjz2cb5e.execute-api.us-east-2.amazonaws.com/listRestaurants");
 const cancelReservationApi = createApiInstance("https://vqo7mqf378.execute-api.us-east-2.amazonaws.com/cancelReservation")
 const deleteRestaurantApi = createApiInstance("https://ub4vssj8g4.execute-api.us-east-2.amazonaws.com/deleteRestaurant")
 const generateAvailabilityReportApi = createApiInstance("https://0lynymlkwk.execute-api.us-east-2.amazonaws.com/adminUtilization")
@@ -37,9 +37,9 @@ export default function Home() {
   type AdminEntry = TableData | { utilization: number } | { availability: number };
 
   type AdminData = {
-    [key:string]: {
+    [key: string]: {
       tables: TableData[];
-      utilization: number; 
+      utilization: number;
       availability: number
     }
   }
@@ -48,12 +48,10 @@ export default function Home() {
   const [isCanRes, setIsCanRes] = useState(false)
   const [isSelectedRes, setIsSelectedRes] = useState(false)
   const [isGAR, setIsGar] = useState(false)
-  const [reservationId, setReservtionId] = useState('')
+  const [reservationId, setReservationId] = useState('')
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null)
-  const [availabilityReport, setAvailablityReport] = useState<any>([])
-
+  const [availabilityReport, setAvailabilityReport] = useState<any>([])
   const [time, setTime] = useState()
-
   const [tableNumber, setTableNumber] = useState()
   const [totalSeats, setTotalSeats] = useState()
   const [usedSeats, setUsedSeats] = useState()
@@ -61,11 +59,6 @@ export default function Home() {
   const [reportDate, setReportDate] = useState('')
   const [report, setReport] = useState({})
 
-  // useEffect(() =>{
-  //   console.log("useEffect for availabilityReport: ", availabilityReport)
-
-  // }, [availabilityReport])
- 
   const handleOpenCanRes = () => setIsCanRes(true)
   const handleCloseCanRes = () => {
     setIsCanRes(false)
@@ -77,102 +70,153 @@ export default function Home() {
     setIsSelectedRes(false)
   }
 
-  const handleopenIsGAR = () => setIsGar(true)
+  const handleOpenIsGAR = () => setIsGar(true)
   const handleCloseIsGar = () => {
     setIsGar(false)
   }
 
-  const handleRestaurantClick = (restaurant: Restaurant) =>{
+  const handleRestaurantClick = (restaurant: Restaurant) => {
     setSelectedRestaurant(restaurant)
     setIsSelectedRes(true)
   }
 
-  const handleGenerateReport = async() => {
-    //handleopenIsGAR()
-   
-    try{
-      const payload = {restaurantId: selectedRestaurant?.restaurantId, reportDate: reportDate}
-      generateAvailabilityReportApi.post('/', payload).then (response => {
-        const responseBody =  response.data.admin //typeof response === "string" ? JSON.parse(response.a) : response.
-        console.log( "response: ", response )
-        let finalResult:Array<any> = []
+  // Function for on-screen notifications
+  const [notification, setNotification] = useState<{ message: string; visible: boolean; type: string }>({
+    message: '',
+    visible: false,
+    type: '',
+  });
+
+  // Notification component
+  const Notification = ({ message, visible, type }: { message: string; visible: boolean; type: string }) => {
+    if (!visible) return null;
+    return <div className={`notification ${type}`}>{message}</div>;
+  };
+
+  // Helper function to show notifications
+  const showNotification = (
+    message: string,
+    params: Record<string, string> = {},
+    type: string = 'success',
+    duration: number = 10000 // Default duration: 10 seconds
+  ) => {
+    const formattedMessage = Object.keys(params).reduce(
+      (msg, key) => msg.replace(`{${key}}`, params[key]),
+      message
+    );
+
+    setNotification({ message: formattedMessage, visible: true, type });
+
+    // Clear notification after specified duration
+    setTimeout(() => {
+      setNotification({ message: '', visible: false, type: '' });
+    }, duration);
+  };
+
+  const handleGenerateReport = async () => {
+
+    try {
+      const payload = { restaurantId: selectedRestaurant?.restaurantId, reportDate: reportDate }
+      generateAvailabilityReportApi.post('/', payload).then(response => {
+        const responseBody = response.data.admin //typeof response === "string" ? JSON.parse(response.a) : response.
+        console.log("response: ", response)
+        let finalResult: Array<any> = []
         for (let x in responseBody) {
-          finalResult.push( {x : { "hour" : x, "body": responseBody[x]}})
+          finalResult.push({ x: { "hour": x, "body": responseBody[x] } })
         }
-        console.log("response status code: ",  response.data.statusCode)
+        console.log("response status code: ", response.data.statusCode)
         finalResult.map((n) => {
           console.log(n)
         })
-        setAvailablityReport(finalResult)
-  
-        
-        if(response.data.statusCode === 200 ){
-         // setAvailablityReport(responseBody)
+        setAvailabilityReport(finalResult)
+
+        if (response.data.statusCode === 200) {
           console.log("availability Report: ", responseBody)
           console.log("availability Report body: ", availabilityReport)
-  
-   
-        }else{
+
+        } else {
           alert("Failed to generate the report")
         }
-        handleopenIsGAR()
-   
-    }).catch((reason) => {
+        handleOpenIsGAR()
+
+      }).catch((reason) => {
         console.log(reason)
-    })
-      
-    }catch (error){
+      })
+    } catch (error) {
       console.error("Error generating report:", error)
     }
-    
   }
 
-  const handledeleteRestaurant = async() =>{
-    if(!selectedRestaurant){
-      alert("No Restarant Selected to delete")
-      return
+  // API: Delete Restaurant
+  // API: Delete Restaurant
+  const handleDeleteRestaurant = async () => {
+    if (!selectedRestaurant) {
+      // Notify if no restaurant is selected
+      showNotification("No restaurant selected to delete", {}, "error");
+      return;
     }
 
-    try{
-      const payload = {restaurantId : selectedRestaurant?.restaurantId}
-      const response = await deleteRestaurantApi.post('/', payload)
-       
-        if(response.data.statusCode === 200){
-          alert("Restaurant Has Been Deleted")
-          setIsCanRes(false)
-        } else {
-          alert("Something went wrong")
-        }
+    try {
+      // Prepare the payload for the API request
+      const payload = { restaurantId: selectedRestaurant.restaurantId };
 
-    } catch(error){
-      console.error("Something went wong server")
-      alert("Failed to delete Restaurant")
+      // Send the API request to delete the restaurant
+      const response = await deleteRestaurantApi.post('/', payload);
+
+      if (response.data.statusCode === 200) {
+        // Notify success and reset state
+        showNotification("Restaurant has been deleted successfully", {}, "success");
+
+        // Close the popup automatically
+        setIsSelectedRes(false);
+        setIsCanRes(false);
+      } else {
+        // Notify of an error during the delete operation
+        showNotification("Something went wrong while deleting the restaurant", {}, "error");
+      }
+    } catch (error) {
+      // Log and notify the user of a server error
+      console.error("Error deleting restaurant:", error);
+      showNotification("Failed to delete the restaurant. Please try again later.", {}, "error");
     }
-    setIsSelectedRes(false)
-  }
+  };
 
-  const handleCancelReservation = async() => {
-    try{
-      console.log("reservationID: " +reservationId)
-      const payload = {reservationId : reservationId}
-      const info = JSON.stringify(payload)
+  // API: Cancel Reservation
+  const handleCancelReservation = async () => {
+    try {
+      console.log("reservationID: " + reservationId);
 
-      cancelReservationApi.post('/',info).then((response) =>{
-        console.log("status"+response.status + "StatusCode" +response.data.statusCode + "body: " +response.data.body )
-        const data = response.data.body[20]
-        console.log(data)
+      // Prepare the payload for the API request
+      const payload = { reservationId };
+      const info = JSON.stringify(payload);
 
-        if(data === '1'){
-          alert("Reservation has been Canceled")
-        } else {
-          alert("Reservation Id does not exist")
-        }
-      })
-    } catch(error){
-      console.error("Failed to cancel reservation")
+      // Send the API request to cancel the reservation
+      const response = await cancelReservationApi.post('/', info);
+      console.log(
+        "status" + response.status +
+        "StatusCode" + response.data.statusCode +
+        "body: " + response.data.body
+      );
+
+      // Check the response and show appropriate notifications
+      const data = response.data.body[20];
+      console.log(data);
+
+      if (data === '1') {
+        showNotification("Reservation has been canceled successfully", {}, "success");
+
+        // Close the popup automatically
+        setIsCanRes(false);
+      } else {
+        showNotification("Reservation ID does not exist", {}, "error");
+      }
+    } catch (error) {
+      // Log and notify the user of an error
+      console.error("Failed to cancel reservation:", error);
+      showNotification("An unexpected error occurred while canceling the reservation", {}, "error");
     }
-  }
-  
+  };
+
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
@@ -182,13 +226,13 @@ export default function Home() {
             restaurantId: restaurant.restaurantId,
             name: restaurant.name,
             address: restaurant.address,
-            startTime: restaurant.startTime, 
-            endTime: restaurant.endTime, 
+            startTime: restaurant.startTime,
+            endTime: restaurant.endTime,
             tables: restaurant.table
           }));
 
           <div className="right-panel"> </div>
-          setRestaurants(fetchedRestaurants); 
+          setRestaurants(fetchedRestaurants);
         }
       } catch (error) {
         console.error('Error fetching restaurants:', error);
@@ -196,21 +240,30 @@ export default function Home() {
     };
     fetchRestaurants();
   },
-  []);
+    []);
 
 
   return (
     <div className="page-container">
+      {notification.visible && (
+        <Notification
+          message={notification.message}
+          visible={notification.visible}
+          type={notification.type}
+        />
+      )}
+
       {/* Left Panel: Contains Logo, Subheading, and Back Button */}
       <div className="left-panel">
         <div className="left-panel-header">
           <img src="/logo.svg" alt="Tables4U Logo" className="left-panel-logo" />
           <h2 className="left-panel-subtitle">Administrator View</h2>
         </div>
-        <div>
+        <div className="action-button-container">
           <div className="left-admin-container">
-            <button className="left-panel-back-button" onClick={handleOpenCanRes}> Cancel Reservation</button>
-
+            <button className="action-button" onClick={handleOpenCanRes}> Cancel Reservation</button>
+            <div>
+            </div>
           </div>
         </div>
         <div className="back-button-container">
@@ -222,103 +275,77 @@ export default function Home() {
 
       {/* Right Panel: Main Content */}
       <section className="right-panel">
+
         {/* Restaurant List Section */}
         <div className="restaurant-list-admin">
           <h3 className="list-title-admin">Restaurants</h3>
-          {restaurants.length > 0 ?  (
+          {restaurants.length > 0 ? (
             <ul className="list-admin">
               {restaurants.map((restaurant: Restaurant) => (
                 <li
-                 key={restaurant.restaurantId}
-                 className="result-item-admin"
-                 onClick={() => handleRestaurantClick(restaurant)}>
-                  <strong className="restuarnant-name-admin">{restaurant.name}</strong>
+                  key={restaurant.restaurantId}
+                  className="result-item-admin"
+                  onClick={() => handleRestaurantClick(restaurant)}>
+                  <strong className="restaurant-name-list-admin">{restaurant.name}</strong>
                   <p className="restaurant-info-admin">Address:  {restaurant.address}</p>
                 </li>
               ))}
             </ul>
-          ): ( <p>No Restaurants</p>)}
+          ) : (<p>No Restaurants</p>)}
         </div>
       </section>
-      
 
-      {/* cancel reservation*/}
-      {isSelectedRes &&(
-        <div className="modal-overlay-open-cancel">
-          <div className="cancel-reservation-modal">
+      {/* Restaurant Popup */}
+      {isSelectedRes && (
+        <div className="modal-overlay-restaurant-admin">
+          <div className="restaurant-popup-admin">
             <button className="close-button" onClick={handleCloseSelectedRes}>
-            ✕
-            </button>  
-            <div className="input-group">
-              <h1>{selectedRestaurant?.name}</h1>
-              <button className="delete-restaurant-button" onClick={handledeleteRestaurant}> Delete Restaurant </button>
+              ✕
+            </button>
+            {/* Restaurant Name */}
+            <div className="restaurant-name-admin">{selectedRestaurant?.name}</div>
 
-              {/*displaying the availability Report */}
-              <label>Generate Availibilty Report: </label>
-              <label>Input date of Report</label>
+            {/* Availability Report Section */}
+            <div className="availability-report-section">
+              <label className="availability-label">Generate Availability Report:</label>
               <input
-               type="date"
-               value={reportDate}
-               onChange={(e) => setReportDate(e.target.value)}
-               />
-              <button onClick={handleGenerateReport}>Generate Availabilty Report</button>
-            </div> 
+                type="date"
+                value={reportDate}
+                onChange={(e) => setReportDate(e.target.value)}
+                className="date-input-report"
+              />
+              <button
+                className="generate-report-button"
+                onClick={handleGenerateReport}
+              >
+                Generate Availability Report
+              </button>
+            </div>
+
+            {/* Delete Restaurant Button */}
+            <button
+              className="delete-restaurant-button-admin"
+              onClick={handleDeleteRestaurant}
+            >
+              Delete Restaurant
+            </button>
           </div>
         </div>
       )}
 
-      {/**Generate Availabilty Report */}
-      {isGAR && (
-      <div className="modal-overlay">
-        <div className="generate-modal">
-          <button className="close-button" onClick={handleCloseIsGar}>
-            ✕
-          </button>
-          <h1>Availability Report for {selectedRestaurant?.name}</h1>
-          <h1>{(console.log('availabilityReport', availabilityReport), availabilityReport)}</h1>
-          {availabilityReport.map(([time, tableData]: [number, TableData[]]) => (
-            <div key={time}>
-              <h2>Hour: {time}</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Table Number</th>
-                    <th>Total Seats</th>
-                    <th>Used Seats</th>
-                    <th>Available Seats</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tableData.map((table, index) => (
-                    <tr key={index}>
-                      <td>{table.tableNumber}</td>
-                      <td>{table.totalSeats}</td>
-                      <td>{table.usedSeats}</td>
-                      <td>{table.availableSeats}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-
-
-      {/*cancel Reservation */}
-      {isCanRes &&(
+      {/* Cancel Reservation */}
+      {isCanRes && (
         <div className="modal-overlay-admin-cancel">
           <div className="cancel-reservation-modal">
             <button className="close-button" onClick={handleCloseCanRes}>
-            ✕
+              ✕
             </button>
             <div className="cancel-reservation-input">
               <label>Input Reservation ID  </label>
               <input
-              type="text"
-              value={reservationId}
-              onChange={(e) => setReservtionId(e.target.value)}
+                type="text"
+                value={reservationId}
+                onChange={(e) => setReservationId(e.target.value)}
               />
               <button className="cancel-reservation-button" onClick={handleCancelReservation}>Cancel Reservation</button>
             </div>

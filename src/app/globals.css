@@ -154,6 +154,75 @@ body {
 
 /* ---------------- Admin View Styles ---------------- */
 
+.modal-overlay-restaurant-admin {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  z-index: 999;
+}
+
+.delete-restaurant-button-admin {
+  width: 100%;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: var(--danger-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+}
+
+.restaurant-popup-admin {
+  position: relative;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  color: black;
+}
+
+.date-label-report {
+  font-size: 14px;
+  color: #555;
+}
+
+.date-input-report {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.generate-report-button {
+  padding: 10px;
+  font-size: 14px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+}
+
+.generate-report-button:hover {
+  background-color: #0056b3;
+}
+
 .list-admin {
   list-style: none;
   padding: 0;
@@ -190,13 +259,69 @@ body {
   text-decoration: underline;
 }
 
+.result-item-admin{
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 15px;
+  display: flex;
+  flex-direction: column; 
+  height: 80px; 
+  box-sizing: border-box;
+  text-align: left;
+  margin-bottom: 15px; /* Add space between items */
+}
+
+.result-item-admin:hover{
+  text-decoration: underline;
+}
+
+.modal-overlay-admin-cancel{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cancel-reservation-modal {
+  position: relative;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  color: black
+}
+
+.cancel-reservation-input input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: black
+}
+
 /* ---------------- Admin (Single Restaurant) View Styles ---------------- */
 
 .restaurant-name-admin {
-  font-size: 28px;
+  font-size: 23px;
   font-weight: bold;
   text-align: center;
   margin-bottom: 20px;
+  color: #000000;
+}
+
+.restaurant-name-list-admin {
+  font-size: 16px;
   color: #000000;
 }
 
@@ -828,18 +953,6 @@ body {
   background-color: #c82333;
 }
 
-.input-date {
-  display: block;
-  margin-bottom: 15px;
-  width: 100%;
-  padding: 8px;
-  font-size: 14px;
-  color: #495057;
-  background-color: #ffffff;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-}
-
 .dates-list {
   margin-top: 16px;
 }
@@ -1172,7 +1285,7 @@ input:checked+.slider:before {
   line-height: 1.5; 
 }
 
-.cancel-reservation-button-consumer {
+.cancel-reservation-button {
   background-color: var(--danger-color); 
   color: white; 
   border: none;
