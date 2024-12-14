@@ -23,8 +23,7 @@ const searchActiveRestaurantsApi = createApiInstance('https://isfqvx6a4g.execute
 const makeReservationApi = createApiInstance('https://cogjtdgnmh.execute-api.us-east-2.amazonaws.com/makeReservation');
 const findReservationApi = createApiInstance('https://0lfhd5uy74.execute-api.us-east-2.amazonaws.com/findReservation');
 const cancelExistingReservationApi = createApiInstance('https://vqo7mqf378.execute-api.us-east-2.amazonaws.com/cancelReservation');
-const createAdmin = createApiInstance('https://eurgllqs6f.execute-api.us-east-2.amazonaws.com/createUser');
-const loginAdmin = createApiInstance('https://r0phmfsst7.execute-api.us-east-2.amazonaws.com/loginUser');
+const loginAdminApi = createApiInstance('https://r0phmfsst7.execute-api.us-east-2.amazonaws.com/loginUser');
 
 // Reusable component for account creation modal
 const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
@@ -174,28 +173,31 @@ const ConsumerView: React.FC = () => {
     setIsViewingReservation(false); // Reset viewing state if needed
   };
 
-  const loginAdministrator = async () => {
+  // API: Login Administrator
+  const handleLoginAdministrator = async () => {
     try {
-      const payload = { username: username, password: password }
-      const info = JSON.stringify(payload)
+      const payload = { username: username, password: password };
+      const info = JSON.stringify(payload);
 
-      loginAdmin.post('/', info).then((response) => {
-        console.log(response.data.statusCode)
+      loginAdminApi.post('/', info).then((response) => {
+        console.log(response.data.statusCode);
 
         if (response.data.statusCode === 200) {
-          router.push('/admin')
+          showNotification("Login successful! Redirecting to Admin Panel...", {}, "success");
+          router.push('/admin');
         } else {
-          alert("Login Failed, Check Credentials")
+          showNotification("Login Failed, Check Credentials", {}, "error");
         }
-        console.log(response.status)
+        console.log(response.status);
       }).catch((e) => {
         console.error('Failed logging in, try again later', e);
-      })
-
+        showNotification("An unexpected error occurred. Please try again later.", {}, "error");
+      });
     } catch (error) {
       console.error('Failed logging in, try again later', error);
+      showNotification("An error occurred while attempting to log in. Please try again.", {}, "error");
     }
-  }
+  };
 
   // Update the selected date for filtering
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -733,7 +735,7 @@ const ConsumerView: React.FC = () => {
                 </div>
                 <div className="reservation-detail-consumer"><strong>Seats:</strong> {reservationDetails?.seats ?? 'N/A'}</div>
                 <button
-                  className="cancel-reservation-button-consumer"
+                  className="cancel-reservation-button"
                   onClick={handleCancelReservation}
                 >
                   Cancel Reservation
@@ -809,7 +811,7 @@ const ConsumerView: React.FC = () => {
             <div className="login-buttons">
               <button
                 className="login-button"
-                onClick={loginAdministrator}
+                onClick={handleLoginAdministrator}
               >
                 Login as Administrator
               </button>

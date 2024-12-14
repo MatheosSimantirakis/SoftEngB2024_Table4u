@@ -427,7 +427,7 @@ const ManagerView = (): JSX.Element => {
         </div>
       );
     }
-    
+
     // Extract all time slots (from opening to closing)
     const times = Array.from(
       { length: parseInt(endTime) - parseInt(startTime) },
@@ -438,7 +438,7 @@ const ManagerView = (): JSX.Element => {
       <table className="availability-table">
         <thead>
           <tr>
-          <th>Date: {getESTDateString(new Date(reviewAvailabilityDate))}</th>
+            <th>Date: {getESTDateString(new Date(reviewAvailabilityDate))}</th>
             {availabilityData.map(([tableNumber]: [number]) => (
               <th key={tableNumber}>T{tableNumber}</th>
             ))}
@@ -464,107 +464,115 @@ const ManagerView = (): JSX.Element => {
     );
   };
 
-  // API: Manager Login
-  const handleManagerLogin = async () => {
-    // Validate input: Ensure restaurant ID is provided and not empty
-    if (!restaurantId.trim()) {
-      showNotification("Restaurant ID is required", {}, "error"); // Notify the user
-      console.error("Error: Restaurant ID is empty"); // Log the error
-      return;
-    }
+// API: Manager Login
+const handleManagerLogin = async () => {
+  // Validate input: Ensure restaurant ID is provided and not empty
+  if (!restaurantId.trim()) {
+    showNotification("Restaurant ID is required", {}, "error"); // Notify the user
+    console.error("Error: Restaurant ID is empty"); // Log the error
+    return;
+  }
 
-    // Prepare the payload for the API request
-    const payload = {
-      restaurantId: restaurantId.toString(),
-    };
-
-    console.log("Sending payload to manager login API:", payload);
-
-    try {
-      // Send POST request to the manager login API
-      const response = await managerLoginApi.post("", payload);
-      console.log("Raw Response received from API:", response);
-
-      // Parse the response body if it's a string
-      const parsedBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data;
-
-      console.log("Parsed Response Data:", parsedBody);
-
-      // Handle responses based on `statusCode`
-      if (response.data.statusCode === 200) {
-        const { data } = parsedBody;
-
-        if (data && data.restaurant) {
-          const { restaurant, openDays, tables } = data;
-
-          // Update state with restaurant details
-          setName(restaurant.name);
-          setAddress(restaurant.address);
-          setStartTime(restaurant.startTime.slice(0, 5)); // Extract time in HH:MM format
-          setEndTime(restaurant.endTime.slice(0, 5));
-          setIsActivated(restaurant.activated === 1); // Set activation status
-          setHasRestaurant(true); // Indicate that a restaurant exists
-          setShowInitialPopup(false);
-
-          // Format open days for display
-          const formattedOpenDays = openDays.map((day: { openDate: string }) => day.openDate);
-
-          // Format tables for display and state
-          const formattedTables = tables.map((table: Table) => ({
-            tableNumber: table.tableNumber,
-            seats: table.seats,
-            available: true,
-            tableId: table.tableNumber,
-            isNew: false,
-          }));
-
-          // Update state with formatted data
-          setDatesOpen(formattedOpenDays);
-          setTables(formattedTables);
-          setNextTableNumber(
-            formattedTables.length > 0
-              ? Math.max(...formattedTables.map((t: Table) => t.tableNumber)) + 1
-              : 1
-          );
-          setTablesReady(true); // Indicate tables are ready for display
-
-          // Switch to the edit form 
-          setCurrentForm("edit");
-
-          console.log("Tables from API:", tables);
-          showNotification("Restaurant details retrieved successfully", {}, "success");
-        } else {
-          console.error("No restaurant data found in API response:", parsedBody);
-          showNotification("Failed to retrieve restaurant details", {}, "error");
-        }
-      } else if (response.data.statusCode === 400) {
-        // Handle validation errors
-        console.warn("API responded with status 400:", parsedBody.message);
-        showNotification(parsedBody.message || "Bad request error", {}, "error");
-      } else {
-        // Handle unexpected status codes
-        console.error("Unhandled response status code:", response.data.statusCode);
-        showNotification("An unexpected error occurred", {}, "error");
-      }
-    } catch (error) {
-      // Handle Axios-specific errors 
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || error.message || "An unexpected API error occurred.";
-        showNotification(errorMessage, {}, "error");
-        console.error("Axios error:", errorMessage);
-      }
-      // Handle general errors
-      else if (error instanceof Error) {
-        console.error("Error:", error.message);
-        showNotification(error.message, {}, "error");
-      }
-      // Handle unknown errors
-      else {
-        console.error("Unknown error occurred:", error);
-        showNotification("An unexpected error occurred", {}, "error");
-      }
-    }
+  // Prepare the payload for the API request
+  const payload = {
+    restaurantId: restaurantId.toString(),
   };
+
+  console.log("Sending payload to manager login API:", payload);
+
+  try {
+    // Send POST request to the manager login API
+    const response = await managerLoginApi.post("", payload);
+    console.log("Raw Response received from API:", response);
+
+    // Parse the response body if it's a string
+    const parsedBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data;
+
+    console.log("Parsed Response Data:", parsedBody);
+
+    // Handle responses based on `statusCode`
+    if (response.data.statusCode === 200) {
+      const { data } = parsedBody;
+
+      if (data && data.restaurant) {
+        const { restaurant, openDays, tables } = data;
+
+        // Update state with restaurant details
+        setName(restaurant.name);
+        setAddress(restaurant.address);
+        setStartTime(restaurant.startTime.slice(0, 5)); // Extract time in HH:MM format
+        setEndTime(restaurant.endTime.slice(0, 5));
+        setIsActivated(restaurant.activated === 1); // Set activation status
+        setHasRestaurant(true); // Indicate that a restaurant exists
+        setShowInitialPopup(false);
+
+        // Format open days for display
+        const formattedOpenDays = openDays.map((day: { openDate: string }) => day.openDate);
+
+        // Format tables for display and state
+        const formattedTables = tables.map((table: Table) => ({
+          tableNumber: table.tableNumber,
+          seats: table.seats,
+          available: true,
+          tableId: table.tableNumber,
+          isNew: false,
+          saved: true,
+        }));
+
+        // Update state with formatted data
+        setDatesOpen(formattedOpenDays);
+        setTables(formattedTables);
+        setNextTableNumber(
+          formattedTables.length > 0
+            ? Math.max(...formattedTables.map((t: Table) => t.tableNumber)) + 1
+            : 1
+        );
+        setTablesReady(true); // Indicate tables are ready for display
+
+        // Update dropdown values for Open and Close times
+        const startTimeDropdown = document.getElementById("startTime") as HTMLSelectElement;
+        const endTimeDropdown = document.getElementById("endTime") as HTMLSelectElement;
+
+        if (startTimeDropdown) startTimeDropdown.value = restaurant.startTime.slice(0, 5);
+        if (endTimeDropdown) endTimeDropdown.value = restaurant.endTime.slice(0, 5);
+
+        // Switch to the edit form 
+        setCurrentForm("edit");
+
+        console.log("Tables from API:", tables);
+        showNotification("Restaurant details retrieved successfully", {}, "success");
+      } else {
+        console.error("No restaurant data found in API response:", parsedBody);
+        showNotification("Failed to retrieve restaurant details", {}, "error");
+      }
+    } else if (response.data.statusCode === 400) {
+      // Handle validation errors
+      console.warn("API responded with status 400:", parsedBody.message);
+      showNotification(parsedBody.message || "Bad request error", {}, "error");
+    } else {
+      // Handle unexpected status codes
+      console.error("Unhandled response status code:", response.data.statusCode);
+      showNotification("An unexpected error occurred", {}, "error");
+    }
+  } catch (error) {
+    // Handle Axios-specific errors 
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || error.message || "An unexpected API error occurred.";
+      showNotification(errorMessage, {}, "error");
+      console.error("Axios error:", errorMessage);
+    }
+    // Handle general errors
+    else if (error instanceof Error) {
+      console.error("Error:", error.message);
+      showNotification(error.message, {}, "error");
+    }
+    // Handle unknown errors
+    else {
+      console.error("Unknown error occurred:", error);
+      showNotification("An unexpected error occurred", {}, "error");
+    }
+  }
+};
 
   // API: Create Restaurant
   const handleCreateRestaurant = async () => {
@@ -574,11 +582,11 @@ const ManagerView = (): JSX.Element => {
       console.error("Validation error: Name and Address are required.");
       return;
     }
-  
+
     // Adjust dates to EST timezone
-    const today = getESTDateString(); 
+    const today = getESTDateString();
     const adjustedDatesOpen = datesOpen.map((date) => getESTDateString(new Date(date)));
-  
+
     // Prepare the payload for the API request
     const payload = {
       name,
@@ -588,22 +596,22 @@ const ManagerView = (): JSX.Element => {
       openDays: adjustedDatesOpen.length > 0 ? adjustedDatesOpen : [today],
       tables: [{ tableNumber: 1, seats: 1 }], // Initialize with one default table
     };
-  
+
     console.log("Sending payload to create restaurant API:", payload);
-  
+
     try {
       // Send API request to create the restaurant
       const response = await createRestaurantApi.post("", payload);
       console.log("API Response received:", response);
-  
+
       // Extract statusCode and body from the API response
       const responseBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data.body;
-  
+
       // Handle response based on statusCode
       if (response.data.statusCode === 200) {
         const { restaurantId } = responseBody; // Extract restaurantId from response body
         console.log("Created Restaurant ID:", restaurantId);
-  
+
         if (restaurantId) {
           // Update state with the new restaurant ID and default table
           setRestaurantId(restaurantId.toString());
@@ -657,7 +665,7 @@ const ManagerView = (): JSX.Element => {
         showNotification("An unexpected error occurred", {}, "error");
       }
     }
-  };  
+  };
 
   // API: Edit Restaurant
   const handleEditRestaurantInfo = async () => {
@@ -691,6 +699,8 @@ const ManagerView = (): JSX.Element => {
       // Handle successful response
       if (response.data.statusCode === 200) {
         showNotification("Successfully updated restaurant", {}, "success"); // Notify user of success
+        setStartTime(startTime);  // Update local state with new times
+        setEndTime(endTime)  // Update local state with new times
         setCurrentForm(null); // Reset the current form
         resetState(); // Reset any state related to restaurant info
       }
@@ -807,7 +817,7 @@ const ManagerView = (): JSX.Element => {
       setError("Selected date must be today or later.");
       return;
     }
-    
+
     console.log(`Date: ${openFutureDayDate}, Restaurant ID: ${restaurantId}`);
     const payload = { restaurantId, openDays: [openFutureDayDate] }; // Prepare payload for API
     console.log("Payload to API:", payload);
@@ -871,7 +881,7 @@ const ManagerView = (): JSX.Element => {
     if (new Date(closeFutureDayDate) < new Date(getESTDateString())) {
       setError("Selected date must be today or later.");
       return;
-    }    
+    }
 
     console.log(`Date: ${closeFutureDayDate}, Restaurant ID: ${restaurantId}`);
     const payload = { restaurantId, openDays: [closeFutureDayDate] }; // Prepare payload for API
@@ -1372,7 +1382,7 @@ const ManagerView = (): JSX.Element => {
                 >
                   <option value="" disabled>Select Open Time</option>
                   {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
-                    <option key={hour} value={hour}>{`${hour}:00`}</option>
+                    <option key={hour} value={`${hour}:00`}>{`${hour}:00`}</option>
                   ))}
                 </select>
               </div>
@@ -1388,7 +1398,7 @@ const ManagerView = (): JSX.Element => {
                 >
                   <option value="" disabled>Select Close Time</option>
                   {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
-                    <option key={hour} value={hour}>{`${hour}:00`}</option>
+                    <option key={hour} value={`${hour}:00`}>{`${hour}:00`}</option>
                   ))}
                 </select>
               </div>
@@ -1438,9 +1448,10 @@ const ManagerView = (): JSX.Element => {
               <input
                 id="open-future-day-date"
                 value={openFutureDayDate}
-                onChange={(e) => {setOpenFutureDayDate(e.target.value);
+                onChange={(e) => {
+                  setOpenFutureDayDate(e.target.value);
                   if (error) setError(""); // Clear error on valid input
-                }}                
+                }}
                 className="form-input"
                 type="date"
                 min={getESTDateString(new Date(new Date().setDate(new Date().getDate() + 1)))}
