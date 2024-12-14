@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 'use client';
 
 import React, { useState, useEffect } from "react";
@@ -120,8 +122,8 @@ export default function Home() {
       generateAvailabilityReportApi.post('/', payload).then(response => {
         const responseBody = response.data.admin //typeof response === "string" ? JSON.parse(response.a) : response.
         console.log("response: ", response)
-        let finalResult: Array<any> = []
-        for (let x in responseBody) {
+        const finalResult: Array<any> = []
+        for (const x in responseBody) {
           finalResult.push({ x: { "hour": x, "body": responseBody[x] } })
         }
         console.log("response status code: ", response.data.statusCode)

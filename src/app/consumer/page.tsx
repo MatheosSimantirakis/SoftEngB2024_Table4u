@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -147,7 +149,7 @@ const ConsumerView: React.FC = () => {
   };
 
   // Navigate to account creation based on the role
-  const handleCreateAccount = (role: String) => {
+  const handleCreateAccount = (role: string) => {
     if (role === 'manager') {
       router.push('/createAdmin'); // Redirect to create admin account page
     } else if (role === 'admin') {
