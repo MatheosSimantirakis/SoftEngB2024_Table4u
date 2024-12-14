@@ -9,7 +9,6 @@ import {
   DateEntryProps,
   FormWrapperProps,
 } from '../types';
-import { Restaurant } from '@/model';
 
 // Dynamic baseURL for all APIs
 const createApiInstance = (baseURL: string) => {
@@ -24,8 +23,8 @@ const createRestaurantApi = createApiInstance('https://kwd94qobx2.execute-api.us
 const editRestaurantInfoApi = createApiInstance('https://doo8y94tle.execute-api.us-east-2.amazonaws.com/editRestaurant/');
 const editRestaurantTablesApi = createApiInstance('https://2ss0b3tpbj.execute-api.us-east-2.amazonaws.com/editTables');
 const openFutureDaysApi = createApiInstance('https://cxj6su3ix7.execute-api.us-east-2.amazonaws.com/openFutureDay/');
-const closeFutureDaysApi = createApiInstance('https://example.com'); // Replace with actual URL
-const reviewAvailabilityApi = createApiInstance('https://example.com'); // Replace with actual URL
+const closeFutureDaysApi = createApiInstance('https://jklr3333ug.execute-api.us-east-2.amazonaws.com/closeFutureDay/');
+const reviewAvailabilityApi = createApiInstance('https://3pnqvlisdc.execute-api.us-east-2.amazonaws.com/reviewDaysAvailability/');
 const deleteRestaurantApi = createApiInstance('https://ub4vssj8g4.execute-api.us-east-2.amazonaws.com/deleteRestaurant');
 const activateRestaurantApi = createApiInstance('https://ys2gzedx59.execute-api.us-east-2.amazonaws.com/activateRestaurant/');
 
@@ -58,7 +57,7 @@ const TableEntry: React.FC<TableEntryProps> = ({
           <option value="" disabled>
             Seats
           </option>
-          {Array.from({ length: 20 }, (_, i) => i + 1).map((seatCount) => (
+          {Array.from({ length: 8 }, (_, i) => i + 1).map((seatCount) => (
             <option key={seatCount} value={seatCount}>
               {seatCount}
             </option>
@@ -69,6 +68,7 @@ const TableEntry: React.FC<TableEntryProps> = ({
         <span className="table-seats-static">{table.seats} Seat(s)</span>
       )}
     </div>
+
     {/* Render the Save button only for new tables that are not saved */}
     {table.isNew && !table.saved && (
       <button
@@ -103,6 +103,14 @@ const DateEntry: React.FC<DateEntryProps> = ({ date, index, removeDate }) => (
   </div>
 );
 
+// Function to adjust for timezone 
+const getESTDateString = (date = new Date()) => {
+  const estOffset = -5; // EST is UTC-5
+  const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60 * 1000); // Convert to UTC
+  const estDate = new Date(utcDate.getTime() + estOffset * 60 * 60 * 1000); // Apply EST offset
+  return estDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+};
+
 const ManagerView = (): JSX.Element => {
   const [currentForm, setCurrentForm] = useState<string | null>(null); // Tracks the currently open form (create, edit...)
   const [isActivated, setIsActivated] = useState(false); // Whether the restaurant is activated
@@ -113,31 +121,64 @@ const ManagerView = (): JSX.Element => {
   const [numTables, setNumTables] = useState(''); // Total number of tables in the restaurant
   const [startTime, setStartTime] = useState(''); // Opening time of the restaurant
   const [endTime, setEndTime] = useState(''); // Closing time of the restaurant
+  const [openFutureDayDate, setOpenFutureDayDate] = useState(''); // Initialize date 
+  const [closeFutureDayDate, setCloseFutureDayDate] = useState(''); // Initialize date 
+  const [reviewAvailabilityDate, setReviewAvailabilityDate] = useState(getESTDateString()); // Initialize date, default to today's date
+  const [date, setDate] = useState(getESTDateString()); // Default to today's date
   const [datesOpen, setDatesOpen] = useState<string[]>([]); // List of dates the restaurant is open
   const [tables, setTables] = useState<Table[]>([]); // Array of tables and their details
   const [nextTableNumber, setNextTableNumber] = useState(1); // Next available number for adding a new table
-  const [date, setDate] = useState(''); // Selected date for opening or closing the restaurant
   const [error, setError] = useState(''); // Error messages for the form or actions
   const [showActivatePopup, setShowActivatePopup] = useState(false); // To show/hide the activate popup
   const [activateRestaurantId, setActivateRestaurantId] = useState(''); // To store the entered restaurant ID
   const [showInitialPopup, setShowInitialPopup] = useState(true); // For the initial popup
   const [restaurantId, setRestaurantId] = useState(''); // For the restaurant ID entered in the popup
-  const router = useRouter(); // Router instance for navigation
   const [tablesReady, setTablesReady] = useState(false); // Track when the tables data is ready
+  const [availabilityData, setAvailabilityData] = useState<any[]>([]); // Holds the availability data for rendering
+  const router = useRouter(); // Router instance for navigation
 
   // Function to remove a table by its ID
   const removeTable = async (tableNumber: number) => {
     try {
-      // Call the handler to remove the table, automatically sending seats: 1
-      await editTableHandler("delete", restaurantId, tableNumber);
+      // Find the table in the current state
+      const tableToRemove = tables.find((table) => table.tableNumber === tableNumber);
 
-      // Update local state to remove the table
-      setTables((prevTables) => prevTables.filter((table) => table.tableNumber !== tableNumber));
+      if (!tableToRemove) {
+        throw new Error(`Table with number ${tableNumber} not found.`);
+      }
 
-      showNotification(`Table ${tableNumber} removed successfully`, {}, "success");
+      // If the table is new and not saved, handle locally
+      if (tableToRemove.isNew && !tableToRemove.saved) {
+        setTables((prevTables) =>
+          prevTables.filter((table) => table.tableNumber !== tableNumber)
+        );
+        showNotification(`Table ${tableNumber} removed successfully`, {}, "success");
+        return;
+      }
+
+      // If the table is saved, call the backend to delete it
+      if (!restaurantId) {
+        throw new Error("Restaurant ID is missing. Please try logging in again.");
+      }
+
+      const isSuccess = await editTableHandler("delete", restaurantId, tableNumber);
+
+      if (isSuccess) {
+        setTables((prevTables) =>
+          prevTables.filter((table) => table.tableNumber !== tableNumber)
+        );
+        showNotification(`Table ${tableNumber} removed successfully`, {}, "success");
+      } else {
+        throw new Error("Failed to delete the table.");
+      }
     } catch (error) {
-      console.error("Error removing table:", error);
-      showNotification("Failed to remove the table.", {}, "error");
+      if (error instanceof Error) {
+        console.error("Error removing table:", error.message);
+        showNotification(error.message, {}, "error");
+      } else {
+        console.error("Unexpected error:", error);
+        showNotification("An unexpected error occurred", {}, "error");
+      }
     }
   };
 
@@ -178,8 +219,13 @@ const ManagerView = (): JSX.Element => {
   // Function to save tables
   const saveTable = async (table: Table) => {
     try {
+      if (!restaurantId) {
+        throw new Error("Restaurant ID is missing. Please try logging in again.");
+      }
+
+      // Call the handler to save the table
       const isSuccess = await editTableHandler(
-        'save',
+        "save",
         restaurantId,
         table.tableNumber,
         table.seats || 1
@@ -191,22 +237,87 @@ const ManagerView = (): JSX.Element => {
             t.tableNumber === table.tableNumber ? { ...t, saved: true } : t
           )
         );
-        // Show success notification
         showNotification(`Table ${table.tableNumber} saved successfully`, {}, "success");
       } else {
-        // Show failure notification
-        showNotification(`Failed to save table ${table.tableNumber}`, {}, "error");
+        throw new Error(`Failed to save table ${table.tableNumber}`);
       }
     } catch (error) {
-      console.error('Error saving table:', error);
-      showNotification('An unexpected error occurred while saving the table.', {}, 'error');
+      if (error instanceof Error) {
+        console.error("Error saving table:", error.message);
+        showNotification(error.message, {}, "error");
+      } else {
+        console.error("Unexpected error:", error);
+        showNotification("An unexpected error occurred", {}, "error");
+      }
     }
   };
 
-  // Handler for toggle forms
+  // Function to fetch restaurant and table details
+  const reloadRestaurantDetails = async () => {
+    if (!restaurantId) {
+      console.error("Restaurant ID is missing. Unable to reload restaurant details.");
+      return;
+    }
+
+    try {
+      const payload = { restaurantId };
+      const response = await managerLoginApi.post("", payload);
+
+      let parsedBody = response.data;
+      if (typeof response.data.body === "string") {
+        parsedBody = JSON.parse(response.data.body);
+      }
+
+      const { data } = parsedBody;
+      if (data && data.restaurant) {
+        const { tables } = data;
+
+        // Process and update the tables in the state
+        const formattedTables = tables.map((table: Table) => ({
+          tableNumber: table.tableNumber,
+          seats: table.seats,
+          available: true,
+          tableId: table.tableNumber,
+          isNew: false,
+          saved: true,
+        }));
+
+        setTables(formattedTables);
+        setNextTableNumber(
+          formattedTables.length > 0
+            ? Math.max(...formattedTables.map((t: Table) => t.tableNumber)) + 1
+            : 1
+        );
+
+        console.log("Tables reloaded successfully:", formattedTables);
+      } else {
+        console.error("No restaurant data found during reload.");
+      }
+    } catch (error) {
+      console.error("Error reloading restaurant details:", error);
+    }
+  };
+
+  // Handler for toggling forms
   const handleToggleForm = (form: string | null) => {
-    setCurrentForm(currentForm === form ? null : form);
-    resetState();
+    if (currentForm === form) {
+      // Close the form and reset the state
+      setCurrentForm(null);
+      resetState();
+    } else {
+      // Open the requested form
+      setCurrentForm(form);
+
+      // Call `handleReviewAvailability` when switching to the "review" form
+      if (form === "review") {
+        handleReviewAvailability();
+      }
+
+      // Reload tables when opening the "Edit Restaurant" form
+      if (form === "edit") {
+        reloadRestaurantDetails();
+      }
+    }
   };
 
   // Reset form after closing out
@@ -307,35 +418,80 @@ const ManagerView = (): JSX.Element => {
     setError(''); // Clear any errors
   };
 
-  // API: Manager Login
-  const handleManagerLogin = async () => {
-    if (!restaurantId.trim()) {
-      showNotification("Restaurant ID is required.", {}, "error");
-      console.error("Error: Restaurant ID is empty.");
-      return;
+  // Integrates a dynamic availability table in the "Review Availability" form
+  const renderAvailabilityTable = () => {
+    if (!availabilityData || availabilityData.length === 0) {
+      return (
+        <div className="placeholder-manager">
+          <p>No availability data to display</p>
+        </div>
+      );
     }
 
-    // Prepare payload with restaurantId
-    const payload = {
-      restaurantId: restaurantId.toString(),
-    };
+    // Extract all time slots (from opening to closing)
+    const times = Array.from(
+      { length: parseInt(endTime) - parseInt(startTime) },
+      (_, i) => `${parseInt(startTime) + i}:00`
+    );
 
-    console.log("Sending payload to manager login API:", payload);
+    return (
+      <table className="availability-table">
+        <thead>
+          <tr>
+            <th>Date: {getESTDateString(new Date(reviewAvailabilityDate))}</th>
+            {availabilityData.map(([tableNumber]: [number]) => (
+              <th key={tableNumber}>T{tableNumber}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {times.map((time, rowIndex) => (
+            <tr key={rowIndex}>
+              <td>{time}</td>
+              {availabilityData.map(([tableNumber, tableData]: [number, any[]]) => {
+                const slot = tableData[rowIndex]; // Get the current time slot
+                const email = typeof slot === "string" ? slot : ""; // Check if the slot is an email
+                return (
+                  <td key={tableNumber}>
+                    {email}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
 
-    try {
-      // Send POST request to manager login API
-      const response = await managerLoginApi.post("", payload);
-      console.log("Raw Response received from API:", response);
+// API: Manager Login
+const handleManagerLogin = async () => {
+  // Validate input: Ensure restaurant ID is provided and not empty
+  if (!restaurantId.trim()) {
+    showNotification("Restaurant ID is required", {}, "error"); // Notify the user
+    console.error("Error: Restaurant ID is empty"); // Log the error
+    return;
+  }
 
-      // Parse the body if it's a string
-      let parsedBody = response.data;
-      if (typeof response.data.body === "string") {
-        parsedBody = JSON.parse(response.data.body);
-      }
+  // Prepare the payload for the API request
+  const payload = {
+    restaurantId: restaurantId.toString(),
+  };
 
-      console.log("Parsed Response Data:", parsedBody);
+  console.log("Sending payload to manager login API:", payload);
 
-      // Extract data from the parsed response
+  try {
+    // Send POST request to the manager login API
+    const response = await managerLoginApi.post("", payload);
+    console.log("Raw Response received from API:", response);
+
+    // Parse the response body if it's a string
+    const parsedBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data;
+
+    console.log("Parsed Response Data:", parsedBody);
+
+    // Handle responses based on `statusCode`
+    if (response.data.statusCode === 200) {
       const { data } = parsedBody;
 
       if (data && data.restaurant) {
@@ -344,22 +500,26 @@ const ManagerView = (): JSX.Element => {
         // Update state with restaurant details
         setName(restaurant.name);
         setAddress(restaurant.address);
-        setStartTime(restaurant.startTime.slice(0, 5));
+        setStartTime(restaurant.startTime.slice(0, 5)); // Extract time in HH:MM format
         setEndTime(restaurant.endTime.slice(0, 5));
-        setIsActivated(restaurant.activated === 1);
-        setHasRestaurant(true);
+        setIsActivated(restaurant.activated === 1); // Set activation status
+        setHasRestaurant(true); // Indicate that a restaurant exists
         setShowInitialPopup(false);
 
-        // Process openDays and tables
+        // Format open days for display
         const formattedOpenDays = openDays.map((day: { openDate: string }) => day.openDate);
+
+        // Format tables for display and state
         const formattedTables = tables.map((table: Table) => ({
           tableNumber: table.tableNumber,
           seats: table.seats,
           available: true,
           tableId: table.tableNumber,
           isNew: false,
+          saved: true,
         }));
 
+        // Update state with formatted data
         setDatesOpen(formattedOpenDays);
         setTables(formattedTables);
         setNextTableNumber(
@@ -367,272 +527,596 @@ const ManagerView = (): JSX.Element => {
             ? Math.max(...formattedTables.map((t: Table) => t.tableNumber)) + 1
             : 1
         );
-        setTablesReady(true);
+        setTablesReady(true); // Indicate tables are ready for display
 
-        // Switch to edit form after all updates
-        setCurrentForm('edit');
+        // Update dropdown values for Open and Close times
+        const startTimeDropdown = document.getElementById("startTime") as HTMLSelectElement;
+        const endTimeDropdown = document.getElementById("endTime") as HTMLSelectElement;
 
-        console.log('Tables from API:', tables);
+        if (startTimeDropdown) startTimeDropdown.value = restaurant.startTime.slice(0, 5);
+        if (endTimeDropdown) endTimeDropdown.value = restaurant.endTime.slice(0, 5);
+
+        // Switch to the edit form 
+        setCurrentForm("edit");
+
+        console.log("Tables from API:", tables);
         showNotification("Restaurant details retrieved successfully", {}, "success");
       } else {
         console.error("No restaurant data found in API response:", parsedBody);
         showNotification("Failed to retrieve restaurant details", {}, "error");
       }
-    } catch (error) {
-      // Handle errors during API request
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || error.message;
-        showNotification(`API Error: ${errorMessage}`, {}, "error");
-        console.error("Axios error:", errorMessage);
-      } else {
-        showNotification("An unexpected error occurred while logging in.", {}, "error");
-        console.error("Unexpected error:", error);
-      }
+    } else if (response.data.statusCode === 400) {
+      // Handle validation errors
+      console.warn("API responded with status 400:", parsedBody.message);
+      showNotification(parsedBody.message || "Bad request error", {}, "error");
+    } else {
+      // Handle unexpected status codes
+      console.error("Unhandled response status code:", response.data.statusCode);
+      showNotification("An unexpected error occurred", {}, "error");
     }
-  };
+  } catch (error) {
+    // Handle Axios-specific errors 
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || error.message || "An unexpected API error occurred.";
+      showNotification(errorMessage, {}, "error");
+      console.error("Axios error:", errorMessage);
+    }
+    // Handle general errors
+    else if (error instanceof Error) {
+      console.error("Error:", error.message);
+      showNotification(error.message, {}, "error");
+    }
+    // Handle unknown errors
+    else {
+      console.error("Unknown error occurred:", error);
+      showNotification("An unexpected error occurred", {}, "error");
+    }
+  }
+};
 
   // API: Create Restaurant
   const handleCreateRestaurant = async () => {
+    // Validate input: Ensure name and address are provided
     if (!name || !address) {
-      setError('Name and Address are required.');
+      setError("Name and Address are required.");
+      console.error("Validation error: Name and Address are required.");
       return;
     }
-    const today = new Date().toISOString().split('T')[0];
+
+    // Adjust dates to EST timezone
+    const today = getESTDateString();
+    const adjustedDatesOpen = datesOpen.map((date) => getESTDateString(new Date(date)));
+
+    // Prepare the payload for the API request
     const payload = {
       name,
       address,
-      startTime: `${startTime}:00`,
-      endTime: `${endTime}:00`,
-      openDays: datesOpen.length > 0 ? datesOpen : [today],
-      tables: tables.length > 0
-        ? tables.map((table) => ({
-          tableNumber: table.tableNumber,
-          seats: table.seats,
-        }))
-        : [{ tableNumber: 1, seats: 1 }],
+      startTime: `${startTime}:00`, // Format start time with seconds
+      endTime: `${endTime}:00`, // Format end time with seconds
+      openDays: adjustedDatesOpen.length > 0 ? adjustedDatesOpen : [today],
+      tables: [{ tableNumber: 1, seats: 1 }], // Initialize with one default table
     };
 
-    console.log('Sending payload to create restaurant API:', payload);
+    console.log("Sending payload to create restaurant API:", payload);
 
     try {
-      const response = await createRestaurantApi.post('', payload);
+      // Send API request to create the restaurant
+      const response = await createRestaurantApi.post("", payload);
+      console.log("API Response received:", response);
 
+      // Extract statusCode and body from the API response
+      const responseBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data.body;
+
+      // Handle response based on statusCode
       if (response.data.statusCode === 200) {
-        setHasRestaurant(true);
-        setCurrentForm(null);
-        setName('');
-        setAddress('');
-        setStartTime('');
-        setEndTime('');
-        setDatesOpen([]);
-        setTables([]);
+        const { restaurantId } = responseBody; // Extract restaurantId from response body
+        console.log("Created Restaurant ID:", restaurantId);
 
-        const message =
-          JSON.parse(response.data.body)?.message || 'Restaurant created successfully';
-        showNotification(`${message}`);
+        if (restaurantId) {
+          // Update state with the new restaurant ID and default table
+          setRestaurantId(restaurantId.toString());
+          setHasRestaurant(true);
+          setTables([
+            {
+              tableId: 1,
+              tableNumber: 1,
+              restaurantId: parseInt(restaurantId, 10),
+              seats: 1,
+              available: true,
+              isNew: false,
+              saved: true,
+            },
+          ]);
+          setCurrentForm("edit"); // Switch to edit form after creation
+          showNotification(
+            `Restaurant created successfully! ID: ${restaurantId}`,
+            {},
+            "success"
+          );
+        } else {
+          console.error("Restaurant ID missing in the response.");
+          showNotification("Failed to retrieve Restaurant ID", {}, "error");
+        }
+      } else if (response.data.statusCode === 400) {
+        // Handle validation errors from the API
+        console.warn("Validation error from API:", responseBody.message);
+        showNotification(responseBody.message || "Validation error occurred", {}, "error");
       } else {
-        console.error('API responded with an error:', response.data);
-        showNotification('Could not create Restaurant', {}, 'error');
+        // Handle unexpected status codes
+        console.error("Unexpected statusCode:", response.data.statusCode);
+        showNotification("Failed to create restaurant due to an unexpected error", {}, "error");
       }
     } catch (error) {
+      // Handle Axios-specific errors
       if (axios.isAxiosError(error)) {
-        console.error('Axios error:', error.response?.data || error.message);
-        setError(`API Error: ${error.response?.data?.message || error.message}`);
-      } else {
-        console.error('Unexpected error:', error);
-        setError('An unexpected error occurred. Please try again.');
+        const errorMessage =
+          error.response?.data?.message || error.message || "An unexpected API error occurred.";
+        showNotification(errorMessage, {}, "error");
+        console.error("Axios error:", errorMessage);
+      }
+      // Handle general errors
+      else if (error instanceof Error) {
+        console.error("Error creating restaurant:", error.message);
+        showNotification(error.message, {}, "error");
+      }
+      // Handle unknown errors
+      else {
+        console.error("Unexpected error occurred:", error);
+        showNotification("An unexpected error occurred", {}, "error");
       }
     }
   };
 
   // API: Edit Restaurant
   const handleEditRestaurantInfo = async () => {
+    // Validate input: Ensure restaurant ID is provided
     if (!restaurantId) {
-      setError('Restaurant ID is missing. Please log in again.');
-      showNotification('Restaurant ID is required.', {}, 'error');
-      return;
+      setError("Restaurant ID is missing. Please log in again"); // Set error state
+      showNotification("Restaurant ID is required", {}, "error"); // Notify the user
+      console.error("Validation error: Restaurant ID is missing."); // Log the error
+      return; // Exit early if validation fails
     }
-  
+
+    // Prepare the payload for the API request
     const payload = {
-      restaurantId, 
-      name: name || '', 
-      address: address || '',
-      startTime: startTime ? `${startTime}:00` : '', 
-      endTime: endTime ? `${endTime}:00` : '', 
+      restaurantId,
+      name: name || "", // Default to an empty string if name is not provided
+      address: address || "", // Default to an empty string if address is not provided
+      startTime: startTime ? `${startTime}:00` : "", // Format startTime with seconds
+      endTime: endTime ? `${endTime}:00` : "", // Format endTime with seconds
     };
-  
-    console.log('Sending API request to edit restaurant with payload:', payload);
-  
+
+    console.log("Sending API request to edit restaurant with payload:", payload);
+
     try {
-      const response = await editRestaurantInfoApi.post('', payload);
-  
+      // Make the API call
+      const response = await editRestaurantInfoApi.post("", payload);
+      console.log("API Response received:", response);
+
+      // Extract the response body
+      const responseBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data.body;
+
+      // Handle successful response
       if (response.data.statusCode === 200) {
-        showNotification(`Successfully updated restaurant`, {}, 'success');
-        setCurrentForm(null); 
-        resetState(); 
-      } else {
-        console.error('API error:', response.data.body || response.data);
-        showNotification('Failed to update restaurant', {}, 'error');
+        showNotification("Successfully updated restaurant", {}, "success"); // Notify user of success
+        setStartTime(startTime);  // Update local state with new times
+        setEndTime(endTime)  // Update local state with new times
+        setCurrentForm(null); // Reset the current form
+        resetState(); // Reset any state related to restaurant info
+      }
+      // Handle validation errors
+      else if (response.data.statusCode === 400) {
+        console.warn("Validation error from API:", responseBody.message);
+        showNotification(responseBody.message || "Validation error occurred", {}, "error");
+      }
+      // Handle unexpected status codes
+      else {
+        console.error("Unexpected statusCode:", response.data.statusCode);
+        showNotification("Failed to update restaurant due to an unexpected error", {}, "error");
       }
     } catch (error) {
-      console.error('Error editing restaurant:', error);
-      showNotification('An error occurred while editing the restaurant.', {}, 'error');
+      // Handle Axios-specific errors
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message || "An unexpected API error occurred.";
+        showNotification(errorMessage, {}, "error");
+        console.error("Axios error:", errorMessage);
+      }
+      // Handle general JavaScript errors
+      else if (error instanceof Error) {
+        console.error("Error editing restaurant:", error.message);
+        showNotification(error.message, {}, "error");
+      }
+      // Handle unknown errors
+      else {
+        console.error("Unknown error occurred:", error);
+        showNotification("An unexpected error occurred", {}, "error");
+      }
     }
-  };  
+  };
 
   // API: Edit Tables
   const editTableHandler = async (
-    type: string,
-    restaurantId: string,
-    tableNumber: number,
-    seats: number = 1
+    type: string, // "add" or "delete"
+    restaurantId: string, // ID of the restaurant
+    tableNumber: number, // Table number being edited
+    seats: number = 1 // Number of seats for the table
   ): Promise<boolean> => {
+    // Ensure restaurant ID is provided before proceeding
+    if (!restaurantId) {
+      console.error("Restaurant ID is missing. Aborting API call.");
+      return false;
+    }
+
+    // Prepare the payload for the API request
+    const payload = {
+      type,
+      restaurantId,
+      tableNumber,
+      seats,
+    };
+
+    console.log("Sending payload to edit table API:", payload);
+
     try {
-      const payload = {
-        type,
-        restaurantId,
-        tableNumber,
-        seats,
-      };
+      // Make the API call to edit the table
+      const response = await editRestaurantTablesApi.post("", payload);
+      console.log("API Response received:", response);
 
-      console.log("Sending payload to edit table API:", payload);
+      // Parse the response body if it's a string
+      const responseBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data.body;
 
-      const response = await editRestaurantTablesApi.post('', payload);
-
-      if (response.status === 200) {
+      // Handle successful response
+      if (response.data.statusCode === 200) {
         console.log(
-          `Successfully ${type === "delete" ? "deleted" : "edited"} table.`
+          `Successfully ${type === "delete" ? "deleted" : "saved"} table.`
         );
         return true;
-      } else {
-        console.error("API responded with an error:", response.data);
+      }
+      // Handle validation errors
+      else if (response.data.statusCode === 400) {
+        console.warn("Validation error from API:", responseBody.message);
+        return false;
+      }
+      // Handle unexpected status codes
+      else {
+        console.error("Unexpected statusCode:", response.data.statusCode);
         return false;
       }
     } catch (error) {
-      console.error("Error editing table:", error);
+      // Handle Axios-specific errors
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          "An unexpected API error occurred.";
+        console.error("Axios error:", errorMessage);
+      }
+      // Handle general errors
+      else if (error instanceof Error) {
+        console.error("Error editing table:", error.message);
+      }
+      // Handle unknown errors
+      else {
+        console.error("Unknown error occurred:", error);
+      }
       return false;
     }
   };
 
   // API: Open Future Days
   const handleOpenFutureDays = async () => {
-    if (date) {
-      openFutureDaysApi
-        .post('/open-day', { date })
-        .then(() => {
-          showNotification(`Successfully set dates to open`);
-          setDate('');
-          setCurrentForm(null);
-        })
-        .catch((error) => {
-          console.error('Error opening future days:', error);
-          showNotification('Failed to set future days to open', {}, 'error');
-        });
-    } else {
-      showNotification('Date is required.', {}, 'error');
+    // Check if both date and restaurantId are provided
+    if (!openFutureDayDate || !restaurantId) {
+      console.warn("Date or Restaurant ID missing");
+      showNotification("Date and Restaurant ID are required", {}, "error");
+      return;
+    }
+
+    // Handle Invalid Date Inputs 
+    if (new Date(openFutureDayDate) < new Date(getESTDateString())) {
+      setError("Selected date must be today or later.");
+      return;
+    }
+
+    console.log(`Date: ${openFutureDayDate}, Restaurant ID: ${restaurantId}`);
+    const payload = { restaurantId, openDays: [openFutureDayDate] }; // Prepare payload for API
+    console.log("Payload to API:", payload);
+
+    try {
+      // Send API request to open future days
+      const response = await openFutureDaysApi.post("", payload);
+      console.log("API Response received:", response);
+
+      // Parse the response body if it's a string
+      const responseBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data.body;
+
+      // Handle successful response
+      if (response.data.statusCode === 200) {
+        console.log("API call successful, response data:", responseBody);
+        showNotification(`Successfully opened date ${openFutureDayDate} for restaurant ID: ${restaurantId}`, {}, "success");
+        setDate("");
+        setCurrentForm(null);
+      }
+      // Handle validation errors
+      else if (response.data.statusCode === 400) {
+        console.warn("Validation error from API:", responseBody.message);
+        showNotification(responseBody.message || "Failed to open the future day", {}, "error");
+      }
+      // Handle unexpected status codes
+      else {
+        console.error("Unexpected statusCode:", response.data.statusCode);
+        showNotification("An unexpected error occurred while opening the day", {}, "error");
+      }
+    } catch (error) {
+      // Catch any Axios errors
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.message || error.message || "An unexpected API error occurred.";
+        console.error("Axios error:", errorMessage);
+        showNotification(errorMessage, {}, "error");
+      }
+      // Catch general errors
+      else if (error instanceof Error) {
+        console.error("Error during API call:", error.message);
+        showNotification(error.message, {}, "error");
+      }
+      // Catch any unknown errors
+      else {
+        console.error("Unknown error occurred:", error);
+        showNotification("An unexpected error occurred", {}, "error");
+      }
     }
   };
 
   // API: Close Future Days
   const handleCloseFutureDays = async () => {
-    if (date) {
-      closeFutureDaysApi
-        .post('/close-day', { date })
-        .then(() => {
-          showNotification(`Successfully set dates to close`);
-          setDate('');
-          setCurrentForm(null);
-        })
-        .catch((error) => {
-          console.error('Error closing future days:', error);
-          showNotification('Failed to set future days to close', {}, 'error');
-        });
-    } else {
-      setError('Date is required.');
+    // Check if both date and restaurantId are provided
+    if (!closeFutureDayDate || !restaurantId) {
+      console.warn("Date or Restaurant ID missing");
+      showNotification("Date and Restaurant ID are required", {}, "error");
+      return;
+    }
+
+    // Handle Invalid Date Inputs
+    if (new Date(closeFutureDayDate) < new Date(getESTDateString())) {
+      setError("Selected date must be today or later.");
+      return;
+    }
+
+    console.log(`Date: ${closeFutureDayDate}, Restaurant ID: ${restaurantId}`);
+    const payload = { restaurantId, openDays: [closeFutureDayDate] }; // Prepare payload for API
+    console.log("Payload to API:", payload);
+
+    try {
+      // Send API request to close future days
+      const response = await closeFutureDaysApi.post("", payload);
+      console.log("API Response received:", response);
+
+      // Parse the response body if it's a string
+      const responseBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data.body;
+
+      // Handle successful response
+      if (response.data.statusCode === 200) {
+        console.log("API call successful, response data:", responseBody);
+        showNotification(`Successfully closed date ${closeFutureDayDate} for restaurant ID: ${restaurantId}`, {}, "success");
+        setDate("");
+        setCurrentForm(null);
+      }
+      // Handle validation errors
+      else if (response.data.statusCode === 400) {
+        console.warn("Validation error from API:", responseBody.message);
+        showNotification(responseBody.message || "Failed to close the future day", {}, "error");
+      }
+      // Handle unexpected status codes
+      else {
+        console.error("Unexpected statusCode:", response.data.statusCode);
+        showNotification("An unexpected error occurred while closing the day", {}, "error");
+      }
+    } catch (error) {
+      // Catch any Axios errors
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.message || error.message || "An unexpected API error occurred.";
+        console.error("Axios error:", errorMessage);
+        showNotification(errorMessage, {}, "error");
+      }
+      // Catch general errors
+      else if (error instanceof Error) {
+        console.error("Error during API call:", error.message);
+        showNotification(error.message, {}, "error");
+      }
+      // Catch any unknown errors
+      else {
+        console.error("Unknown error occurred:", error);
+        showNotification("An unexpected error occurred", {}, "error");
+      }
     }
   };
 
   // API: Review Availability
   const handleReviewAvailability = async () => {
-    reviewAvailabilityApi
-      .get('/availability')
-      .then((response) => {
-        console.log('Availability:', response.data);
-        setCurrentForm(null);
-      })
-      .catch((error) => {
-        console.error('Error fetching availability:', error);
-        showNotification('Failed to fetch availability data', {}, 'error');
-      });
+    try {
+      if (!restaurantId) {
+        throw new Error("Restaurant ID is required to review availability.");
+      }
+
+      const payload = { restaurantId, reviewAvailabilityDate };
+      console.log("Sending payload to review availability API:", payload);
+
+      const response = await reviewAvailabilityApi.post("", payload);
+      console.log("API Response received:", response);
+
+      const responseBody =
+        typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data.body;
+
+      if (response.data.statusCode === 200 && responseBody.message) {
+        setAvailabilityData(responseBody.message); // Store availability data for rendering the table
+        setCurrentForm("review"); // Switch to the review form
+        console.log("Availability data:", responseBody.message);
+      } else {
+        throw new Error("Failed to retrieve availability data.");
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error fetching availability:", error.message);
+        showNotification(error.message, {}, "error");
+      } else {
+        console.error("Unexpected error:", error);
+        showNotification("An unexpected error occurred.", {}, "error");
+      }
+    }
   };
 
   // API: Delete Restaurant
   const handleDeleteRestaurant = async () => {
+    // Ensure a restaurant ID is provided before proceeding
     if (!restaurantId) {
-      setError('Restaurant ID is required to delete.');
-      showNotification('Restaurant ID is required.', {}, 'error');
-      console.error('Error: Restaurant ID is missing.');
+      setError("Restaurant ID is required to delete.");
+      showNotification("Restaurant ID is required", {}, "error");
+      console.error("Error: Restaurant ID is missing.");
       return;
     }
 
-    console.log('Sending request to delete restaurant:', { restaurantId });
+    console.log("Sending request to delete restaurant:", { restaurantId });
 
     try {
-      const response = await deleteRestaurantApi.post('', { restaurantId });
-      console.log('API response:', response.data);
+      // Send API request to delete the restaurant
+      const response = await deleteRestaurantApi.post("", { restaurantId });
+      console.log("API Response received:", response);
 
-      if (response.status === 200) {
+      // Parse the response body if it's a string
+      const responseBody = typeof response.data.body === "string" ? JSON.parse(response.data.body) : response.data.body;
+
+      // Handle successful response
+      if (response.data.statusCode === 200) {
+        console.log("API call successful, response data:", responseBody);
+
+        // Update the state to reflect the successful deletion
         setShowDeleteConfirmation(false);
         setHasRestaurant(false);
         setIsActivated(false);
         setCurrentForm(null);
-        showNotification(`Successfully deleted restaurant`);
-        setRestaurantId('');
-      } else {
-        console.error('Failed to delete restaurant:', response.data);
-        showNotification('Failed to delete restaurant', {}, 'error');
+
+        // Clear the restaurant ID and notify the user of success
+        showNotification("Successfully deleted restaurant", {}, "success");
+        setRestaurantId("");
+      }
+      // Handle validation errors
+      else if (response.data.statusCode === 400) {
+        console.warn("Validation error from API:", responseBody.message);
+        showNotification(
+          responseBody.message || "Failed to delete the restaurant",
+          {},
+          "error"
+        );
+      }
+      // Handle unexpected status codes
+      else {
+        console.error("Unexpected statusCode:", response.data.statusCode);
+        showNotification("An unexpected error occurred while deleting the restaurant", {}, "error");
       }
     } catch (error) {
-      console.error('Delete Error:', error);
-      setError('An error occurred while deleting the restaurant.');
+      // Handle Axios-specific errors 
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          "An unexpected API error occurred.";
+        console.error("Axios error:", errorMessage);
+        setError(errorMessage);
+        showNotification(errorMessage, {}, "error");
+      }
+      // Handle general errors
+      else if (error instanceof Error) {
+        console.error("Error during delete operation:", error.message);
+        setError(error.message);
+        showNotification(error.message, {}, "error");
+      }
+      // Handle unknown errors
+      else {
+        console.error("Unknown error occurred:", error);
+        setError("An unexpected error occurred.");
+        showNotification("An unexpected error occurred", {}, "error");
+      }
     }
   };
 
+  // Function to trigger the delete confirmation popup
   const handleDeleteClick = () => setShowDeleteConfirmation(true);
+
+  // Function to cancel the delete operation
   const cancelDelete = () => {
-    setShowDeleteConfirmation(false);
-    setRestaurantId('');
+    setShowDeleteConfirmation(false); // Close the confirmation popup
+    setRestaurantId(""); // Clear the restaurant ID to reset the form
   };
 
   // API: Activate Restaurant
   const handleActivateRestaurant = async () => {
+    // Validate input
     if (!activateRestaurantId) {
-      setError('Restaurant ID is required to delete.');
-      showNotification('Restaurant ID is required.', {}, 'error');
-      console.error('Error: Restaurant ID is missing.');
+      setError("Restaurant ID is required to activate.");
+      showNotification("Restaurant ID is required", {}, "error");
+      console.error("Error: Restaurant ID is missing.");
       return;
     }
 
     try {
+      // Prepare the payload for the API request
       const payload = { restaurantId: activateRestaurantId };
-      console.log('Sending request to activate restaurant:', payload);
+      console.log("Sending request to activate restaurant:", payload);
 
-      const response = await activateRestaurantApi.post('', payload);
+      // Make the API call
+      const response = await activateRestaurantApi.post("", payload);
+      console.log("API Response received:", response);
 
-      if (response.status === 200) {
-        console.log("test");
-        showNotification(`Successfully activated restaurant with ID: ${activateRestaurantId}`);
-        setShowActivatePopup(false);
-        setActivateRestaurantId('');
-        setIsActivated(true);
-        setCurrentForm(null);
+      // Extract statusCode and body from the response
+      const { statusCode, body } = response.data;
+      const responseBody = typeof body === "string" ? JSON.parse(body) : body;
+
+      // Handle successful response
+      if (statusCode === 200) {
+        console.log("API call successful, response data:", responseBody);
+
+        // Update state and notify user of success
+        showNotification(`Successfully activated restaurant with ID: ${activateRestaurantId}`, {}, "success");
+        setShowActivatePopup(false); // Close the activation popup
+        setActivateRestaurantId(""); // Clear the restaurant ID field
+        setIsActivated(true); // Mark restaurant as activated
+        setCurrentForm(null); // Reset the form
+
+        // Handle validation errors
+      } else if (statusCode === 400) {
+        console.warn("Validation error from API:", responseBody.message);
+        showNotification(responseBody.message || "Failed to activate restaurant", {}, "error");
+
+        // Handle unexpected status codes
       } else {
-        console.error('Failed to activate restaurant:', response.data);
-        showNotification('Failed to activate restaurant', {}, 'error');
+        console.error("Unexpected statusCode:", statusCode);
+        showNotification("An unexpected error occurred while activating the restaurant.", {}, "error");
       }
     } catch (error) {
-      console.error('Error activating restaurant:', error);
-      showNotification('An error occurred while activating the restaurant.', {}, 'error');
+      // Handle Axios errors
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          "An unexpected API error occurred.";
+        console.error("Axios error:", errorMessage);
+        setError(errorMessage);
+        showNotification(errorMessage, {}, "error");
+
+        // Handle general errors
+      } else if (error instanceof Error) {
+        console.error("Error activating restaurant:", error.message);
+        setError(error.message);
+        showNotification(error.message, {}, "error");
+
+        // Handle unknown errors
+      } else {
+        console.error("Unknown error occurred:", error);
+        setError("An unexpected error occurred.");
+        showNotification("An unexpected error occurred", {}, "error");
+      }
     }
   };
 
@@ -722,12 +1206,14 @@ const ManagerView = (): JSX.Element => {
               </button>
 
               {/* Button to review availability */}
-              <button
-                className={`action-button ${currentForm === 'review' ? 'active' : ''}`}
-                onClick={() => handleToggleForm('review')}
-              >
-                {currentForm === 'review' ? 'Exit' : 'Review Availability'}
-              </button>
+              {isActivated && (
+                <button
+                  className={`action-button ${currentForm === 'review' ? 'active' : ''}`}
+                  onClick={() => handleToggleForm('review')}
+                >
+                  {currentForm === 'review' ? 'Exit' : 'Review Availability'}
+                </button>
+              )}
 
               {/* Button to delete restaurant */}
               <button
@@ -749,6 +1235,7 @@ const ManagerView = (): JSX.Element => {
 
       {/* Right Panel: Contains all Forms */}
       <div className="right-panel">
+
         {/* Check if the Create Form should be displayed */}
         {currentForm === 'create' && (
           <FormWrapper title="Create Restaurant">
@@ -815,12 +1302,12 @@ const ManagerView = (): JSX.Element => {
               <input
                 id="datesOpen"
                 type="date"
-                min={new Date().toISOString().split('T')[0]}
+                min={getESTDateString()}
                 onFocus={(e) => (e.target.dataset.isSelecting = 'true')}
                 onBlur={(e) => (e.target.dataset.isSelecting = 'false')}
                 onChange={(e) => {
                   const inputElement = e.target as HTMLInputElement;
-                  const selectedDate = inputElement.value;
+                  const selectedDate = getESTDateString(new Date(inputElement.value));
                   const isSelecting = inputElement.dataset.isSelecting === 'true';
                   if (selectedDate && isSelecting && !datesOpen.includes(selectedDate)) {
                     setDatesOpen((prev) => [...prev, selectedDate]);
@@ -895,7 +1382,7 @@ const ManagerView = (): JSX.Element => {
                 >
                   <option value="" disabled>Select Open Time</option>
                   {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
-                    <option key={hour} value={hour}>{`${hour}:00`}</option>
+                    <option key={hour} value={`${hour}:00`}>{`${hour}:00`}</option>
                   ))}
                 </select>
               </div>
@@ -911,7 +1398,7 @@ const ManagerView = (): JSX.Element => {
                 >
                   <option value="" disabled>Select Close Time</option>
                   {Array.from({ length: 16 }, (_, i) => 8 + i).map((hour) => (
-                    <option key={hour} value={hour}>{`${hour}:00`}</option>
+                    <option key={hour} value={`${hour}:00`}>{`${hour}:00`}</option>
                   ))}
                 </select>
               </div>
@@ -959,12 +1446,15 @@ const ManagerView = (): JSX.Element => {
             <div className="form-group">
               <label className="form-label" htmlFor="date">Date</label>
               <input
-                id="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                id="open-future-day-date"
+                value={openFutureDayDate}
+                onChange={(e) => {
+                  setOpenFutureDayDate(e.target.value);
+                  if (error) setError(""); // Clear error on valid input
+                }}
                 className="form-input"
                 type="date"
-                min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
+                min={getESTDateString(new Date(new Date().setDate(new Date().getDate() + 1)))}
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
@@ -976,29 +1466,31 @@ const ManagerView = (): JSX.Element => {
 
         {/* Check if the Close Future Days Form should be displayed */}
         {currentForm === 'close' && (
-          <FormWrapper title="Open Future Days">
+          <FormWrapper title="Close Future Days">
             <div className="form-group">
               <label className="form-label" htmlFor="date">Date</label>
               <input
-                id="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                id="close-future-day-date"
+                value={closeFutureDayDate}
+                onChange={(e) => setCloseFutureDayDate(e.target.value)}
                 className="form-input"
                 type="date"
-                min={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0]}
+                min={getESTDateString(new Date(new Date().setDate(new Date().getDate() + 1)))}
               />
             </div>
             {error && <p className="form-error-message">{error}</p>}
-            <button onClick={handleOpenFutureDays} className="form-submit-button">
-              Open Day
+            <button onClick={handleCloseFutureDays} className="form-submit-button">
+              Close Day
             </button>
           </FormWrapper>
         )}
 
         {/* Check if the Review Availability Form should be displayed */}
-        {currentForm === 'review' && (
+        {currentForm === "review" && (
           <FormWrapper title="Review Availability">
-            <p className="form-label">Work in progress</p>
+            <div className="availability-table-container">
+              {renderAvailabilityTable()}
+            </div>
           </FormWrapper>
         )}
 
@@ -1020,7 +1512,6 @@ const ManagerView = (): JSX.Element => {
               <button onClick={cancelDelete} className="cancel-button">
                 Cancel
               </button>
-
             </div>
           </div>
         )}
@@ -1050,7 +1541,7 @@ const ManagerView = (): JSX.Element => {
         {/* Place Holder Text */}
         {!currentForm && !showDeleteConfirmation && (
           <div className="placeholder-manager">
-            <p>Select an option from the left panel to get started.</p>
+            <p>Select an option from the left panel to get started</p>
           </div>
         )}
 

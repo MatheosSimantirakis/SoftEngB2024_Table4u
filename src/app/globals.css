@@ -165,6 +165,75 @@ body {
 
 /* ---------------- Admin View Styles ---------------- */
 
+.modal-overlay-restaurant-admin {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  z-index: 999;
+}
+
+.delete-restaurant-button-admin {
+  width: 100%;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: var(--danger-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-align: center;
+}
+
+.restaurant-popup-admin {
+  position: relative;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  color: black;
+}
+
+.date-label-report {
+  font-size: 14px;
+  color: #555;
+}
+
+.date-input-report {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.generate-report-button {
+  padding: 10px;
+  font-size: 14px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+}
+
+.generate-report-button:hover {
+  background-color: #0056b3;
+}
+
 .list-admin {
   list-style: none;
   padding: 0;
@@ -236,15 +305,70 @@ body {
   text-decoration: underline;
 }
 
+.result-item-admin{
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 15px;
+  display: flex;
+  flex-direction: column; 
+  height: 80px; 
+  box-sizing: border-box;
+  text-align: left;
+  margin-bottom: 15px; /* Add space between items */
+}
+
+.result-item-admin:hover{
+  text-decoration: underline;
+}
+
+.modal-overlay-admin-cancel{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cancel-reservation-modal {
+  position: relative;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  color: black
+}
+
+.cancel-reservation-input input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: black
+}
+
 /* ---------------- Admin (Single Restaurant) View Styles ---------------- */
 
 .restaurant-name-admin {
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 23px;
+  font-weight: bold;
   text-align: center;
   margin-bottom: 20px;
   color: #000000;
- 
+}
+
+.restaurant-name-list-admin {
+  font-size: 16px;
+  color: #000000;
 }
 
 .content-box-admin {
@@ -297,9 +421,18 @@ body {
 .consumer-header {
   position: relative;
   width: 100%;
-  max-width: 1200px;
   text-align: center;
   margin-bottom: 20px;
+  padding: 10px;
+}
+
+.header-buttons-container {
+  position: absolute;
+  top: 30%;
+  right: 0px; 
+  transform: translateY(-50%);
+  display: flex;
+  gap: 10px; 
 }
 
 .logo-consumer {
@@ -309,10 +442,7 @@ body {
 }
 
 .login-button-consumer {
-  position: absolute;
-  top: 15px;
-  right: 0px;
-  padding: 8px 16px;
+  padding: 9px 18px;
   font-size: 14px;
   color: var(--primary-color);
   border: 1px solid var(--primary-color);
@@ -325,6 +455,21 @@ body {
 .login-button-consumer:hover {
   color: white;
   background-color: var(--primary-color);
+}
+
+.find-reservations-button-consumer {
+  padding: 9px 16px;
+  font-size: 14px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.find-reservations-button-consumer:hover {
+  background-color: #0056b3;
 }
 
 .search-container-consumer {
@@ -365,18 +510,21 @@ body {
   margin-bottom: 20px;
 }
 
-.my-reservations-button-consumer {
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: var(--primary-color);
-  color: white;
+.go-back-button-consumer {
+  position: fixed;
+  bottom: 30px; 
+  padding: 8px 132px;
+  font-size: 14px;
+  background-color: rgba(0, 123, 255, 0.9); 
+  color: white; 
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.my-reservations-button-consumer:hover {
-  background-color: #0056b3;
+.go-back-button-consumer:hover {
+  background-color: rgba(0, 86, 179, 0.9); 
 }
 
 .dropdown-consumer {
@@ -403,52 +551,49 @@ body {
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
 }
 
+.filter-search-button-consumer {
+  padding: 6px 14px;
+  font-size: 14px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-search-button-consumer:hover {
+  background-color: #0056b3;
+}
+
 .results-section-consumer {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
   margin-top: 20px;
+  padding-bottom: 80px;
 }
 
 .results-list-consumer {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-  gap: 15px; 
-  width: 100%;
-  margin-top: 10px;
-  padding: 0 10px; 
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center; 
 }
 
 .result-item-consumer {
-  border: 1px solid #ced4da;
+  width: 350px; 
+  height: 200px; 
+  background-color: white;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  background-color: #ffffff;
-  padding: 15px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
-  flex-direction: column; 
-  height: 150px; 
-  box-sizing: border-box;
-  text-align: left;
-}
-
-.result-item-admin{
-  border: 1px solid #ced4da;
-  border-radius: 8px;
-  background-color: #ffffff;
-  padding: 15px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column; 
-  height: 80px; 
-  box-sizing: border-box;
-  text-align: left;
-  /* bottom: 16px; */
-}
-
-.result-item-admin:hover{
-  text-decoration: underline;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .results-title-consumer {
@@ -473,7 +618,6 @@ body {
   color: #000000;
   font-weight: bold;
   text-align: center;
-  align-self: center;
   margin-bottom: 10px;
 }
 
@@ -481,6 +625,8 @@ body {
   font-size: 14px;
   color: #000000;
   margin-bottom: 5px;
+  text-align: left; 
+  width: 100%; 
 }
 
 
@@ -499,6 +645,15 @@ body {
 
 .action-button-consumer:hover {
   background-color: #0056b3;
+}
+
+.label-find-reservation {
+  font-size: 16px;
+  margin-left: 12px;
+  text-align: left;
+  color: var(--gray-color);
+  margin-bottom: 5px;
+  display: block; 
 }
 
 /* ---------------- Login/ Create Account Popup Styles ---------------- */
@@ -548,93 +703,11 @@ body {
   background: #ffffff;
   padding: 30px;
   border-radius: 10px;
-  width: 700px; 
+  width: 450px; 
   max-width: 90%;
   text-align: center;
   position: relative;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.cancel-reservation-modal {
-  position: relative;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 300px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
-  color: black
-}
-
-.cancel-reservation-button{
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #ff0000;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-
-.Generate-modal {
-  position: relative;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 600px;
-  height: 500px; 
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
-  color: black
-}
-
-.availability-report-header{
-  text-align: center;
-  font-size: 30;
-}
-
-.modal-overlay-open-cancel {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  flex-direction: column;
-}
-
-
-
-.input-group{
-  display: flex;
-  flex-direction: column;
-  gap: 8px;  
-}
-
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  color: var(--gray-color);
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.close-button:hover {
-  color: #343a40;
 }
 
 .login-title {
@@ -650,31 +723,22 @@ body {
   margin-bottom: 20px;
 }
 
-.login-inputs {
+.login-inputs-container {
   color: #000000;
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.login-input {
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ced4da;
-  border-radius: 5px;
-  width: 100%;
-  box-sizing: border-box;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .login-buttons {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
 
 .login-button {
-  padding: 12px 20px;
+  padding: 10px 20px;
   font-size: 16px;
   color: #ffffff;
   background-color: var(--primary-color);
@@ -708,7 +772,25 @@ body {
 
 /* ---------------- Manager View Styles ---------------- */
 
+.availability-table {
+  color: #000;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 16px;
+}
 
+.availability-table th,
+.availability-table td {
+  border: 1px solid #ddd;
+  padding: 5px;
+  text-align: center;
+}
+
+.availability-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
 
 /* ---------------- Forms Styles ---------------- */
 
@@ -777,10 +859,6 @@ body {
   background-color: #0056b3;
 }
 
-.form-submit-button:hover {
-  background-color: #0056b3;
-}
-
 .form-error-message {
   color: #5a6268;
   font-size: 14px;
@@ -810,7 +888,7 @@ body {
 .create-account-link {
   color: var(--gray-color);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 15px;
   margin: 0 15px;
 }
 
@@ -950,18 +1028,6 @@ body {
   background-color: #c82333;
 }
 
-.input-date {
-  display: block;
-  margin-bottom: 15px;
-  width: 100%;
-  padding: 8px;
-  font-size: 14px;
-  color: #495057;
-  background-color: #ffffff;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-}
-
 .dates-list {
   margin-top: 16px;
 }
@@ -1017,38 +1083,12 @@ input:checked+.slider:before {
   justify-content: space-between;
 }
 
-.login-button {
-  flex: 1;
-  margin: 0px 5px;
-  padding: 10px 15px;
-  font-size: 15px;
-  color: #ffffff;
-  background-color: var(--primary-color);
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
 .inline-button:hover {
   background-color: #0056b3;
 }
 
-.login-modal {
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 10px;
-  width: 400px;
-  max-width: 90%;
-  text-align: center;
-  position: relative;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-
 .login-input {
-  width: calc(100% - 20px);
-  margin: 5px auto;
+  width: calc(100% - 0px);
   padding: 10px;
   border: 1px solid #ced4da;
   border-radius: 5px;
@@ -1175,6 +1215,175 @@ input:checked+.slider:before {
   background-color: #565d63;
 }
 
+/* ---------------- Reservation Styles ---------------- */
+
+.reservation-modal {
+  width: 100%;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 10px;
+  width: 500px; 
+  max-width: 90%;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.reservation-title-consumer {
+  font-size: 24px;
+  color: #000000;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.reservation-subtitle {
+  font-size: 16px;
+  color: var(--gray-color);
+  margin-bottom: 20px;
+}
+
+.reservation-inputs-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.reservation-input {
+  color: #000000;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.reservation-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
+.reservation-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.reservation-button {
+  padding: 12px 20px;
+  font-size: 16px;
+  color: #ffffff;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%; 
+  box-sizing: border-box; 
+  transition: all 0.3s ease;
+}
+
+.reservation-button:hover {
+  background-color: #0056b3;
+}
+
+.label-make-reservation {
+  font-size: 16px;
+  margin-left: 12px;
+  text-align: left;
+  color: var(--gray-color);
+  margin-bottom: 5px;
+  display: block; 
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--gray-color);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close-button:hover {
+  color: #343a40;
+}
+
+.make-reservation-button-consumer {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+  transition: background-color 0.3s ease;
+  width: 100%; 
+  box-sizing: border-box; 
+}
+
+.make-reservation-button-consumer:hover {
+  background-color: #0056b3;
+}
+
+.reservation-popup-error-message {
+  color: #5a6268;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.find-my-reservation-button {
+  padding: 12px 20px;
+  font-size: 16px;
+  color: #ffffff;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%; 
+  box-sizing: border-box; 
+  transition: all 0.3s ease;
+}
+
+.find-my-reservation-button:hover {
+  background-color: #0056b3;
+}
+
+.reservation-detail-consumer {
+  font-size: 1rem;
+  margin: 10px 0;
+  color: #333; 
+  line-height: 1.5; 
+}
+
+.cancel-reservation-button {
+  background-color: var(--danger-color); 
+  color: white; 
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%; 
+  text-align: center;
+}
+
+.cancel-reservation-button-consumer:hover {
+  background-color: #c82333; 
+}
+
+.cancel-policy-text {
+  font-size: 13px;
+  color: #666; 
+  margin-top: 10px;
+  text-align: center; 
+}
+
 /* ---------------- On-Screen Notification Styles ---------------- */
 
 .notification {
@@ -1188,7 +1397,7 @@ input:checked+.slider:before {
   z-index: 1000;
   color: #fff;
   max-width: 90%;
-  animation: fadeInOut 9s ease-in-out forwards; 
+  animation: fadeInOut 9s ease-in-out forwards;
   visibility: visible; 
   opacity: 0;
 }
