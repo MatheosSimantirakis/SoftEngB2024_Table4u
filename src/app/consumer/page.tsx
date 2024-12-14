@@ -23,7 +23,8 @@ const searchActiveRestaurantsApi = createApiInstance('https://isfqvx6a4g.execute
 const makeReservationApi = createApiInstance('https://cogjtdgnmh.execute-api.us-east-2.amazonaws.com/makeReservation');
 const findReservationApi = createApiInstance('https://0lfhd5uy74.execute-api.us-east-2.amazonaws.com/findReservation');
 const cancelExistingReservationApi = createApiInstance('https://vqo7mqf378.execute-api.us-east-2.amazonaws.com/cancelReservation');
-const loginInfoApi = createApiInstance('https://example.com');
+const createAdmin = createApiInstance('https://eurgllqs6f.execute-api.us-east-2.amazonaws.com/createUser');
+const loginAdmin = createApiInstance('https://r0phmfsst7.execute-api.us-east-2.amazonaws.com/loginUser');
 
 // Reusable component for account creation modal
 const AccountCreationModal: React.FC<{ title: string; onClose: () => void }> = ({ title, onClose }) => (
@@ -173,16 +174,28 @@ const ConsumerView: React.FC = () => {
     setIsViewingReservation(false); // Reset viewing state if needed
   };
 
-  // Handles the action for finding a reservation
-  const handleFindReservationModalAction = () => {
-    if (!findEmail || !confirmationId) {
-      alert('Please fill in both Email and Confirmation ID');
-      return;
+  const loginAdministrator = async () => {
+    try {
+      const payload = { username: username, password: password }
+      const info = JSON.stringify(payload)
+
+      loginAdmin.post('/', info).then((response) => {
+        console.log(response.data.statusCode)
+
+        if (response.data.statusCode === 200) {
+          router.push('/admin')
+        } else {
+          alert("Login Failed, Check Credentials")
+        }
+        console.log(response.status)
+      }).catch((e) => {
+        console.error('Failed logging in, try again later', e);
+      })
+
+    } catch (error) {
+      console.error('Failed logging in, try again later', error);
     }
-    // Placeholder action to simulate finding a reservation
-    alert(`Finding reservation for Email: ${findEmail} and Confirmation ID: ${confirmationId}`);
-    setIsFindReservationModalVisible(false);
-  };
+  }
 
   // Update the selected date for filtering
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -311,7 +324,7 @@ const ConsumerView: React.FC = () => {
       // Send API request to cancel the reservation
       const response = await cancelExistingReservationApi.post("/", requestData);
       console.log("API  response:", response);
-      
+
       if (response.status === 200) {
         const { message } = response.data;
         console.log("Cancellation successful:", message);
@@ -794,39 +807,17 @@ const ConsumerView: React.FC = () => {
               />
             </div>
             <div className="login-buttons">
-              <button className="login-button" onClick={handleManager}>
-                Login Manager/ Create Restaurant
-              </button>
               <button
                 className="login-button"
-                onClick={async () => {
-                  try {
-                    const response = await loginInfoApi.post('/', {
-                      action: 'register',
-                      username,
-                      password,
-                      role: 'Admin',
-                    });
-
-                    if (response.status === 201) {
-                      alert('Administrator created successfully');
-                      closeCreateAdmin();
-                    } else {
-                      alert('Error creating administrator: ' + response.data.message);
-                    }
-                  } catch (err) {
-                    console.error('Error creating administrator:', err);
-                    alert('An error occurred. Please try again.');
-                  }
-                }}
+                onClick={loginAdministrator}
               >
                 Login as Administrator
               </button>
-            </div>
-            <div className="create-account-link-container">
-              <span className="create-account-link" onClick={openCreateAdmin}>
-                Create Administrator Account
-              </span>
+              <div className="create-account-link-container">
+                <span className="create-account-link" onClick={handleManager}>
+                  Login Manager/ Create Restaurant
+                </span>
+              </div>
             </div>
           </div>
         </div>
