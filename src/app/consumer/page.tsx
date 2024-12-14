@@ -531,7 +531,7 @@ const ConsumerView: React.FC = () => {
         <select
           className="dropdown-consumer"
           onChange={(e) => setReservationTime(e.target.value)}
-          value={reservationDate || getESTDateString()}
+          value={reservationTime}
         >
           <option value="">Time</option>
           {Array.from({ length: 16 }, (_, i) => i + 8).map((hour) => (
